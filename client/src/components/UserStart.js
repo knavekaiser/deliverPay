@@ -4,6 +4,7 @@ import logo from "../logo.svg";
 import illustration from "../landingPage_illustration.svg";
 import { Route, Switch, useHistory, Link } from "react-router-dom";
 import { Checkbox } from "./Elements";
+import GoogleLogin from "react-google-login";
 require("../components/styles/userStart.scss");
 
 const RegisterForm = () => {
@@ -166,6 +167,25 @@ const LoginForm = () => {
         }
       });
   };
+  // const responseGoogle = (e) => {
+  //   console.log(e);
+  // };
+  // <GoogleLogin
+  //   className="google"
+  //   clientId="110481019268-ih90k85im3nskjerljhou6ecgdhhl13t.apps.googleusercontent.com"
+  //   render={(renderProps) => (
+  //     <button
+  //       onClick={renderProps.onClick}
+  //       disabled={renderProps.disabled}
+  //     >
+  //       Continue with Google
+  //     </button>
+  //   )}
+  //   buttonText="Continue with Google"
+  //   onSuccess={responseGoogle}
+  //   onFailure={responseGoogle}
+  //   cookiePolicy={"single_host_origin"}
+  // />
   return (
     <div className="formWrapper login">
       <img
