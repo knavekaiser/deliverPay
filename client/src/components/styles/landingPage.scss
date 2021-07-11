@@ -1,0 +1,128 @@
+$blue: #336cf9;
+$green: #1be6d6;
+
+.landingPage {
+  min-height: 100vh;
+  display: grid;
+  .innerWrapper {
+    padding: 0 2rem;
+    width: 100%;
+    max-width: 1560px;
+    margin: auto;
+    position: relative;
+  }
+  header {
+    height: min-content;
+    .innerWrapper {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      a {
+        white-space: nowrap;
+      }
+      .links {
+        z-index: 1;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        grid-gap: 4rem;
+        a {
+          font-size: 1.5rem;
+          color: $blue;
+          font-weight: bold;
+          display: inline-block;
+        }
+        position: relative;
+      }
+      .path {
+        position: relative;
+        height: 100%;
+        &::after {
+          content: "";
+          display: block;
+          height: 100%;
+          width: 100vw;
+          background: white;
+          position: absolute;
+          right: 100%;
+          top: 0;
+        }
+        svg {
+          transform: scale(1.01);
+        }
+      }
+      .clas {
+        z-index: 1;
+        margin-right: 0;
+        display: flex;
+        grid-gap: 2rem;
+        a {
+          border-radius: 2rem;
+          width: 10vw;
+          text-align: center;
+          border: 2px solid white;
+          color: white;
+          font-weight: 500;
+          padding: 0.7rem 1rem;
+          background-image: linear-gradient(
+            165deg,
+            rgba(51, 108, 249, 1) 20%,
+            rgba(27, 230, 214, 1) 150%
+          );
+          &:hover {
+            color: $blue;
+            background: white;
+          }
+        }
+      }
+    }
+    .logo {
+      height: 70px;
+    }
+  }
+  .content {
+    .innerWrapper {
+      display: flex;
+      align-items: center;
+      .text {
+        display: grid;
+        grid-gap: 3rem;
+        color: white;
+        h1 {
+          font-size: 4.5rem;
+        }
+        p {
+          letter-spacing: 0.04em;
+          font-size: 1.4rem;
+          width: clamp(45ch, 90%, 75ch);
+        }
+        .clas {
+          display: flex;
+          grid-gap: 1rem;
+          align-items: center;
+          a {
+            border-radius: 2rem;
+            padding: 0.7rem 2.5rem;
+            font-size: 1.1rem;
+            background: white;
+            color: $blue;
+            font-weight: 500;
+            border: 2px solid white;
+            &:hover {
+              background: transparent;
+              color: white;
+            }
+          }
+        }
+      }
+      .illustration {
+        max-width: 35vw;
+      }
+    }
+  }
+  background: linear-gradient(
+    160deg,
+    rgba(51, 108, 249, 1) 42%,
+    rgba(27, 230, 214, 1) 100%
+  );
+}

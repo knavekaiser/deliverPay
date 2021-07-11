@@ -1,0 +1,2234 @@
+$blue: #336cf9;
+$green: #1be6d6;
+$lightGreen: #e7f6fc;
+$lightGreen2: #f8faff;
+$lightPink: #f9eaf4;
+$pink: #f64bbd;
+$red: #ff5757;
+
+.account {
+  height: 100vh;
+  header {
+    position: relative;
+    z-index: 100;
+    padding: 0.7rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .logo {
+      max-height: 2.8rem;
+    }
+    .profile {
+      position: relative;
+      z-index: 10;
+      img {
+        cursor: pointer;
+      }
+      .menu {
+        position: absolute;
+        padding: 1rem;
+        top: 110%;
+        right: 0;
+        background: white;
+        box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.2);
+        border-radius: 0.7rem;
+        display: grid;
+        .aboutUs {
+          font-weight: 500;
+          color: $blue;
+          display: inline-block;
+          margin: auto;
+          margin-top: -0.5rem;
+          margin-right: 0;
+        }
+        button {
+          border: none;
+          outline: none;
+          background: none;
+          font-weight: 500;
+          font-size: 1.2rem;
+          margin-bottom: 0.5rem;
+        }
+        .referral {
+          padding: 1rem 0;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+          margin-bottom: 1.5rem;
+          p {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+          }
+        }
+        .logout {
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          color: #fc0660;
+          font-size: 1.3rem;
+          font-weight: bold;
+          &:hover {
+            opacity: 0.7;
+          }
+        }
+      }
+    }
+    .backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+    }
+    box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+  }
+  .content {
+    height: 100%;
+    max-height: calc(100vh - 73px);
+    overflow: hidden;
+    padding: 1rem;
+    display: flex;
+    grid-gap: 1.25rem;
+    .sidebar {
+      border-radius: 1rem;
+      width: 15rem;
+      padding: 1.5rem;
+      box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.1);
+      display: grid;
+      grid-gap: 1rem;
+      grid-auto-rows: min-content;
+      overflow-y: auto;
+      max-height: calc(100vh - 73px - 2.2rem);
+      li {
+        height: min-content;
+        a {
+          padding: 0.7rem;
+          .icon {
+            flex-shrink: 0;
+            background: $blue;
+            padding: 0.7rem;
+            border-radius: 2rem;
+            display: grid;
+            place-items: center;
+            height: 2.9rem;
+            width: 2.9rem;
+            margin-right: 0.7rem;
+            box-shadow: 0 0.3rem 0.5rem rgba(9, 55, 135, 0.2);
+          }
+          .acc {
+            padding: 0;
+            img {
+              height: 2.9rem;
+              width: 2.9rem;
+              border-radius: 50%;
+              object-fit: cover;
+              background: $blue;
+            }
+          }
+          display: flex;
+          align-items: center;
+          border-radius: 5rem;
+          &:hover {
+            background: rgba(0, 0, 0, 0.04);
+          }
+        }
+        &.active {
+          a {
+            background: #054677;
+          }
+          color: white;
+        }
+        &.deals {
+          .icon {
+            svg {
+              transform: translate(-15%, 5%);
+            }
+          }
+        }
+        &.hold {
+          .icon {
+            svg {
+              transform: translate(5%, -12%);
+            }
+          }
+        }
+        &.trans {
+          .icon {
+            svg {
+              transform: translate(-10%, -3%);
+            }
+          }
+        }
+        &.support {
+          .icon {
+            svg {
+              transform: translate(5%, -3%);
+            }
+          }
+        }
+      }
+    }
+    main {
+      flex: 1;
+    }
+  }
+}
+::-webkit-scrollbar {
+  width: 2px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(#a2a2a2, 0.44);
+}
+
+.homeContainer {
+  overflow-y: scroll;
+  height: calc(100% + 2rem);
+  margin: -1rem 0;
+  padding: 1rem 0;
+  .userType {
+    padding: 2rem 4rem;
+    display: flex;
+    grid-gap: 4rem;
+    grid-row-gap: 2rem;
+    flex-wrap: wrap;
+    .option {
+      display: flex;
+      img {
+        max-height: 7rem;
+        z-index: 1;
+        margin-bottom: 3rem;
+      }
+      .btn {
+        cursor: pointer;
+        height: min-content;
+        background: $lightGreen;
+        padding: 2.5rem;
+        padding-left: 3.5rem;
+        font-weight: 500;
+        font-size: 1.1rem;
+        border-radius: 0.5rem;
+        display: flex;
+        grid-gap: 1rem;
+        margin: auto;
+        margin-left: -3.5rem;
+        margin-bottom: 0;
+        .radial {
+          height: 1.5rem;
+          width: 1.5rem;
+          border-radius: 50%;
+          border: 2px solid rgba(10, 142, 250, 0.81);
+          padding: 4px;
+          .fill {
+            height: 100%;
+            width: 100%;
+            background: rgba(10, 142, 250, 0.81);
+            border-radius: 50%;
+          }
+        }
+      }
+      &.active {
+        .btn {
+          background: white;
+          box-shadow: 0 0 2.2rem rgba(#059b8d, 0.15);
+        }
+      }
+    }
+  }
+  .search {
+    padding: 2rem 4rem;
+    form {
+      position: relative;
+      label {
+        color: $blue;
+        font-size: 1.4rem;
+        display: block;
+        font-weight: 500;
+      }
+      section {
+        margin-top: 2rem;
+        width: 100%;
+        max-width: 40rem;
+        position: relative;
+        svg {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+        input {
+          width: 100%;
+          border: none;
+          outline: none;
+          border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+          padding: 0.75rem 1.7rem;
+          font-size: 1rem;
+          &:focus {
+            border-color: $blue;
+          }
+        }
+      }
+      .searchResult {
+        background: white;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        padding: 0.5rem 0;
+        max-width: 40rem;
+        border-radius: 0 0 0.75rem 0.75rem;
+        box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+        li {
+          padding: 0.5rem 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          .profile {
+            display: flex;
+            align-items: center;
+            grid-gap: 1rem;
+            img {
+              height: 3rem;
+              width: 3rem;
+              border-radius: 3rem;
+              object-fit: cover;
+              background-color: $blue;
+            }
+            .name {
+              font-weight: 500;
+              text-transform: capitalize;
+            }
+            .phone {
+              display: block;
+              font-size: 0.75em;
+              font-weight: 400;
+              color: rgba(0, 0, 0, 0.56);
+            }
+          }
+          &:hover {
+            background: #f0f0f0;
+          }
+          .sendReq {
+            color: $blue;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+  .recentPayments {
+    padding: 2rem 4rem;
+    .label {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .payments {
+      display: flex;
+      grid-gap: 1.5rem;
+      li {
+        display: grid;
+        grid-gap: 0.5rem;
+        max-width: 100px;
+        text-align: center;
+        img {
+          object-fit: cover;
+          margin: auto;
+          height: 3.3rem;
+          width: 3.3rem;
+          background: $blue;
+          border-radius: 50%;
+        }
+        .name {
+          text-transform: capitalize;
+        }
+      }
+    }
+  }
+  .benner {
+    margin-bottom: 2rem;
+  }
+}
+.profile {
+  display: flex;
+  img {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background: $blue;
+  }
+  align-items: center;
+  grid-gap: 1rem;
+  .name {
+    font-size: 1rem;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+}
+.homeContainer,
+.holdContainer {
+  .benner {
+    background: $lightGreen2;
+    padding: 2rem;
+    border-radius: 0.7rem;
+    max-width: 85rem;
+    h4 {
+      font-size: 2rem;
+      font-weight: 400;
+      margin-bottom: 0.8rem;
+    }
+    p {
+      font-size: 1.2rem;
+    }
+  }
+}
+.holdContainer {
+  overflow-y: auto;
+  height: calc(100% + 2rem);
+  margin: -1rem 0;
+  margin-left: 3rem;
+  padding: 1rem 0;
+  .head {
+    z-index: 10;
+    position: sticky;
+    background: white;
+    top: -1rem;
+    padding: 1rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 85rem;
+    p {
+      font-weight: 500;
+      font-size: 1.2rem;
+    }
+    .filters {
+      display: none;
+    }
+  }
+  .milestones {
+    max-width: 85rem;
+    display: grid;
+    grid-gap: 0.75rem;
+    .milestone {
+      background: $lightGreen2;
+      padding: 1rem 1.4rem;
+      border-radius: 0.7rem;
+      display: flex;
+      flex-wrap: wrap;
+      grid-gap: 4rem;
+      .clientDetail {
+        flex: 1;
+        font-size: 0.9rem;
+        .profile {
+          margin-bottom: 1rem;
+          img {
+            height: 2.6rem;
+            width: 2.6rem;
+          }
+        }
+        .milestoneDetail {
+          ul {
+            max-width: 25rem;
+            display: grid;
+            grid-gap: 0.5rem;
+            li {
+              display: grid;
+              grid-template-columns: 5.75rem 1rem 1fr;
+              grid-auto-flow: column;
+              color: rgba(0, 0, 0, 0.79);
+              .role {
+                font-weight: 500;
+              }
+            }
+          }
+        }
+      }
+      .steps {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        transform: scale(0.8);
+        .step {
+          position: relative;
+          .icons {
+            display: grid;
+            svg {
+              display: none;
+              grid-column: 1/2;
+              grid-row: 1/2;
+            }
+          }
+          p {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 1rem;
+            text-align: center;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            color: rgba(0, 0, 0, 0.6);
+          }
+        }
+        .progress {
+          display: grid;
+          svg {
+            opacity: 0;
+            margin: auto;
+            grid-column: 1/2;
+            grid-row: 1/2;
+          }
+        }
+        &.pendingRelease,
+        &.inProgress {
+          .pending {
+            .icons {
+              .filled {
+                display: block;
+              }
+            }
+            .done {
+              opacity: 1;
+            }
+          }
+          .onhold {
+            .icons {
+              .default {
+                display: block;
+              }
+            }
+            .running {
+              opacity: 1;
+            }
+          }
+          .released {
+            .icons {
+              .blank {
+                display: block;
+              }
+            }
+          }
+        }
+        &.released {
+          .pending {
+            .icons {
+              .filled {
+                display: block;
+              }
+            }
+            .done {
+              opacity: 1;
+            }
+          }
+          .onhold {
+            .icons {
+              .filled {
+                display: block;
+              }
+            }
+            .done {
+              opacity: 1;
+            }
+          }
+          .released {
+            .icons {
+              .filled {
+                display: block;
+              }
+            }
+          }
+        }
+        &.pending {
+          .pending {
+            .icons {
+              .default {
+                display: block;
+              }
+            }
+            .running {
+              opacity: 1;
+            }
+          }
+          .onhold {
+            .icons {
+              .blank {
+                display: block;
+              }
+            }
+          }
+          .released {
+            .icons {
+              .blank {
+                display: block;
+              }
+            }
+          }
+        }
+        &.dispute {
+          .pending {
+            .icons {
+              .default {
+                display: block;
+              }
+            }
+            .done {
+              opacity: 1;
+            }
+          }
+          .onhold {
+            .icons {
+              .filled {
+                display: block;
+              }
+            }
+            .done {
+              opacity: 1;
+            }
+          }
+          .released {
+            .icons {
+              .blank {
+                display: block;
+              }
+            }
+          }
+        }
+      }
+      &.buyer {
+        .steps {
+          &.dispute {
+            .pending {
+              .icons {
+                .default {
+                  display: block;
+                }
+              }
+              .done {
+                opacity: 1;
+              }
+            }
+            .onhold {
+              .icons {
+                .filled {
+                  display: block;
+                }
+              }
+              .done {
+                opacity: 1;
+              }
+            }
+            .released {
+              .icons {
+                .blank {
+                  display: block;
+                }
+              }
+            }
+          }
+        }
+      }
+      .clas {
+        text-align: center;
+        display: grid;
+        grid-auto-rows: min-content;
+        min-width: 182px;
+        h4 {
+          font-size: 1.5rem;
+          font-weight: 500;
+          margin-bottom: 0.5rem;
+        }
+        .btns {
+          display: grid;
+          grid-gap: 1rem;
+        }
+        a {
+          display: block;
+          font-weight: 500;
+          color: white;
+          border-radius: 2rem;
+          padding: 0.6rem 2rem;
+          font-size: 0.85rem;
+          background: linear-gradient(
+            138deg,
+            $blue 0%,
+            rgba(34, 71, 148, 1) 130%
+          );
+          &:hover {
+            color: $blue;
+            box-shadow: inset 0 0 0 2px $blue;
+            background: none;
+          }
+          &.dispute {
+            background: linear-gradient(100deg, $blue 0%, $green 130%);
+            &:hover {
+              background: white;
+              color: $green;
+              box-shadow: inset 0 0 0 2px $green;
+              background: none;
+            }
+          }
+          &.released {
+            pointer-events: none;
+            color: $blue;
+            box-shadow: inset 0 0 0 2px $blue;
+            background: none;
+          }
+          &.disputed {
+            pointer-events: none;
+            background: white;
+            color: $pink;
+            box-shadow: inset 0 0 0 2px $pink;
+            background: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+.chatContainer {
+  height: 100%;
+  display: flex;
+  grid-gap: 1rem;
+  .contactsContainer {
+    display: grid;
+    grid-template-rows: min-content min-content 1fr;
+    .userCard {
+      max-width: 18rem;
+      background: $lightGreen2;
+      padding: 1rem;
+      border-radius: 0.7rem;
+      .profile {
+        display: flex;
+        grid-gap: 0.75rem;
+        overflow: hidden;
+        max-width: 100%;
+        img {
+          height: 4.5rem;
+          width: 4.5rem;
+          object-fit: cover;
+          background: $blue;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        .details {
+          font-size: 0.9rem;
+          .name {
+            text-transform: capitalize;
+            font-size: 1.1rem;
+            font-weight: 500;
+          }
+          .phone {
+            font-weight: 500;
+            opacity: 1;
+          }
+          a {
+            display: block;
+          }
+          a,
+          .add {
+            opacity: 0.7;
+          }
+        }
+      }
+      .clas {
+        .status {
+          text-transform: capitalize;
+          padding: 0.5rem;
+        }
+        margin-top: 1rem;
+        align-items: center;
+        display: none; // ----------------
+        justify-content: space-between;
+        button {
+          border: 1px solid $blue;
+          padding: 0.6rem 1.25rem;
+          border-radius: 3rem;
+          background: white;
+          color: $blue;
+          cursor: pointer;
+          &:hover {
+            color: white;
+            background: $blue;
+          }
+        }
+      }
+      .placeholder {
+        text-align: center;
+        font-style: italic;
+        color: rgba(0, 0, 0, 0.5);
+      }
+    }
+    .label {
+      height: min-content;
+      font-weight: 500;
+      margin: 0.5rem 0;
+    }
+    width: 18rem;
+    .peopleWrapper {
+      max-height: 100%;
+      height: 100%;
+      border-radius: 0.7rem;
+      box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.08);
+      overflow-y: auto;
+      .people {
+        height: min-content;
+        display: grid;
+        padding: 1rem;
+        align-items: flex-start;
+        width: 100%;
+        li {
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          grid-gap: 1rem;
+          img {
+            height: 3.2rem;
+            width: 3.2rem;
+            background: $blue;
+            object-fit: cover;
+            border-radius: 50%;
+            flex-shrink: 0;
+          }
+          overflow: hidden;
+          div {
+            display: grid;
+            width: 100%;
+            position: relative;
+            .name {
+              text-transform: capitalize;
+            }
+            .lastMessage {
+              font-size: 0.85em;
+              color: rgba(0, 0, 0, 0.5);
+              display: -webkit-box;
+              text-overflow: ellipsis;
+              -webkit-line-clamp: 1;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
+            .unread {
+              background: $red;
+              color: white;
+              font-weight: 500;
+              height: 1.7rem;
+              width: 1.7rem;
+              border-radius: 2rem;
+              display: grid;
+              place-items: center;
+              position: absolute;
+              right: 0;
+              top: 50%;
+              transform: translateY(-50%);
+            }
+          }
+          &.active {
+            background: #f0f0f0 !important;
+          }
+          &:hover {
+            background: rgba(#f0f0f0, 0.5);
+          }
+        }
+      }
+    }
+  }
+  .chat {
+    flex: 1;
+    background: $lightGreen2;
+    border-radius: 1rem;
+    display: grid;
+    grid-template-rows: min-content 1fr min-content;
+    .chatHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: min-content;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      padding: 1rem;
+      .profile {
+        display: flex;
+        grid-gap: 1rem;
+        align-items: center;
+        img {
+          height: 3rem;
+          width: 3rem;
+          border-radius: 50%;
+          object-fit: cover;
+          background: $blue;
+        }
+        .name {
+          text-transform: capitalize;
+        }
+      }
+      .pay {
+        padding: 0.5rem 1.5rem;
+        background: linear-gradient(90deg, $blue 0%, $green 100%);
+        color: white;
+        font-weight: 500;
+        border-radius: 2rem;
+      }
+    }
+    .chatWrapper {
+      height: 100%;
+      overflow-y: scroll;
+      padding: 1rem 0;
+      .chats {
+        padding: 0 1rem;
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        grid-gap: 1px;
+        .bubble {
+          width: 100%;
+          margin: 0 auto;
+          display: grid;
+          .dateStamp {
+            padding: 0.25rem 0.6rem;
+            background: rgba(0, 0, 0, 0.05);
+            font-size: 0.85rem;
+            margin: 1rem auto;
+            border-radius: 4px;
+            color: rgba(0, 0, 0, 0.6);
+            font-weight: 500;
+          }
+          .text {
+            max-width: 80%;
+            width: max-content;
+            padding: 0.7rem 1rem;
+            color: white;
+          }
+          .timestamp {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.6);
+            margin-bottom: 0.5rem;
+          }
+          &.user {
+            display: grid;
+            .text {
+              margin: auto;
+              margin-right: 0;
+              border-radius: 1rem 1rem 0 1rem;
+              background: #054677;
+            }
+            .timestamp {
+              text-align: right;
+            }
+          }
+          &.client {
+            margin-left: 0;
+            .text {
+              border-radius: 1rem 1rem 1rem 0;
+              background: $blue;
+            }
+          }
+        }
+      }
+    }
+    form {
+      margin-bottom: 1rem;
+      display: flex;
+      padding: 0 1rem;
+      grid-gap: 0.5rem;
+      section {
+        position: relative;
+        input[type="text"] {
+          outline: none;
+          padding: 0 1rem;
+          font-size: 1rem;
+          width: 100%;
+          height: 100%;
+          border-radius: 2rem;
+          border: 1px solid rgba(0, 0, 0, 0.54);
+        }
+        .fileUpload {
+          display: none;
+          cursor: pointer;
+          background: rgba(0, 0, 0, 0.02);
+          position: absolute;
+          right: 2px;
+          top: 50%;
+          transform: translateY(-50%);
+          height: 90%;
+          width: 2.2rem;
+          border-radius: 50%;
+          overflow: hidden;
+          input[type="file"] {
+            font-size: 100px;
+            opacity: 0;
+          }
+        }
+        flex: 1;
+      }
+      button {
+        height: 2.5rem;
+        width: 2.5rem;
+        border: none;
+        background: $blue;
+        border-radius: 4rem;
+        svg {
+          transform: translate(-10%, 10%);
+        }
+      }
+    }
+    .startChat {
+      margin: auto;
+      grid-row: 1/-1;
+      display: grid;
+      grid-gap: 0.7rem;
+      svg {
+        margin: auto;
+      }
+    }
+  }
+}
+
+.transcationContainer {
+  height: calc(100% + 2rem);
+  overflow-y: auto;
+  margin: -1rem 0;
+  padding: 1rem 3rem;
+  .benner {
+    padding: 1rem 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+  .transactions {
+    max-width: 85rem;
+    display: grid;
+    grid-gap: 1rem;
+    .transaction {
+      display: flex;
+      justify-content: space-between;
+      grid-column-gap: 5rem;
+      grid-row-gap: 1rem;
+      border-radius: 0.7rem;
+      padding: 1.5rem 1.25rem;
+      padding-bottom: 2rem;
+      font-size: 0.85rem;
+      flex-wrap: wrap;
+      &.in {
+        background: $lightGreen;
+      }
+      &.out {
+        background: $lightPink;
+      }
+      .transactionDetail {
+        flex: 0 0 100%;
+      }
+      ul {
+        color: rgba(0, 0, 0, 0.8);
+        display: grid;
+        grid-gap: 0.5rem;
+        li {
+          grid-template-columns: 6rem 1rem 11rem;
+        }
+      }
+      ul {
+        .role,
+        .amount {
+          font-weight: bold;
+          font-size: 1.05rem;
+        }
+        li {
+          display: grid;
+          p:last-child {
+            font-weight: 500;
+          }
+        }
+        &.amountDate {
+          li {
+            grid-template-columns: 7.5rem 1rem 12rem;
+          }
+        }
+        &.statusMethod {
+          li {
+            grid-template-columns: 8rem 1rem 8rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+.modal.milestoneRequest,
+.modal.disputeForm,
+.addAddress,
+.modal.addMoney,
+.modal.paymentMethodsForm,
+.modal.milestoneReleaseForm {
+  border-radius: 0.7rem;
+  width: 100%;
+  display: grid;
+  .head {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 1.3rem;
+    box-shadow: 0 0 0.7rem rgba(0, 0, 0, 0.25);
+    .modalName {
+      color: $blue;
+      font-weight: 500;
+    }
+    button {
+      border: none;
+      outline: none;
+      background: none;
+      cursor: pointer;
+    }
+  }
+  form {
+    max-height: calc(100vh - 2rem - 62px);
+    overflow-y: scroll;
+    flex-wrap: wrap;
+    .pBtm {
+      height: 1px;
+      flex-basis: 1;
+    }
+  }
+}
+.modal.milestoneRequest {
+  max-width: 40rem;
+}
+.modal.addAddress {
+  max-width: 35rem;
+}
+.milestoneReleaseForm {
+  max-width: 30rem;
+  form {
+    padding: 2rem;
+    display: grid;
+    grid-gap: 2rem;
+    label {
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    .number {
+      width: min-content;
+      height: min-content;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+      &:focus-within {
+        border-color: $blue;
+      }
+    }
+    .btns {
+      margin-top: 2rem;
+      display: flex;
+      grid-gap: 1rem;
+      button {
+        margin: auto;
+        color: white;
+        border: none;
+        outline: none;
+        font-weight: bold;
+        width: max-content;
+        background: linear-gradient(139deg, $blue 0%, $green 100%);
+        font-size: 1rem;
+        padding: 0.65rem 2.5rem;
+        border-radius: 3rem;
+        cursor: pointer;
+        &:hover {
+          color: $blue;
+          background: none;
+          box-shadow: inset 0 0 0 2px $blue;
+        }
+        &.cancel {
+          background: linear-gradient(139deg, $blue 0%, $pink 100%);
+          &:hover {
+            color: $pink;
+            background: none;
+            box-shadow: inset 0 0 0 2px $pink;
+          }
+        }
+      }
+    }
+  }
+}
+.modal.addMoney {
+  max-height: 100%;
+  overflow: auto;
+  max-width: 55rem;
+  .label {
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+  }
+  .paymentOptions {
+    padding: 1.5rem;
+    & > .options {
+      display: grid;
+      grid-gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      margin-bottom: 2rem;
+      .placeholder {
+        margin: 1rem 0;
+        font-style: italic;
+        color: rgba(0, 0, 0, 0.4);
+        background: rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        text-align: center;
+      }
+      .paymentMethod {
+        cursor: pointer;
+      }
+    }
+    .addMethodLink {
+      margin-bottom: 2rem;
+      padding: 0.7rem 1rem;
+      display: block;
+      color: white;
+      font-weight: 500;
+      text-align: center;
+      border-radius: 2rem;
+      max-width: 15rem;
+      margin: auto;
+      background: linear-gradient(138deg, $blue 0%, $green 100%);
+      &:hover {
+        background: white;
+        color: $blue;
+        box-shadow: inset 0 0 0 2px $blue;
+      }
+    }
+  }
+}
+.paymentMethod {
+  color: white;
+  border-radius: 0.5rem;
+  padding: 2rem 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1.5rem;
+  box-shadow: 0 0.2rem 0.25rem rgba(0, 0, 0, 0.1);
+  &:hover {
+    opacity: 0.8;
+  }
+  &.card {
+    .cardNumber {
+      font-size: 1.2rem;
+      margin: 0.7rem 0;
+    }
+    .cardHolder {
+      text-transform: capitalize;
+    }
+    .exp {
+      text-align: right;
+      font-size: 0.8rem;
+    }
+    background: linear-gradient(138deg, $blue 0%, $green 100%);
+  }
+  &.bankAccount {
+    background: linear-gradient(
+      138deg,
+      rgb(27, 46, 71) 0%,
+      rgb(21, 21, 45) 100%
+    );
+    .bank {
+      font-size: 1.1rem;
+      text-transform: capitalize;
+      margin-bottom: 1rem;
+    }
+    .name {
+      text-transform: capitalize;
+    }
+    .accountNumber {
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .ifsc {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.57);
+    }
+  }
+}
+.modal.paymentMethodsForm {
+  max-width: 35rem;
+  max-height: calc(100% - 2rem);
+  overflow: auto;
+  .addPaymentMethod {
+    padding: 1.5rem;
+    display: grid;
+    grid-gap: 2rem;
+    .paymentOption {
+      .header {
+        display: flex;
+        grid-gap: 0.7rem;
+        align-items: center;
+        .redial {
+          height: 1.4rem;
+          width: 1.4rem;
+          border: 3px solid rgba($blue, 0.4);
+          border-radius: 50%;
+          padding: 3px;
+          .fill {
+            border-radius: 50%;
+            height: 100%;
+            width: 100%;
+          }
+          &.active {
+            .fill {
+              background: $blue;
+            }
+          }
+        }
+        label {
+          font-size: 1.2rem;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          grid-gap: 0.5rem;
+          img {
+            height: 100%;
+          }
+        }
+      }
+      form {
+        margin: 1rem 0;
+        margin-left: 2.2rem;
+      }
+    }
+  }
+}
+.paymentMethodForm {
+  background: $lightGreen2;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.11);
+  padding: 1.3rem 1rem;
+  border-radius: 0.7rem;
+  &.upi {
+    width: max-content;
+    label {
+      display: block;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    section {
+      align-items: center;
+      display: flex;
+      grid-gap: 1rem;
+      input {
+        padding: 0.5rem;
+        outline: none;
+        border: 1px solid rgba(0, 0, 0, 0.25);
+        border-radius: 5px;
+        font-size: 1rem;
+      }
+    }
+  }
+  &.bankCard,
+  &.netBanking {
+    display: grid;
+    .note {
+      font-size: 0.85rem;
+      color: rgba(0, 0, 0, 0.67);
+      margin-bottom: 1rem;
+    }
+    .inputs {
+      margin-bottom: 1.5rem;
+      outline: none;
+      border-radius: 0.5rem;
+      background: white;
+      padding: 1rem;
+      display: grid;
+      grid-row-gap: 1.75rem;
+      grid-template-columns: 1fr content;
+      & > input,
+      .cvv input {
+        outline: none;
+        grid-column: 1/3;
+        padding: 0.3rem 0;
+        font-size: 1rem;
+        border: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+        &:focus {
+          border-color: $blue;
+        }
+      }
+      .exp {
+        border-right: 1px solid rgba(0, 0, 0, 0.3);
+        grid-template-columns: 1fr 1fr;
+        display: grid;
+        grid-column-gap: 1rem;
+        padding-right: 1.5rem;
+        & > label {
+          grid-column: 1/3;
+          flex-basis: 100;
+        }
+        .combobox {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+          filter: grayscale(1);
+          input {
+            font-size: 0.9rem;
+          }
+          &:focus-within {
+            border-color: $blue;
+          }
+        }
+      }
+      .cvv {
+        margin-left: 1.5rem;
+        display: grid;
+      }
+      .exp,
+      .cvv {
+        label {
+          margin-bottom: 0.7rem;
+          font-size: 0.8rem;
+        }
+      }
+      .cvv {
+        max-width: 8rem;
+        input {
+          width: 100%;
+          grid-column: 1/2;
+        }
+      }
+    }
+    & > button {
+      margin: auto;
+      margin-right: 0;
+    }
+    position: relative;
+    .cardErr {
+      background: $red;
+      padding: 1rem 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.2rem 0.3rem rgba(0, 0, 0, 0.1);
+      color: white;
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      width: max-content;
+      transform: translate(-50%);
+    }
+  }
+  &.upi section button,
+  &.netBanking > button,
+  &.bankCard > button {
+    padding: 0.5rem 1.5rem;
+    background: linear-gradient(138deg, $blue 0%, $green 100%);
+    border: none;
+    outline: none;
+    color: white;
+    font-weight: 600;
+    border-radius: 2rem;
+    cursor: pointer;
+    &:hover {
+      background: none;
+      color: $blue;
+      box-shadow: inset 0 0 0 2px $blue;
+    }
+  }
+}
+
+.milestonesForm {
+  padding: 2rem;
+  display: flex;
+  grid-gap: 2rem;
+  .transactionDetail {
+    flex: 1;
+    display: grid;
+    grid-gap: 2rem;
+    height: min-content;
+    section {
+      height: min-content;
+      label {
+        display: block;
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.51);
+      }
+      input {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 1rem;
+        padding: 0.5rem;
+      }
+    }
+    & > section {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.38);
+      &:focus-within {
+        border-color: $blue;
+      }
+    }
+    .amount {
+      width: max-content;
+      input {
+        width: 8rem;
+        font-size: 1.2rem;
+      }
+    }
+    button[type="submit"] {
+      margin: auto;
+      color: white;
+      border: none;
+      outline: none;
+      font-weight: bold;
+      width: max-content;
+      background: linear-gradient(139deg, $blue 0%, $green 100%);
+      font-size: 1rem;
+      padding: 0.8rem 2rem;
+      border-radius: 3rem;
+      cursor: pointer;
+      &:hover {
+        color: $blue;
+        background: none;
+        box-shadow: inset 0 0 0 2px $blue;
+      }
+    }
+  }
+  .clientDetail {
+    position: relative;
+    label {
+      font-size: 0.85rem;
+      color: rgba(0, 0, 0, 0.5);
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+    img {
+      height: 3.5rem;
+      width: 3.5rem;
+      object-fit: cover;
+      border-radius: 2rem;
+      z-index: 5;
+      position: relative;
+      background: $blue;
+    }
+    .detail {
+      cursor: pointer;
+      background: $lightGreen2;
+      padding: 2.5rem 2rem;
+      padding-bottom: 1.5rem;
+      border-radius: 0.7rem;
+      margin-left: 1.25rem;
+      margin-top: -1.75rem;
+      position: relative;
+      width: 12rem;
+      .profileDetail {
+        display: grid;
+        grid-gap: 0.25rem;
+        .name {
+          text-transform: capitalize;
+          font-weight: 500;
+        }
+        .phone,
+        .email {
+          font-size: 0.85rem;
+          display: -webkit-box;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+      .address {
+        margin-top: 1rem;
+        p {
+          font-size: 0.8rem;
+        }
+      }
+      button {
+        border: none;
+        outline: none;
+        background: none;
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        font-size: 0.7rem;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+    .sellerInfo {
+      margin-top: 2rem;
+      position: relative;
+      .detail {
+        padding-top: 1.5rem;
+      }
+    }
+    .deliveryTime {
+      margin-top: 2rem;
+      margin-left: 1.25rem;
+      input {
+        border: none;
+        outline: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+        &:focus-within {
+          border-color: $blue;
+        }
+      }
+    }
+  }
+}
+.addressForm {
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-column-gap: 2rem;
+  grid-row-gap: 1rem;
+  section {
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: rgba(0, 0, 0, 0.7);
+    }
+    input,
+    textarea {
+      font-size: 1rem;
+      width: 100%;
+      border: none;
+      outline: none;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+      &:focus {
+        border-color: $blue;
+      }
+      resize: none;
+    }
+  }
+  button {
+    width: max-content;
+    padding: 0.7rem 2.5rem;
+    border: none;
+    color: white;
+    margin: auto;
+    margin-top: 2rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    &.save {
+      background: linear-gradient(139deg, $blue 0%, rgb(11, 26, 69) 150%);
+      &:hover {
+        font-weight: bold;
+        color: $blue;
+        background: none;
+        box-shadow: inset 0 0 0 2px $blue;
+      }
+    }
+    &.cancel {
+      background: linear-gradient(139deg, $blue -20%, $pink 120%);
+      &:hover {
+        font-weight: bold;
+        color: $pink;
+        background: none;
+        box-shadow: inset 0 0 0 2px $pink;
+      }
+    }
+  }
+  .street {
+    grid-column: 1/3;
+  }
+}
+.walletContainer {
+  display: flex;
+  flex-wrap: wrap;
+  height: calc(100% + 2rem);
+  overflow-y: auto;
+  margin: -1rem 0;
+  padding: 1rem;
+  grid-gap: 1.5rem;
+  padding-right: 1rem;
+  .leftSection {
+    flex: 1;
+    .nameTag {
+      h2 {
+        font-weight: 400;
+        font-size: 2rem;
+        text-transform: capitalize;
+      }
+      .greetings {
+        font-size: 0.9rem;
+        color: rgba(0, 0, 0, 0.65);
+      }
+    }
+    .balance {
+      .label {
+        font-weight: 500;
+      }
+      background: $lightGreen2;
+      margin: 2rem 0;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      h1 {
+        margin-top: 1.5rem;
+        font-size: 2.5rem;
+        font-weight: 400;
+      }
+      .updateTime {
+        font-size: 0.85rem;
+        color: rgba(0, 0, 0, 0.8);
+      }
+    }
+    .addWithdraw {
+      display: flex;
+      grid-gap: 1rem;
+      width: max-content;
+      margin: 3rem 0;
+      .money {
+        width: max-content;
+        border-radius: 0.7rem;
+        flex: 1;
+        padding: 1.5rem;
+        .label {
+          font-weight: 500;
+          font-size: 1.2rem;
+        }
+        form {
+          max-width: 100%;
+          margin: 1rem 0;
+          display: flex;
+          grid-gap: 1rem;
+          input {
+            background: none;
+            font-size: 1.2rem;
+            border: none;
+            outline: none;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.62);
+            flex: 1;
+            max-width: 8rem;
+            &::placeholder {
+              font-size: 1rem;
+            }
+          }
+          button {
+            padding: 0.2rem 1rem;
+            color: white;
+            font-weight: 400;
+            border: none;
+            outline: none;
+            border-radius: 2rem;
+            cursor: pointer;
+          }
+        }
+        &.add {
+          button {
+            background: linear-gradient(139deg, $blue 0%, rgb(11, 26, 69) 150%);
+            &:hover {
+              background: white;
+              color: $blue;
+              box-shadow: inset 0 0 0 2px $blue;
+            }
+          }
+          background: $lightGreen;
+        }
+        &.withdraw {
+          button {
+            background: linear-gradient(139deg, $blue -20%, $pink 120%);
+            &:hover {
+              background: white;
+              color: $pink;
+              box-shadow: inset 0 0 0 2px $pink;
+            }
+          }
+          background: $lightPink;
+        }
+      }
+    }
+    .rewards {
+      margin-top: 1.5rem;
+      .label {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+      }
+      .cards {
+        display: flex;
+        grid-gap: 1rem;
+        li {
+          height: 6rem;
+          width: 6rem;
+          border-radius: 1rem;
+          box-shadow: 0 0 0.3rem rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+  }
+  .rightSection {
+    display: grid;
+    grid-gap: 2rem;
+    grid-template-rows: min-content 1fr;
+    flex: 1;
+    max-width: 32rem;
+    min-width: 20rem;
+    .savedCards {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      .label {
+        display: none;
+        position: absolute;
+        left: -5%;
+        top: 50%;
+        transform-origin: center;
+        transform: rotate(-90deg);
+      }
+      .next,
+      .prev {
+        cursor: pointer;
+        position: absolute;
+        top: 50%;
+        display: grid;
+        place-items: center;
+        border: none;
+        outline: none;
+        background: none;
+        transform: translateY(-50%);
+      }
+      .prev {
+        transform: translateY(-50%) rotate(180deg);
+        left: 0.75rem;
+      }
+      .next {
+        right: 0.75rem;
+      }
+      padding: 0 1rem;
+      .wrapper {
+        margin: 0 2rem;
+        width: 100%;
+        box-shadow: 0 0 0.2rem rgba(0, 0, 0, 0.1);
+        border-radius: 0.7rem;
+        .cards {
+          width: max-content;
+          display: flex;
+          transition: transform 0.3s ease-in-out;
+          li {
+            width: 100%;
+            border-radius: 1rem;
+            .paymentMethod {
+              height: 100%;
+              box-shadow: none;
+              padding: 2.5rem 2rem;
+              &.card {
+                img {
+                  height: 2rem;
+                }
+                .cardNumber {
+                  font-size: 2rem;
+                }
+                .cardHolder {
+                  font-size: 1.1rem;
+                }
+              }
+              &.bankAccount {
+                .bank {
+                  font-size: 1.6rem;
+                }
+                .name {
+                  font-size: 1.1rem;
+                }
+              }
+              &:hover {
+                opacity: 1;
+              }
+            }
+          }
+        }
+        overflow: hidden;
+      }
+    }
+    .transactions {
+      box-shadow: 0 0 0.7rem rgba(0, 0, 0, 0.1);
+      border-radius: 1rem;
+      max-height: 37rem;
+      overflow-y: scroll;
+      .head {
+        box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        position: sticky;
+        top: 0;
+        background: $lightGreen2;
+        padding: 1rem;
+        font-weight: 500;
+        font-size: 1.2rem;
+      }
+      .allTransactions {
+        overflow-y: auto;
+        padding-right: 1rem;
+        .transaction {
+          padding: 1rem;
+          display: flex;
+          align-items: center;
+          grid-gap: 1rem;
+          &:not(:last-child) {
+            position: relative;
+            &::after {
+              position: absolute;
+              content: "";
+              display: block;
+              height: 1px;
+              width: 75%;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.1);
+              right: 1rem;
+            }
+          }
+          .icon {
+            border: 1px solid rgba(0, 0, 0, 0.16);
+            border-radius: 50%;
+            height: 3.2rem;
+            width: 3.2rem;
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            box-shadow: 0 0.2rem 0.3rem rgba(0, 0, 0, 0.075);
+          }
+          .detail {
+            flex: 1;
+            .userName {
+              text-transform: capitalize;
+              font-weight: 500;
+            }
+          }
+          .amount {
+            font-weight: 500;
+            font-size: 1.3rem;
+          }
+        }
+      }
+    }
+  }
+}
+.modal.milestoneCreateSuccess {
+  border-radius: 1rem;
+  padding: 2.5rem;
+  position: relative;
+  button {
+    border: none;
+    outline: none;
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    font-size: 1rem;
+    color: $blue;
+    background: none;
+    padding: 0.5rem;
+  }
+  div {
+    display: grid;
+    justify-content: center;
+    text-align: center;
+    svg {
+      margin: auto;
+      margin-bottom: 1rem;
+    }
+    h4 {
+      font-size: 1.25rem;
+      font-weight: 400;
+      text-transform: capitalize;
+      color: rgba(0, 0, 0, 0.75);
+      &.amount {
+        color: rgba(0, 0, 0, 0.6);
+        font-size: 2rem;
+      }
+    }
+  }
+  a {
+    margin: 1.5rem;
+    margin-bottom: 0;
+    color: $blue;
+    display: block;
+    background: $lightGreen;
+    padding: 1rem 2rem;
+    border-radius: 0.7rem;
+  }
+}
+.disputeForm {
+  max-width: 35rem;
+  form {
+    padding: 1.5rem;
+    h4 {
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    display: grid;
+    grid-gap: 1.5rem;
+    section {
+      label {
+        display: block;
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.7);
+      }
+      input,
+      textarea {
+        font-size: 1rem;
+        width: 100%;
+        border: none;
+        outline: none;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+        &:focus {
+          border-color: $blue;
+        }
+        resize: none;
+      }
+      &.fileInput {
+        ul {
+          margin-top: 1.5rem;
+        }
+        input {
+          width: min-content;
+          margin-top: 1rem;
+        }
+      }
+      &.btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        button {
+          width: max-content;
+          padding: 0.7rem 2.5rem;
+          border: none;
+          color: white;
+          margin: auto;
+          margin-top: 2rem;
+          border-radius: 2rem;
+          cursor: pointer;
+          &.submit {
+            background: linear-gradient(139deg, $blue 0%, rgb(11, 26, 69) 150%);
+            &:hover {
+              font-weight: bold;
+              color: $blue;
+              background: none;
+              box-shadow: inset 0 0 0 2px $blue;
+            }
+          }
+          &.cancel {
+            background: linear-gradient(139deg, $blue -20%, $pink 120%);
+            &:hover {
+              font-weight: bold;
+              color: $pink;
+              background: none;
+              box-shadow: inset 0 0 0 2px $pink;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.supportContainer {
+  padding-left: 1rem;
+  .benner {
+    background: $blue;
+    padding: 1.5rem 2rem;
+    color: white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    position: relative;
+    margin-bottom: 2rem;
+    h1 {
+      font-size: 2rem;
+      font-weight: 400;
+    }
+    .ticketLink {
+      position: absolute;
+      right: 1rem;
+      top: 1.5rem;
+      padding: 0.5rem 1.5rem;
+      background: white;
+      color: $blue;
+      font-weight: 500;
+      box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.1);
+      border-radius: 2rem;
+    }
+    p {
+      margin: 1.5rem 0;
+    }
+    form {
+      width: 100%;
+      position: relative;
+      max-width: 40rem;
+      input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border: none;
+        outline: none;
+        border-radius: 2rem;
+      }
+      button {
+        cursor: pointer;
+        position: absolute;
+        right: -3px;
+        top: 50%;
+        transform: translateY(-50%) scale(0.8);
+        border: none;
+        outline: none;
+        border-radius: 4rem;
+        padding: 0.5rem;
+        height: 3rem;
+        width: 3rem;
+        background: none;
+        &:hover {
+          background: rgba(0, 0, 0, 0.06);
+        }
+      }
+    }
+  }
+  .feedback {
+    border-radius: 0.7rem;
+    max-width: 25rem;
+    box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+    padding: 2rem 1.5rem;
+    form {
+      width: 100%;
+      display: flex;
+      grid-gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      textarea {
+        border: none;
+        flex: 1;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+        outline: none;
+        font-size: 1rem;
+        &:focus {
+          border-color: $blue;
+        }
+      }
+      button {
+        padding: 0.5rem 1rem;
+        border: 1px solid $blue;
+        color: $blue;
+        background: $lightGreen2;
+        font-weight: 600;
+        border-radius: 2rem;
+        &:hover {
+          background: $blue;
+          color: white;
+        }
+      }
+    }
+    .feedbackLink {
+      font-weight: 500;
+      color: $blue;
+    }
+  }
+}
+
+.profileContainer {
+  height: calc(100% + 2rem);
+  overflow-y: auto;
+  padding: 1rem 3rem;
+  margin: -1rem 0;
+  .benner {
+    padding: 1.5rem 0;
+    .profileImg {
+      width: 6.6rem;
+      height: 6.6rem;
+      border-radius: 50%;
+      overflow: hidden;
+      position: relative;
+      img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        background: $blue;
+      }
+      svg {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      label {
+        position: absolute;
+        bottom: 5px;
+        font-size: 0.9rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: $blue;
+        font-weight: 500;
+      }
+      input {
+        cursor: pointer;
+        opacity: 0;
+        z-index: 10;
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-size: 100px;
+      }
+    }
+    display: flex;
+    align-items: center;
+    grid-gap: 1.5rem;
+    div {
+      .name {
+        font-size: 1.3rem;
+        margin-bottom: 0.6rem;
+      }
+      .id {
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.51);
+      }
+    }
+  }
+  .settings {
+    .head {
+      padding: 1rem 0;
+      font-size: 1.4rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+      font-weight: 300;
+      color: rgba(0, 0, 0, 0.75);
+    }
+    ul {
+      li {
+        padding: 2rem 0;
+        &:not(:last-child) {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+        }
+        display: flex;
+        align-items: center;
+        .label {
+          flex: 1;
+          max-width: 10rem;
+          font-size: 0.95rem;
+          color: rgba(0, 0, 0, 0.7);
+        }
+        form {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          .currentValue {
+            flex: 1;
+            font-weight: 500;
+          }
+          .inputs {
+            flex: 1;
+            display: grid;
+            grid-gap: 1rem;
+            input {
+              width: 100%;
+              max-width: 20rem;
+              border: none;
+              padding: 0.5rem 0;
+              border-bottom: 1px solid rgba(0, 0, 0, 0.44);
+              outline: none;
+              &:focus {
+                border-color: $blue;
+              }
+            }
+          }
+          .btns {
+            display: grid;
+            align-items: center;
+            width: 8rem;
+            grid-gap: 1rem;
+            button {
+              border: none;
+              outline: none;
+              background: none;
+              color: $blue;
+              cursor: pointer;
+              font-weight: 600;
+              &:hover {
+                opacity: 0.5;
+              }
+            }
+          }
+          .errMsg {
+            margin-top: 1rem;
+            color: $red;
+          }
+        }
+      }
+    }
+  }
+}
