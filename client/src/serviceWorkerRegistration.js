@@ -75,6 +75,22 @@ function registerValidSW(swUrl, config) {
                 config.onSuccess(registration);
               }
             }
+            navigator.serviceWorker.ready.then(async (serviceWorker) => {
+              return await serviceWorker.pushManager
+                .subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: urlBase64ToUint8Array(
+                    "BOAary6p08dAK6T2GSg0zRGrWKk5qs-sz_-f62My0JXMPG52fqQfzzJlePyF0snUvrdeEg4RSWOVGhrtVc1v3Lo"
+                  ),
+                })
+                .then((subscription) => {
+                  fetch("/api/subscribe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(subscription),
+                  });
+                });
+            });
           }
         };
       };
