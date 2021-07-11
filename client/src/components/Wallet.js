@@ -44,7 +44,7 @@ function loadScript(src) {
 
 const Wallet = ({ history, location, match }) => {
   const { user, setUser } = useContext(SiteContext);
-  const [balance, setBalance] = useState("--");
+  const [balance, setBalance] = useState(0);
   const [addMoneyAmount, setAddMoneyAmount] = useState("");
   const [addMoneySuccess, setAddMoneySuccess] = useState(false);
   const [addMoneyFailed, setAddMoneyFailed] = useState(false);
@@ -119,7 +119,7 @@ const Wallet = ({ history, location, match }) => {
     const Razorpay = window.Razorpay;
     if (Razorpay) {
       const options = {
-        key: process.env.REACT_APP_RAZOR_PAY_ID,
+        key: "rzp_test_bLCP8mfYRRYzX5",
         amount: order.amount,
         currency: order.currency,
         name: `${user.firstName} ${user.lastName}`,
@@ -200,7 +200,7 @@ const Wallet = ({ history, location, match }) => {
     fetch("/api/viewUserProfile")
       .then((res) => res.json())
       .then((data) => {
-        setBalance(data?.balance || "--");
+        setBalance(data?.balance || 0);
         setUser((prev) => ({ ...prev, paymentMethods: data.paymentMethods }));
       })
       .catch((err) => {
@@ -561,8 +561,8 @@ const Wallet = ({ history, location, match }) => {
       <Modal open={withdrawMoneyFail} className="milestoneCreateSuccess">
         <button
           onClick={() => {
-            setWithdrawMoneyFail(null);
             setLoading(false);
+            setWithdrawMoneyFail(null);
           }}
         >
           Okay

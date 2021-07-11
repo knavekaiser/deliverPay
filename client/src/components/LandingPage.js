@@ -1,9 +1,12 @@
+import { useContext } from "react";
 import logo from "../logo.svg";
+import { SiteContext } from "../SiteContext";
 import illustration from "../landingPage_illustration.svg";
 import { Link } from "react-router-dom";
 require("../components/styles/landingPage.scss");
 
 function LandingPage() {
+  const { user } = useContext(SiteContext);
   return (
     <div className="landingPage">
       <header>
@@ -33,8 +36,14 @@ function LandingPage() {
             </svg>
           </div>
           <div className="clas">
-            <Link to="/u/login">Login</Link>
-            <Link to="/u/join">Join Skropay</Link>
+            {user ? (
+              <Link to="/account/home">Dashboard</Link>
+            ) : (
+              <>
+                <Link to="/u/login">Login</Link>
+                <Link to="/u/join">Join Skropay</Link>
+              </>
+            )}
           </div>
         </div>
       </header>
