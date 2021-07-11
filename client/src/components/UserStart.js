@@ -53,7 +53,12 @@ const RegisterForm = () => {
   }, [confirm_pass]);
   return (
     <div className="formWrapper">
-      <img className="logo" src={logo} alt="Skropay logo" />
+      <img
+        className="logo"
+        onClick={() => history.push("")}
+        src={logo}
+        alt="Skropay logo"
+      />
       <p className="title">Create your Skropay account</p>
       <form onSubmit={submit}>
         <input
@@ -163,7 +168,12 @@ const LoginForm = () => {
   };
   return (
     <div className="formWrapper login">
-      <img className="logo" src={logo} alt="Skropay logo" />
+      <img
+        className="logo"
+        onClick={() => history.push("")}
+        src={logo}
+        alt="Skropay logo"
+      />
       <p className="title">Login to your skropay account</p>
       <form onSubmit={submit}>
         <input
