@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { SiteContext } from "../SiteContext";
 import { Route, Switch, useHistory, Redirect, Link } from "react-router-dom";
 import { Modal } from "./Modal.js";
-import { Combobox, NumberInput } from "./Elements";
+import { Combobox, NumberInput, Err_svg, Succ_svg, X_svg } from "./Elements";
 import Moment from "react-moment";
 import Hold from "./Hold.js";
 import Transactions from "./Transactions";
@@ -231,26 +231,7 @@ const Home = () => {
                 setClient(null);
               }}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="15.557"
-                height="15.557"
-                viewBox="0 0 15.557 15.557"
-              >
-                <defs>
-                  <clipPath id="clip-path">
-                    <rect width="15.557" height="15.557" fill="none" />
-                  </clipPath>
-                </defs>
-                <g id="Cancel" clipPath="url(#clip-path)">
-                  <path
-                    id="Union_3"
-                    data-name="Union 3"
-                    d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                    fill="#2699fb"
-                  />
-                </g>
-              </svg>
+              <X_svg />
             </button>
           </div>
           <MilestoneForm
@@ -262,114 +243,7 @@ const Home = () => {
                 <>
                   <button onClick={() => setMsg(null)}>Okay</button>
                   <div>
-                    {milestone.milestone ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="158"
-                        height="158"
-                        viewBox="0 0 158 158"
-                      >
-                        <defs>
-                          <linearGradient
-                            id="linear-gradient"
-                            x1="-0.298"
-                            y1="-0.669"
-                            x2="1.224"
-                            y2="1.588"
-                            gradientUnits="objectBoundingBox"
-                          >
-                            <stop offset="0" stopColor="#336cf9" />
-                            <stop offset="1" stopColor="#1be6d6" />
-                          </linearGradient>
-                          <clipPath id="clip-path">
-                            <rect width="64" height="64" fill="none" />
-                          </clipPath>
-                        </defs>
-                        <g
-                          id="Group_163"
-                          data-name="Group 163"
-                          transform="translate(-0.426 -0.384)"
-                        >
-                          <g
-                            id="Group_103"
-                            data-name="Group 103"
-                            transform="translate(0 0)"
-                          >
-                            <rect
-                              id="Rectangle_1104"
-                              data-name="Rectangle 1104"
-                              width="158"
-                              height="158"
-                              rx="79"
-                              transform="translate(0.426 0.384)"
-                              fill="url(#linear-gradient)"
-                            />
-                          </g>
-                          <g
-                            id="Component_148_2"
-                            data-name="Component 148 – 2"
-                            transform="translate(47.426 58.384)"
-                            clipPath="url(#clip-path)"
-                          >
-                            <rect
-                              id="Rectangle_460"
-                              data-name="Rectangle 460"
-                              width="64"
-                              height="64"
-                              transform="translate(0 0)"
-                              fill="none"
-                            />
-                            <path
-                              id="Checkbox"
-                              d="M25.35,44.087,0,18.737l5.143-5.143L25.35,33.432,58.782,0l5.143,5.143Z"
-                              transform="translate(0 1.728)"
-                              fill="#fff"
-                            />
-                          </g>
-                        </g>
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="158"
-                        height="158"
-                        viewBox="0 0 158 158"
-                      >
-                        <defs>
-                          <linearGradient
-                            id="linear-gradient-red"
-                            x1="-0.298"
-                            y1="-0.669"
-                            x2="1.224"
-                            y2="1.588"
-                            gradientUnits="objectBoundingBox"
-                          >
-                            <stop offset="0" stopColor="#f93389" />
-                            <stop offset="1" stopColor="#e3003e" />
-                          </linearGradient>
-                        </defs>
-                        <rect
-                          id="Rectangle_1104"
-                          data-name="Rectangle 1104"
-                          width="158"
-                          height="158"
-                          rx="79"
-                          fill="url(#linear-gradient-red)"
-                        />
-                        <g
-                          id="Component_85_8"
-                          data-name="Component 85 – 8"
-                          transform="translate(49.472 49.472)"
-                        >
-                          <path
-                            id="Union_3"
-                            data-name="Union 3"
-                            d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
-                            fill="#fff"
-                          />
-                        </g>
-                      </svg>
-                    )}
+                    {milestone.milestone ? <Succ_svg /> : <Err_svg />}
                     {milestone.milestone && (
                       <h4 className="amount">₹{milestone.milestone?.amount}</h4>
                     )}
@@ -937,6 +811,7 @@ const ProfileAvatar = () => {
   const menuRef = useRef(null);
   const [menu, setMenu] = useState(false);
   const [invite, setInvite] = useState(false);
+  const [msg, setMsg] = useState(null);
   return (
     <>
       <div className="profile">
@@ -966,7 +841,15 @@ const ProfileAvatar = () => {
                   })
                   .catch((err) => {
                     console.log(err);
-                    alert("something went wrong");
+                    setMsg(
+                      <>
+                        <button onClick={() => setMsg(null)}>Okay</button>
+                        <div>
+                          <Err_svg />
+                          <h4>Could not logout.</h4>
+                        </div>
+                      </>
+                    );
                   });
               }}
             >
@@ -1007,6 +890,7 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
   );
   const [dscr, setDscr] = useState("");
   const [amount, setAmount] = useState("");
+  const [msg, setMsg] = useState(null);
   const sellerSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -1033,12 +917,28 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
           if (milestone) {
             onSuccess?.({ message, milestone });
           } else {
-            alert("someting went wrong");
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Err_svg />
+                  <h4>Could not create milestone.</h4>
+                </div>
+              </>
+            );
           }
         })
         .catch((err) => {
           console.log(err);
-          alert("someting went wrong");
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not create milestone. Make sure you're online.</h4>
+              </div>
+            </>
+          );
         });
     },
     [client, searchClient, amount, dscr, type, deliveryTime]
@@ -1070,7 +970,15 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
         })
         .catch((err) => {
           console.log(err);
-          alert("someting went wrong");
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not create milestone. Make sure you're online.</h4>
+              </div>
+            </>
+          );
         });
     },
     [client, searchClient, amount, dscr, type, deliveryTime]
@@ -1176,26 +1084,7 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
               setAddressForm(false);
             }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15.557"
-              height="15.557"
-              viewBox="0 0 15.557 15.557"
-            >
-              <defs>
-                <clipPath id="clip-path">
-                  <rect width="15.557" height="15.557" fill="none" />
-                </clipPath>
-              </defs>
-              <g id="Cancel" clipPath="url(#clip-path)">
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                  fill="#2699fb"
-                />
-              </g>
-            </svg>
+            <X_svg />
           </button>
         </div>
         <AddressForm
@@ -1207,6 +1096,9 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
           }}
           onCancel={() => setAddressForm(false)}
         />
+      </Modal>
+      <Modal className="msg" open={msg}>
+        {msg}
       </Modal>
     </>
   );

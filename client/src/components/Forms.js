@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { NumberInput, Combobox } from "./Elements";
+import { NumberInput, Combobox, Err_svg } from "./Elements";
+import { Modal } from "./Modal";
 
 export const MilestoneReleaseForm = ({
   milestone,
@@ -7,6 +8,7 @@ export const MilestoneReleaseForm = ({
   onSuccess,
 }) => {
   const [amount, setAmount] = useState(milestone.amount);
+  const [msg, setMsg] = useState(null);
   return (
     <form
       onSubmit={(e) => {
@@ -21,12 +23,26 @@ export const MilestoneReleaseForm = ({
             if (milestone) {
               onSuccess?.(milestone);
             } else {
-              alert("something went wrong");
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Err_svg />
+                    <h4>Could not release Milestone.</h4>
+                  </div>
+                </>
+              );
             }
           })
           .catch((err) => {
             console.log(err);
-            alert("something went wrong");
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not release Milestone. Make sure you're online.</h4>
+              </div>
+            </>;
           });
       }}
     >
@@ -45,6 +61,9 @@ export const MilestoneReleaseForm = ({
           Cancel
         </button>
       </section>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
     </form>
   );
 };
@@ -53,6 +72,7 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
   const [issue, setIssue] = useState("");
   const [dscr, setDscr] = useState("");
   const [caseFiles, setCaseFiles] = useState([]);
+  const [msg, setMsg] = useState(null);
   const submit = (e) => {
     e.preventDefault();
     // upload files here
@@ -72,16 +92,41 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
             onSuccess?.(milestone);
           });
         } else if (res.status === 403) {
-          alert(
-            "Insufficient fund! you have to have ₹500 in your wallet to file a dispute."
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>
+                  Insufficient fund! you have to have ₹500 in your wallet to
+                  file a dispute.
+                </h4>
+              </div>
+            </>
           );
         } else {
-          alert("someting went wrong");
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not file dispute.</h4>
+              </div>
+            </>
+          );
         }
       })
       .catch((err) => {
         console.log(err);
-        alert("someting went wrong");
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not file dispute. make sure you're online.</h4>
+            </div>
+          </>
+        );
       });
   };
   return (
@@ -168,6 +213,9 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
         </button>
       </section>
       <div className="pBtm" />
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
     </form>
   );
 };

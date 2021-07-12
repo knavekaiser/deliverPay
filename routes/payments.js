@@ -267,6 +267,7 @@ app.post(
   "/api/withdrawMoney",
   passport.authenticate("userPrivate"),
   async (req, res) => {
+    console.log("this");
     const { amount, paymentMethod, accountDetail } = req.body;
     if (+amount > req.user.balance) {
       res.status(403).json({ message: "insufficient fund" });
@@ -650,7 +651,7 @@ app.patch(
   (req, res) => {
     const { milestone_id, amount } = req.body;
     if (+amount > req.user.balance) {
-      res.status(403).json({ message: "insufficient fund" });
+      res.status(403).json({ code: 403, message: "insufficient fund" });
       return;
     }
     if (milestone_id && +amount) {
@@ -686,6 +687,14 @@ app.patch(
                   client: milestone.seller._id,
                 })
                   .then(([userChat, clientChat]) => {
+                    io.to(userChat._id.toString())
+                      .to(clientChat._id.toString())
+                      .emit("messageToUser", {
+                        type: "milestone",
+                        from: milestone.buyer._id,
+                        to: milestone.seller._id,
+                        text: `${req.user.firstName} approved a milestone.`,
+                      });
                     return SendMessage({
                       rooms: [userChat._id, clientChat._id],
                       message: {
@@ -697,7 +706,11 @@ app.patch(
                     });
                   })
                   .then((chatRes) => {
-                    res.json({ message: "milestone approved", milestone });
+                    res.json({
+                      code: "ok",
+                      message: "milestone approved",
+                      milestone,
+                    });
                     notify(
                       milestone.seller._id,
                       JSON.stringify({
@@ -710,18 +723,20 @@ app.patch(
               })
               .catch((err) => {
                 console.log(err);
-                res.status(500).json({ message: "something went wrong" });
+                res
+                  .status(500)
+                  .json({ code: 500, message: "something went wrong" });
               });
           } else {
-            res.status(500).json({ message: "bad request" });
+            res.status(500).json({ code: 500, message: "bad request" });
           }
         })
         .catch((err) => {
           console.log(err);
-          res.status(400).json({ message: "something went wrong" });
+          res.status(400).json({ code: 500, message: "something went wrong" });
         });
     } else {
-      res.status(400).json({ message: "incomplete request" });
+      res.status(400).json({ code: 500, message: "incomplete request" });
     }
   }
 );

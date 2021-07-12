@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Modal } from "./Modal";
+import { Err_svg } from "./Elements";
 import { MilestoneReleaseForm, DisputeForm } from "./Forms";
 
 const Hold = ({ history, location, match }) => {
   const [milestones, setMilestones] = useState([]);
   const [date, setDate] = useState("");
+  const [msg, setMsg] = useState(null);
   useEffect(() => {
     fetch("/api/milestone")
       .then((res) => res.json())
@@ -14,7 +16,15 @@ const Hold = ({ history, location, match }) => {
       })
       .catch((err) => {
         console.log(err);
-        alert("something went wrong");
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not update milestones.</h4>
+            </div>
+          </>
+        );
       });
   }, []);
   return (
@@ -61,12 +71,16 @@ const Hold = ({ history, location, match }) => {
           <p className="placeholder">No transaction yet.</p>
         )}
       </ul>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
     </div>
   );
 };
 const SingleMilestone = ({ milestone, setMilestones }) => {
   const [releaseForm, setReleaseForm] = useState(false);
   const [disputeForm, setDisputeForm] = useState(false);
+  const [msg, setMsg] = useState(null);
   return (
     <li className={`milestone ${milestone.role}`} key={milestone._id}>
       <div className="clientDetail">
@@ -999,8 +1013,8 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
                     }),
                   })
                     .then((res) => res.json())
-                    .then(({ message, milestone }) => {
-                      if (milestone) {
+                    .then((data) => {
+                      if (data.code === "ok") {
                         setMilestones((prev) => {
                           const newMilestones = [...prev];
                           const index = newMilestones.findIndex(
@@ -1012,13 +1026,46 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
                           };
                           return newMilestones;
                         });
+                      } else if (data.code === 403) {
+                        setMsg(
+                          <>
+                            <button onClick={() => setMsg(null)}>Okay</button>
+                            <div>
+                              <Err_svg />
+                              <h4>
+                                Could not approve milestone due to low balance.
+                              </h4>
+                            </div>
+                          </>
+                        );
                       } else {
-                        alert("someting went wrong");
+                        setMsg(
+                          <>
+                            <button onClick={() => setMsg(null)}>Okay</button>
+                            <div>
+                              <Err_svg />
+                              <h4>
+                                Could not approve milestone. Please try again.
+                              </h4>
+                            </div>
+                          </>
+                        );
                       }
                     })
                     .catch((err) => {
                       console.log(err);
-                      alert("someting went wrong");
+                      setMsg(
+                        <>
+                          <button onClick={() => setMsg(null)}>Okay</button>
+                          <div>
+                            <Err_svg />
+                            <h4>
+                              Could not approve milestone. Make sure you're
+                              online
+                            </h4>
+                          </div>
+                        </>
+                      );
                     });
                 }}
               >
@@ -1051,6 +1098,9 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
                 Approve Dispute
               </Link>
             )}
+            <Modal open={msg} className="msg">
+              {msg}
+            </Modal>
           </div>
         )}
       </div>

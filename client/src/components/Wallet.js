@@ -10,7 +10,7 @@ import {
 import { SiteContext } from "../SiteContext";
 import { Link, Route } from "react-router-dom";
 import { Modal } from "./Modal";
-import { Combobox } from "./Elements";
+import { Combobox, Succ_svg, Err_svg } from "./Elements";
 import Moment from "react-moment";
 import moment from "moment";
 function generateGreetings() {
@@ -53,6 +53,7 @@ const Wallet = ({ history, location, match }) => {
   const [withdrawMoneyFail, setWithdrawMoneyFail] = useState(false);
   const [withdrawOptions, setWithdrawOptions] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
   const withdrawMoney = (method) => {
     let url;
     let options = {
@@ -115,6 +116,44 @@ const Wallet = ({ history, location, match }) => {
         setWithdrawMoneyFail(true);
       });
   };
+  const displayCheckoutForm = (card) => {
+    setLoading(true);
+    fetch("/api/createAddMoneyOrder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: addMoneyAmount }),
+    })
+      .then((res) => res.json())
+      .then(({ order }) => {
+        setLoading(false);
+        if (order) {
+          handleOrder(order, card);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Error happend. Please try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Error happend. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
   const handleOrder = (order, card) => {
     const Razorpay = window.Razorpay;
     if (Razorpay) {
@@ -142,7 +181,18 @@ const Wallet = ({ history, location, match }) => {
                 setAddMoneyAmount("");
                 setLoading(false);
               } else {
-                alert("someting went wrong");
+                setMsg(
+                  <>
+                    <button onClick={() => setMsg(null)}>Okay</button>
+                    <div>
+                      <Err_svg />
+                      <h4>
+                        Error happend. Make sure you're payment details are
+                        correct.
+                      </h4>
+                    </div>
+                  </>
+                );
               }
             })
             .catch((err) => {
@@ -172,25 +222,6 @@ const Wallet = ({ history, location, match }) => {
       rzp1.open();
     }
   };
-  const displayCheckoutForm = (card) => {
-    setLoading(true);
-    fetch("/api/createAddMoneyOrder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: addMoneyAmount }),
-    })
-      .then((res) => res.json())
-      .then(({ order }) => {
-        if (order) {
-          handleOrder(order, card);
-        } else {
-          alert("something went wrong");
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
   const addMoneySubmit = (e) => {
     e.preventDefault();
     history.push("/account/wallet/addMoney");
@@ -205,7 +236,15 @@ const Wallet = ({ history, location, match }) => {
       })
       .catch((err) => {
         console.log(err);
-        alert("could not update balance");
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not update balance.</h4>
+            </div>
+          </>
+        );
       });
   }, []);
   useEffect(() => {
@@ -657,6 +696,9 @@ const Wallet = ({ history, location, match }) => {
           <h4>Add money failed</h4>
         </div>
       </Modal>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
     </div>
   );
 };
@@ -815,46 +857,7 @@ export const BankCardForm = ({ prefill, onSuccess }) => {
             <>
               <button onClick={() => setMsg(null)}>Okay</button>
               <div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="158"
-                  height="158"
-                  viewBox="0 0 158 158"
-                >
-                  <defs>
-                    <linearGradient
-                      id="linear-gradient-red"
-                      x1="-0.298"
-                      y1="-0.669"
-                      x2="1.224"
-                      y2="1.588"
-                      gradientUnits="objectBoundingBox"
-                    >
-                      <stop offset="0" stopColor="#f93389" />
-                      <stop offset="1" stopColor="#e3003e" />
-                    </linearGradient>
-                  </defs>
-                  <rect
-                    id="Rectangle_1104"
-                    data-name="Rectangle 1104"
-                    width="158"
-                    height="158"
-                    rx="79"
-                    fill="url(#linear-gradient-red)"
-                  />
-                  <g
-                    id="Component_85_8"
-                    data-name="Component 85 – 8"
-                    transform="translate(49.472 49.472)"
-                  >
-                    <path
-                      id="Union_3"
-                      data-name="Union 3"
-                      d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
-                      fill="#fff"
-                    />
-                  </g>
-                </svg>
+                <Err_svg />
                 <h4>
                   Payment method could not be {prefill ? "updated" : "added"}.
                   Please try again.
@@ -866,7 +869,15 @@ export const BankCardForm = ({ prefill, onSuccess }) => {
       })
       .catch((err) => {
         console.log(err);
-        alert("something went wrong");
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Error happaned. Make sure you're online.</h4>
+            </div>
+          </>
+        );
       });
   };
   return (
@@ -963,6 +974,7 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
   const [bank, setBank] = useState(prefill?.bank || "");
   const [name, setName] = useState(prefill?.name || "");
   const [ifsc, setIfsc] = useState(prefill?.ifsc || "");
+  const [msg, setMsg] = useState(null);
   const [accountNumber, setAccountNumber] = useState(
     prefill?.accountNumber || ""
   );
@@ -1002,12 +1014,30 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
           }
           onSuccess?.(paymentMethod);
         } else {
-          alert("something went wrong");
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not update payment method. Please try again.</h4>
+              </div>
+            </>
+          );
         }
       })
       .catch((err) => {
         console.log(err);
-        alert("something went wrong");
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>
+                Could not updated payment method. Make sure you're online.
+              </h4>
+            </div>
+          </>
+        );
       });
   };
   return (
@@ -1047,6 +1077,9 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
         />
       </section>
       <button type="submit">Save</button>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
     </form>
   );
 };
@@ -1264,6 +1297,7 @@ export const Cards = ({ paymentMethods }) => {
 };
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
+  const [msg, setMsg] = useState(null);
   useEffect(() => {
     fetch("/api/transactions")
       .then((res) => {
@@ -1275,12 +1309,28 @@ const Transactions = () => {
         if (data) {
           setTransactions(data);
         } else {
-          alert("something went wrong");
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not get transactions</h4>
+              </div>
+            </>
+          );
         }
       })
       .catch((err) => {
         console.log(err);
-        alert("something went wrong");
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Error happened. Make sure you're online.</h4>
+            </div>
+          </>
+        );
       });
   }, []);
   return (
@@ -1296,6 +1346,9 @@ const Transactions = () => {
           <p className="placeholder">No transaction yet.</p>
         )}
       </ul>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
     </div>
   );
 };

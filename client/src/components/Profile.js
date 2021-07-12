@@ -2,6 +2,7 @@ import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { SiteContext } from "../SiteContext";
 import { BankCard, BankAccount, BankCardForm, NetBankingForm } from "./Wallet";
 import { Modal, Confirm } from "./Modal";
+import { Err_svg, Succ_svg } from "./Elements";
 import GoogleLogin from "react-google-login";
 
 async function updateProfileInfo(newData) {
@@ -37,46 +38,7 @@ const Profile = ({ history, match, location }) => {
             <>
               <button onClick={() => setMsg(null)}>Okay</button>
               <div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="158"
-                  height="158"
-                  viewBox="0 0 158 158"
-                >
-                  <defs>
-                    <linearGradient
-                      id="linear-gradient-red"
-                      x1="-0.298"
-                      y1="-0.669"
-                      x2="1.224"
-                      y2="1.588"
-                      gradientUnits="objectBoundingBox"
-                    >
-                      <stop offset="0" stopColor="#f93389" />
-                      <stop offset="1" stopColor="#e3003e" />
-                    </linearGradient>
-                  </defs>
-                  <rect
-                    id="Rectangle_1104"
-                    data-name="Rectangle 1104"
-                    width="158"
-                    height="158"
-                    rx="79"
-                    fill="url(#linear-gradient-red)"
-                  />
-                  <g
-                    id="Component_85_8"
-                    data-name="Component 85 – 8"
-                    transform="translate(49.472 49.472)"
-                  >
-                    <path
-                      id="Union_3"
-                      data-name="Union 3"
-                      d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
-                      fill="#fff"
-                    />
-                  </g>
-                </svg>
+                <Err_svg />
                 <h4>Payment method could not be deleted.</h4>
               </div>
             </>
@@ -91,47 +53,11 @@ const Profile = ({ history, match, location }) => {
         console.log(err);
         setMsg(
           <>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="158"
-              height="158"
-              viewBox="0 0 158 158"
-            >
-              <defs>
-                <linearGradient
-                  id="linear-gradient-red"
-                  x1="-0.298"
-                  y1="-0.669"
-                  x2="1.224"
-                  y2="1.588"
-                  gradientUnits="objectBoundingBox"
-                >
-                  <stop offset="0" stopColor="#f93389" />
-                  <stop offset="1" stopColor="#e3003e" />
-                </linearGradient>
-              </defs>
-              <rect
-                id="Rectangle_1104"
-                data-name="Rectangle 1104"
-                width="158"
-                height="158"
-                rx="79"
-                fill="url(#linear-gradient-red)"
-              />
-              <g
-                id="Component_85_8"
-                data-name="Component 85 – 8"
-                transform="translate(49.472 49.472)"
-              >
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
-                  fill="#fff"
-                />
-              </g>
-            </svg>
-            <h4>Could not connect Google account.</h4>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not connect Google account.</h4>
+            </div>
           </>
         );
       });
@@ -425,75 +351,7 @@ const Profile = ({ history, match, location }) => {
                                   Okay
                                 </button>
                                 <div>
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="158"
-                                    height="158"
-                                    viewBox="0 0 158 158"
-                                  >
-                                    <defs>
-                                      <linearGradient
-                                        id="linear-gradient"
-                                        x1="-0.298"
-                                        y1="-0.669"
-                                        x2="1.224"
-                                        y2="1.588"
-                                        gradientUnits="objectBoundingBox"
-                                      >
-                                        <stop offset="0" stopColor="#336cf9" />
-                                        <stop offset="1" stopColor="#1be6d6" />
-                                      </linearGradient>
-                                      <clipPath id="clip-path">
-                                        <rect
-                                          width="64"
-                                          height="64"
-                                          fill="none"
-                                        />
-                                      </clipPath>
-                                    </defs>
-                                    <g
-                                      id="Group_163"
-                                      data-name="Group 163"
-                                      transform="translate(-0.426 -0.384)"
-                                    >
-                                      <g
-                                        id="Group_103"
-                                        data-name="Group 103"
-                                        transform="translate(0 0)"
-                                      >
-                                        <rect
-                                          id="Rectangle_1104"
-                                          data-name="Rectangle 1104"
-                                          width="158"
-                                          height="158"
-                                          rx="79"
-                                          transform="translate(0.426 0.384)"
-                                          fill="url(#linear-gradient)"
-                                        />
-                                      </g>
-                                      <g
-                                        id="Component_148_2"
-                                        data-name="Component 148 – 2"
-                                        transform="translate(47.426 58.384)"
-                                        clipPath="url(#clip-path)"
-                                      >
-                                        <rect
-                                          id="Rectangle_460"
-                                          data-name="Rectangle 460"
-                                          width="64"
-                                          height="64"
-                                          transform="translate(0 0)"
-                                          fill="none"
-                                        />
-                                        <path
-                                          id="Checkbox"
-                                          d="M25.35,44.087,0,18.737l5.143-5.143L25.35,33.432,58.782,0l5.143,5.143Z"
-                                          transform="translate(0 1.728)"
-                                          fill="#fff"
-                                        />
-                                      </g>
-                                    </g>
-                                  </svg>
+                                  <Succ_svg />
                                   <h4>Payment method updated.</h4>
                                 </div>
                               </>
@@ -550,75 +408,7 @@ const Profile = ({ history, match, location }) => {
                                   Okay
                                 </button>
                                 <div>
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="158"
-                                    height="158"
-                                    viewBox="0 0 158 158"
-                                  >
-                                    <defs>
-                                      <linearGradient
-                                        id="linear-gradient"
-                                        x1="-0.298"
-                                        y1="-0.669"
-                                        x2="1.224"
-                                        y2="1.588"
-                                        gradientUnits="objectBoundingBox"
-                                      >
-                                        <stop offset="0" stopColor="#336cf9" />
-                                        <stop offset="1" stopColor="#1be6d6" />
-                                      </linearGradient>
-                                      <clipPath id="clip-path">
-                                        <rect
-                                          width="64"
-                                          height="64"
-                                          fill="none"
-                                        />
-                                      </clipPath>
-                                    </defs>
-                                    <g
-                                      id="Group_163"
-                                      data-name="Group 163"
-                                      transform="translate(-0.426 -0.384)"
-                                    >
-                                      <g
-                                        id="Group_103"
-                                        data-name="Group 103"
-                                        transform="translate(0 0)"
-                                      >
-                                        <rect
-                                          id="Rectangle_1104"
-                                          data-name="Rectangle 1104"
-                                          width="158"
-                                          height="158"
-                                          rx="79"
-                                          transform="translate(0.426 0.384)"
-                                          fill="url(#linear-gradient)"
-                                        />
-                                      </g>
-                                      <g
-                                        id="Component_148_2"
-                                        data-name="Component 148 – 2"
-                                        transform="translate(47.426 58.384)"
-                                        clipPath="url(#clip-path)"
-                                      >
-                                        <rect
-                                          id="Rectangle_460"
-                                          data-name="Rectangle 460"
-                                          width="64"
-                                          height="64"
-                                          transform="translate(0 0)"
-                                          fill="none"
-                                        />
-                                        <path
-                                          id="Checkbox"
-                                          d="M25.35,44.087,0,18.737l5.143-5.143L25.35,33.432,58.782,0l5.143,5.143Z"
-                                          transform="translate(0 1.728)"
-                                          fill="#fff"
-                                        />
-                                      </g>
-                                    </g>
-                                  </svg>
+                                  <Succ_svg />
                                   <h4>Payment method updated.</h4>
                                 </div>
                               </>

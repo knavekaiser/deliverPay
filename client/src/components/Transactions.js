@@ -1,9 +1,12 @@
 import { useEffect, useState, useContext } from "react";
 import { SiteContext } from "../SiteContext";
+import { Err_svg } from "./Elements";
+import { Modal } from "./Modal";
 import Moment from "react-moment";
 
 const Transactions = ({ history, location, match }) => {
   const [transactions, setTransactions] = useState([]);
+  const [msg, setMsg] = useState(null);
   useEffect(() => {
     fetch("/api/transactions?type=P2PTransaction")
       .then((res) => {
@@ -18,7 +21,15 @@ const Transactions = ({ history, location, match }) => {
       })
       .catch((err) => {
         console.log(err);
-        alert("something went wrong");
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get transactions.</h4>
+            </div>
+          </>
+        );
       });
   }, []);
   return (
@@ -32,6 +43,9 @@ const Transactions = ({ history, location, match }) => {
           <p className="placeholder">No transaction yet.</p>
         )}
       </ul>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
     </div>
   );
 };
