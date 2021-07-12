@@ -57,6 +57,9 @@ const Hold = ({ history, location, match }) => {
             setMilestones={setMilestones}
           />
         ))}
+        {milestones.length === 0 && (
+          <p className="placeholder">No transaction yet.</p>
+        )}
       </ul>
     </div>
   );

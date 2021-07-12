@@ -325,7 +325,7 @@ const Wallet = ({ history, location, match }) => {
           </button>
         </div>
         <PaymentOption
-          label="Choose payment method"
+          label="Choose a payment method."
           action={displayCheckoutForm}
         />
       </Modal>
@@ -414,7 +414,7 @@ const Wallet = ({ history, location, match }) => {
           action={withdrawMoney}
         />
       </Modal>
-      <Modal open={addMoneySuccess} className="milestoneCreateSuccess">
+      <Modal open={addMoneySuccess} className="msg">
         <button onClick={() => setAddMoneySuccess(null)}>Okay</button>
         <div>
           <svg
@@ -486,7 +486,7 @@ const Wallet = ({ history, location, match }) => {
           <h4>Money added!</h4>
         </div>
       </Modal>
-      <Modal open={withdrawMoneySuccess} className="milestoneCreateSuccess">
+      <Modal open={withdrawMoneySuccess} className="msg">
         <button onClick={() => setWithdrawMoneySuccess(null)}>Okay</button>
         <div>
           <svg
@@ -558,7 +558,7 @@ const Wallet = ({ history, location, match }) => {
           <h4>Money withdrawed!</h4>
         </div>
       </Modal>
-      <Modal open={withdrawMoneyFail} className="milestoneCreateSuccess">
+      <Modal open={withdrawMoneyFail} className="msg">
         <button
           onClick={() => {
             setLoading(false);
@@ -611,7 +611,7 @@ const Wallet = ({ history, location, match }) => {
           <h4>Could not withdraw money.</h4>
         </div>
       </Modal>
-      <Modal open={false} className="milestoneCreateSuccess">
+      <Modal open={false} className="msg">
         <button onClick={() => setAddMoneyFailed(null)}>Okay</button>
         <div>
           <svg
@@ -665,7 +665,7 @@ const PaymentOption = ({ label, action }) => {
   const { user, setUser } = useContext(SiteContext);
   return (
     <div className="paymentOptions">
-      <p className="label">{action}</p>
+      <p className="label">{label}</p>
       <div className="options">
         {user.paymentMethods.map((method, i) => (
           <Fragment key={method._id}>
@@ -678,7 +678,7 @@ const PaymentOption = ({ label, action }) => {
           </Fragment>
         ))}
         {user.paymentMethods.length === 0 && (
-          <div className="placeholder">No payment method</div>
+          <div className="placeholder">No payment method added.</div>
         )}
       </div>
       <Link className="addMethodLink" to="addMoney/addPaymentMethod">
@@ -727,7 +727,7 @@ const PaymentMethodForm = ({ onSuccess }) => {
   );
 };
 
-const UpiForm = () => {
+export const UpiForm = () => {
   const [id, setId] = useState("");
   const submit = (e) => {
     e.preventDefault();
@@ -750,14 +750,14 @@ const UpiForm = () => {
     </form>
   );
 };
-const BankCardForm = ({ onSuccess }) => {
+export const BankCardForm = ({ prefill, onSuccess }) => {
   const { setUser } = useContext(SiteContext);
-  const [brand, setBrand] = useState(null);
-  const [name, setName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
+  const [brand, setBrand] = useState(prefill?.brand || null);
+  const [name, setName] = useState(prefill?.nameOnCard || "");
+  const [cardNumber, setCardNumber] = useState(prefill?.cardNumber || "");
   const [expMonth, setExpMonth] = useState("");
   const [expYear, setExpYear] = useState("");
-  const [cvv, setCvv] = useState("");
+  const [cvv, setCvv] = useState(prefill?.cvv || "");
   const [unsupporetdCard, setUnsuppportedCard] = useState(false);
   const years = (() => {
     const year = new Date().getFullYear();
@@ -767,6 +767,7 @@ const BankCardForm = ({ onSuccess }) => {
     }
     return years;
   })();
+  const [msg, setMsg] = useState(null);
   useEffect(() => {}, [expYear, expMonth]);
   const submit = (e) => {
     e.preventDefault();
@@ -775,8 +776,8 @@ const BankCardForm = ({ onSuccess }) => {
       setTimeout(() => setUnsuppportedCard(false), 1500);
       return;
     }
-    fetch("/api/addPaymentMethod", {
-      method: "POST",
+    fetch(prefill ? "/api/editPaymentMethod" : "/api/addPaymentMethod", {
+      method: prefill ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: "BankCard",
@@ -785,18 +786,82 @@ const BankCardForm = ({ onSuccess }) => {
         cardNumber,
         exp: `${expMonth}/${expYear}`,
         cvv,
+        ...(prefill && { _id: prefill._id }),
       }),
     })
       .then((res) => res.json())
       .then(({ paymentMethod }) => {
         if (paymentMethod) {
-          setUser((prev) => ({
-            ...prev,
-            paymentMethods: [...prev.paymentMethods, paymentMethod],
-          }));
+          if (!prefill) {
+            setUser((prev) => ({
+              ...prev,
+              paymentMethods: [...prev.paymentMethods, paymentMethod],
+            }));
+          } else {
+            setUser((prev) => ({
+              ...prev,
+              paymentMethods: prev.paymentMethods.map((item) => {
+                if (item._id === paymentMethod._id) {
+                  return paymentMethod;
+                } else {
+                  return item;
+                }
+              }),
+            }));
+          }
           onSuccess?.(paymentMethod);
         } else {
-          alert("something went wrong");
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="158"
+                  height="158"
+                  viewBox="0 0 158 158"
+                >
+                  <defs>
+                    <linearGradient
+                      id="linear-gradient-red"
+                      x1="-0.298"
+                      y1="-0.669"
+                      x2="1.224"
+                      y2="1.588"
+                      gradientUnits="objectBoundingBox"
+                    >
+                      <stop offset="0" stopColor="#f93389" />
+                      <stop offset="1" stopColor="#e3003e" />
+                    </linearGradient>
+                  </defs>
+                  <rect
+                    id="Rectangle_1104"
+                    data-name="Rectangle 1104"
+                    width="158"
+                    height="158"
+                    rx="79"
+                    fill="url(#linear-gradient-red)"
+                  />
+                  <g
+                    id="Component_85_8"
+                    data-name="Component 85 – 8"
+                    transform="translate(49.472 49.472)"
+                  >
+                    <path
+                      id="Union_3"
+                      data-name="Union 3"
+                      d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
+                      fill="#fff"
+                    />
+                  </g>
+                </svg>
+                <h4>
+                  Payment method could not be {prefill ? "updated" : "added"}.
+                  Please try again.
+                </h4>
+              </div>
+            </>
+          );
         }
       })
       .catch((err) => {
@@ -806,10 +871,12 @@ const BankCardForm = ({ onSuccess }) => {
   };
   return (
     <form className="paymentMethodForm bankCard" onSubmit={submit}>
-      <p className="note">
-        We’ll save this card for your convenience. Remove it by going to Your
-        Account section
-      </p>
+      {!prefill && (
+        <p className="note">
+          We’ll save this card for your convenience. Remove it by going to Your
+          Account section
+        </p>
+      )}
       <section className="inputs">
         <input
           type="text"
@@ -885,19 +952,24 @@ const BankCardForm = ({ onSuccess }) => {
       {unsupporetdCard && (
         <p className="cardErr">Enter valid Visa/MasterCard</p>
       )}
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
     </form>
   );
 };
-const NetBankingForm = ({ onSuccess }) => {
+export const NetBankingForm = ({ prefill, onSuccess }) => {
   const { setUser } = useContext(SiteContext);
-  const [bank, setBank] = useState("");
-  const [name, setName] = useState("");
-  const [ifsc, setIfsc] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
+  const [bank, setBank] = useState(prefill?.bank || "");
+  const [name, setName] = useState(prefill?.name || "");
+  const [ifsc, setIfsc] = useState(prefill?.ifsc || "");
+  const [accountNumber, setAccountNumber] = useState(
+    prefill?.accountNumber || ""
+  );
   const submit = (e) => {
     e.preventDefault();
-    fetch("/api/addPaymentMethod", {
-      method: "POST",
+    fetch(prefill ? "/api/editPaymentMethod" : "/api/addPaymentMethod", {
+      method: prefill ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: "BankAccount",
@@ -905,15 +977,29 @@ const NetBankingForm = ({ onSuccess }) => {
         bank,
         ifsc,
         accountNumber,
+        ...(prefill && { _id: prefill._id }),
       }),
     })
       .then((res) => res.json())
       .then(({ paymentMethod }) => {
         if (paymentMethod) {
-          setUser((prev) => ({
-            ...prev,
-            paymentMethods: [...prev.paymentMethods, paymentMethod],
-          }));
+          if (!prefill) {
+            setUser((prev) => ({
+              ...prev,
+              paymentMethods: [...prev.paymentMethods, paymentMethod],
+            }));
+          } else {
+            setUser((prev) => ({
+              ...prev,
+              paymentMethods: prev.paymentMethods.map((item) => {
+                if (item._id === paymentMethod._id) {
+                  return paymentMethod;
+                } else {
+                  return item;
+                }
+              }),
+            }));
+          }
           onSuccess?.(paymentMethod);
         } else {
           alert("something went wrong");
@@ -965,7 +1051,7 @@ const NetBankingForm = ({ onSuccess }) => {
   );
 };
 
-const BankCard = ({ card, onClick }) => {
+export const BankCard = ({ card, onClick }) => {
   return (
     <div className="paymentMethod card" onClick={() => onClick?.(card)}>
       <img
@@ -980,9 +1066,12 @@ const BankCard = ({ card, onClick }) => {
     </div>
   );
 };
-const BankAccount = ({ account, onClick }) => {
+export const BankAccount = ({ account, onClick }) => {
   return (
-    <div className="paymentMethod bankAccount" onClick={() => onClick(account)}>
+    <div
+      className="paymentMethod bankAccount"
+      onClick={() => onClick?.(account)}
+    >
       <p className="bank">{account.bank}</p>
       <p className="name">{account.name}</p>
       <p className="accountNumber">{account.accountNumber}</p>
@@ -991,11 +1080,12 @@ const BankAccount = ({ account, onClick }) => {
   );
 };
 
-const Cards = ({ paymentMethods }) => {
+export const Cards = ({ paymentMethods }) => {
   const container = useRef(null);
   const [style, setStyle] = useState({});
   const [wrapperStyle, setWrapperStyle] = useState({});
   const [index, setIndex] = useState(0);
+  const [paymentForm, setPaymentForm] = useState(false);
   useLayoutEffect(() => {
     const { width } = container.current.getBoundingClientRect();
     setStyle({
@@ -1021,7 +1111,31 @@ const Cards = ({ paymentMethods }) => {
               )}
             </li>
           ))}
+          {paymentMethods.length === 0 && (
+            <li style={style}>
+              <p className="placeholder">No payment method added.</p>
+            </li>
+          )}
         </ul>
+        <button
+          className="addPaymentMethod"
+          onClick={() => setPaymentForm(true)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="15.999"
+            viewBox="0 0 16 15.999"
+          >
+            <path
+              id="Union_1"
+              data-name="Union 1"
+              d="M-4613,16V9h-7V7h7V0h2V7h7V9h-7v7Z"
+              transform="translate(4620)"
+              fill="#2699fb"
+            />
+          </svg>
+        </button>
       </div>
       {index > 0 && (
         <button className="prev" onClick={() => setIndex((prev) => prev - 1)}>
@@ -1113,6 +1227,38 @@ const Cards = ({ paymentMethods }) => {
           </svg>
         </button>
       )}
+      <Modal className="paymentMethodsForm" open={paymentForm}>
+        <div className="head">
+          <p className="modalName">Add Payment Method</p>
+          <button onClick={() => setPaymentForm(false)}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="15.557"
+              height="15.557"
+              viewBox="0 0 15.557 15.557"
+            >
+              <defs>
+                <clipPath id="clip-path">
+                  <rect width="15.557" height="15.557" fill="none" />
+                </clipPath>
+              </defs>
+              <g id="Cancel" clipPath="url(#clip-path)">
+                <path
+                  id="Union_3"
+                  data-name="Union 3"
+                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
+                  fill="#2699fb"
+                />
+              </g>
+            </svg>
+          </button>
+        </div>
+        <PaymentMethodForm
+          onSuccess={(method) => {
+            setPaymentForm(false);
+          }}
+        />
+      </Modal>
     </div>
   );
 };
@@ -1146,6 +1292,9 @@ const Transactions = () => {
         {transactions.map((transaction) => (
           <SingleTransaction key={transaction._id} transaction={transaction} />
         ))}
+        {transactions.length === 0 && (
+          <p className="placeholder">No transaction yet.</p>
+        )}
       </ul>
     </div>
   );

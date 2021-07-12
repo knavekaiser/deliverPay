@@ -143,7 +143,7 @@ app.get("*", (req, res) =>
 );
 
 const socketIO = require("socket.io");
-const io = socketIO(
+global.io = socketIO(
   app.listen(PORT, () => {
     console.log("skropay backend listening to port:", PORT);
   })

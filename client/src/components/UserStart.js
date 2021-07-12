@@ -1,7 +1,5 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { SiteContext } from "../SiteContext";
-import logo from "../logo.svg";
-import illustration from "../landingPage_illustration.svg";
 import { Route, Switch, useHistory, Link } from "react-router-dom";
 import { Checkbox } from "./Elements";
 import GoogleLogin from "react-google-login";
@@ -57,10 +55,10 @@ const RegisterForm = () => {
       <img
         className="logo"
         onClick={() => history.push("")}
-        src={logo}
-        alt="Skropay logo"
+        src="/logo_land.jpg"
+        alt="Delivery pay logo"
       />
-      <p className="title">Create your Skropay account</p>
+      <p className="title">Create your Delivery pay account</p>
       <form onSubmit={submit}>
         <input
           type="text"
@@ -167,34 +165,33 @@ const LoginForm = () => {
         }
       });
   };
-  // const responseGoogle = (e) => {
-  //   console.log(e);
-  // };
-  // <GoogleLogin
-  //   className="google"
-  //   clientId="110481019268-ih90k85im3nskjerljhou6ecgdhhl13t.apps.googleusercontent.com"
-  //   render={(renderProps) => (
-  //     <button
-  //       onClick={renderProps.onClick}
-  //       disabled={renderProps.disabled}
-  //     >
-  //       Continue with Google
-  //     </button>
-  //   )}
-  //   buttonText="Continue with Google"
-  //   onSuccess={responseGoogle}
-  //   onFailure={responseGoogle}
-  //   cookiePolicy={"single_host_origin"}
-  // />
+  const responseGoogle = (e) => {
+    fetch("/api/userLoginUsingSocial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ googleId: e.googleId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        if (data.user) {
+          setUser(user);
+          history.push("/account/home");
+        } else if (data.code === 401) {
+          setInvadilCred("No account is associated with this Google account.");
+          setTimeout(() => setInvadilCred(null), 2000);
+        }
+      });
+  };
   return (
     <div className="formWrapper login">
       <img
         className="logo"
         onClick={() => history.push("")}
-        src={logo}
-        alt="Skropay logo"
+        src="/logo_land.jpg"
+        alt="Delivery pay logo"
       />
-      <p className="title">Login to your skropay account</p>
+      <p className="title">Login to your Delivery pay account</p>
       <form onSubmit={submit}>
         <input
           type="text"
@@ -227,6 +224,16 @@ const LoginForm = () => {
           Login
         </button>
       </form>
+      <section className="socials">
+        <GoogleLogin
+          className="google"
+          clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+          buttonText="Continue with Google"
+          onSuccess={responseGoogle}
+          onFailure={responseGoogle}
+          cookiePolicy={"single_host_origin"}
+        />
+      </section>
       <p className="links">
         Don't have an account? <Link to="/u/join">Register</Link>
       </p>
@@ -317,7 +324,7 @@ const PasswordReset = () => {
   }, [code]);
   return (
     <div className="formWrapper resetPass">
-      <img className="logo" src={logo} alt="Skropay logo" />
+      <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
       <p className="title">Password reset</p>
       {step === 1 && (
         <form onSubmit={submit}>
@@ -504,7 +511,11 @@ function UserStart() {
           <h3>Experience the best and secure Transactions</h3>
           <p>We ensure buyer and seller happiness</p>
         </header>
-        <img className="illustration" src={illustration} alt="illustration" />
+        <img
+          className="illustration"
+          src="/landingPage_illustration.svg"
+          alt="illustration"
+        />
       </div>
       <div className="forms">
         <Switch>

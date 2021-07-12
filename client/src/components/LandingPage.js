@@ -1,19 +1,30 @@
-import { useContext } from "react";
-import logo from "../logo.svg";
+import { useContext, useEffect } from "react";
 import { SiteContext } from "../SiteContext";
-import illustration from "../landingPage_illustration.svg";
 import { Link } from "react-router-dom";
 require("../components/styles/landingPage.scss");
 
-function LandingPage() {
-  const { user } = useContext(SiteContext);
+function LandingPage({ history }) {
+  const { user, setUser } = useContext(SiteContext);
+  useEffect(() => {
+    fetch("/api/authUser")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user);
+        }
+      });
+  }, []);
   return (
     <div className="landingPage">
       <header>
         <div className="innerWrapper">
           <div className="links">
             <Link to="/">
-              <img className="logo" src={logo} alt="Skropay logo" />
+              <img
+                className="logo"
+                src="/logo_land.jpg"
+                alt="Delivery pay logo"
+              />
             </Link>
             <Link to="#">For Business</Link>
             <Link to="#">About us</Link>
@@ -41,7 +52,7 @@ function LandingPage() {
             ) : (
               <>
                 <Link to="/u/login">Login</Link>
-                <Link to="/u/join">Join Skropay</Link>
+                <Link to="/u/join">Join Delivery pay</Link>
               </>
             )}
           </div>
@@ -52,19 +63,23 @@ function LandingPage() {
           <div className="text">
             <h1>
               Never Pay Without
-              <br /> Using Skropay
+              <br /> Using Delivery pay
             </h1>
             <p>
-              Skropay is a secure transaction platform that completely protects
-              you from being scammed when you want to buy or sell with someone
-              you don't know.
+              Delivery pay is a secure transaction platform that completely
+              protects you from being scammed when you want to buy or sell with
+              someone you don't know.
             </p>
             <div className="clas">
               <Link to="/account/home">I am a Seller</Link>
               <Link to="/account/home">I am a Buyer</Link>
             </div>
           </div>
-          <img className="illustration" src={illustration} alt="illustration" />
+          <img
+            className="illustration"
+            src="/landingPage_illustration.svg"
+            alt="illustration"
+          />
         </div>
       </div>
     </div>

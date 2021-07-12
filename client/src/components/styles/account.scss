@@ -8,6 +8,8 @@ $red: #ff5757;
 
 .account {
   height: 100vh;
+  display: grid;
+  grid-template-rows: min-content 1fr;
   header {
     position: relative;
     z-index: 100;
@@ -50,16 +52,21 @@ $red: #ff5757;
           margin-bottom: 0.5rem;
         }
         .referral {
-          padding: 1rem 0;
+          padding: 0.7rem 0;
           border-bottom: 1px solid rgba(0, 0, 0, 0.1);
           margin-bottom: 1.5rem;
+          button {
+            display: none;
+          }
           p {
+            display: none;
             font-size: 0.8rem;
             color: rgba(0, 0, 0, 0.6);
             white-space: nowrap;
           }
         }
         .logout {
+          min-width: 10rem;
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -67,8 +74,9 @@ $red: #ff5757;
           color: #fc0660;
           font-size: 1.3rem;
           font-weight: bold;
+          opacity: 0.5;
           &:hover {
-            opacity: 0.7;
+            opacity: 1;
           }
         }
       }
@@ -84,7 +92,6 @@ $red: #ff5757;
   }
   .content {
     height: 100%;
-    max-height: calc(100vh - 73px);
     overflow: hidden;
     padding: 1rem;
     display: flex;
@@ -93,7 +100,7 @@ $red: #ff5757;
       border-radius: 1rem;
       width: 15rem;
       padding: 1.5rem;
-      box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.2);
       display: grid;
       grid-gap: 1rem;
       grid-auto-rows: min-content;
@@ -276,6 +283,8 @@ $red: #ff5757;
         max-width: 40rem;
         border-radius: 0 0 0.75rem 0.75rem;
         box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+        max-height: 20rem;
+        overflow-y: auto;
         li {
           padding: 0.5rem 1rem;
           display: flex;
@@ -408,6 +417,14 @@ $red: #ff5757;
     max-width: 85rem;
     display: grid;
     grid-gap: 0.75rem;
+    .placeholder {
+      border-radius: 0.7rem;
+      padding: 3rem 1rem;
+      background: rgba(0, 0, 0, 0.03);
+      text-align: center;
+      color: rgba(0, 0, 0, 0.5);
+      font-style: italic;
+    }
     .milestone {
       background: $lightGreen2;
       padding: 1rem 1.4rem;
@@ -828,6 +845,12 @@ $red: #ff5757;
             background: rgba(#f0f0f0, 0.5);
           }
         }
+        .placeholder {
+          padding: 1.25rem 0;
+          text-align: center;
+          font-style: italic;
+          color: rgba(0, 0, 0, 0.57);
+        }
       }
     }
   }
@@ -865,6 +888,11 @@ $red: #ff5757;
         color: white;
         font-weight: 500;
         border-radius: 2rem;
+        &:hover {
+          color: $blue;
+          background: none;
+          box-shadow: inset 0 0 0 2px $blue;
+        }
       }
     }
     .chatWrapper {
@@ -996,6 +1024,14 @@ $red: #ff5757;
     max-width: 85rem;
     display: grid;
     grid-gap: 1rem;
+    .placeholder {
+      border-radius: 0.7rem;
+      padding: 3rem 1rem;
+      background: rgba(0, 0, 0, 0.03);
+      text-align: center;
+      color: rgba(0, 0, 0, 0.5);
+      font-style: italic;
+    }
     .transaction {
       display: flex;
       justify-content: space-between;
@@ -1055,6 +1091,7 @@ $red: #ff5757;
 .addAddress,
 .modal.addMoney,
 .modal.paymentMethodsForm,
+.modal.editPaymentMethod,
 .modal.milestoneReleaseForm {
   border-radius: 0.7rem;
   width: 100%;
@@ -1068,6 +1105,7 @@ $red: #ff5757;
     justify-content: space-between;
     padding: 1.3rem;
     box-shadow: 0 0 0.7rem rgba(0, 0, 0, 0.25);
+    border-radius: 0.7rem 0.7rem 0 0;
     .modalName {
       color: $blue;
       font-weight: 500;
@@ -1162,12 +1200,14 @@ $red: #ff5757;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       margin-bottom: 2rem;
       .placeholder {
+        grid-column: 1/-1;
         margin: 1rem 0;
         font-style: italic;
         color: rgba(0, 0, 0, 0.4);
-        background: rgba(0, 0, 0, 0.05);
-        padding: 2rem;
+        background: rgba(0, 0, 0, 0.03);
+        padding: 3rem 1.5rem;
         text-align: center;
+        border-radius: 0.7rem;
       }
       .paymentMethod {
         cursor: pointer;
@@ -1242,7 +1282,7 @@ $red: #ff5757;
   }
 }
 .modal.paymentMethodsForm {
-  max-width: 35rem;
+  max-width: 50rem;
   max-height: calc(100% - 2rem);
   overflow: auto;
   .addPaymentMethod {
@@ -1317,6 +1357,7 @@ $red: #ff5757;
   &.bankCard,
   &.netBanking {
     display: grid;
+    max-width: 30rem;
     .note {
       font-size: 0.85rem;
       color: rgba(0, 0, 0, 0.67);
@@ -1417,6 +1458,14 @@ $red: #ff5757;
       color: $blue;
       box-shadow: inset 0 0 0 2px $blue;
     }
+  }
+}
+.modal.editPaymentMethod {
+  width: max-content;
+  .paymentMethodForm {
+    margin: 1.5rem;
+    min-width: 25rem;
+    box-shadow: none;
   }
 }
 
@@ -1667,7 +1716,7 @@ $red: #ff5757;
         padding: 1.5rem;
         .label {
           font-weight: 500;
-          font-size: 1.2rem;
+          font-size: 1.3rem;
         }
         form {
           max-width: 100%;
@@ -1688,7 +1737,7 @@ $red: #ff5757;
             }
           }
           button {
-            padding: 0.2rem 1rem;
+            padding: 0.2rem 2rem;
             color: white;
             font-weight: 400;
             border: none;
@@ -1722,6 +1771,7 @@ $red: #ff5757;
       }
     }
     .rewards {
+      display: none;
       margin-top: 1.5rem;
       .label {
         font-size: 1.25rem;
@@ -1784,6 +1834,7 @@ $red: #ff5757;
         width: 100%;
         box-shadow: 0 0 0.2rem rgba(0, 0, 0, 0.1);
         border-radius: 0.7rem;
+        overflow: hidden;
         .cards {
           width: max-content;
           display: flex;
@@ -1818,9 +1869,39 @@ $red: #ff5757;
                 opacity: 1;
               }
             }
+            .placeholder {
+              background: rgba(0, 0, 0, 0.03);
+              height: 100%;
+              display: grid;
+              place-items: center;
+              color: rgba(0, 0, 0, 0.5);
+              font-style: italic;
+            }
           }
         }
-        overflow: hidden;
+        .addPaymentMethod {
+          cursor: pointer;
+          background: white;
+          transform: scale(1.5);
+          position: absolute;
+          bottom: 1rem;
+          right: 4rem;
+          display: grid;
+          place-items: center;
+          padding: 0.5rem;
+          border: 1px solid rgba(0, 0, 0, 0.07);
+          outline: none;
+          border-radius: 50%;
+          box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.1);
+          &:hover {
+            background: $blue;
+            svg {
+              path {
+                fill: white;
+              }
+            }
+          }
+        }
       }
     }
     .transactions {
@@ -1841,6 +1922,12 @@ $red: #ff5757;
       .allTransactions {
         overflow-y: auto;
         padding-right: 1rem;
+        .placeholder {
+          padding: 2rem 1rem;
+          text-align: center;
+          font-style: italic;
+          color: rgba(0, 0, 0, 0.5);
+        }
         .transaction {
           padding: 1rem;
           display: flex;
@@ -1885,10 +1972,11 @@ $red: #ff5757;
     }
   }
 }
-.modal.milestoneCreateSuccess {
+.modal.msg {
   border-radius: 1rem;
   padding: 2.5rem;
   position: relative;
+  max-width: 25rem;
   button {
     border: none;
     outline: none;
@@ -1906,7 +1994,7 @@ $red: #ff5757;
     text-align: center;
     svg {
       margin: auto;
-      margin-bottom: 1rem;
+      margin-bottom: 3rem;
     }
     h4 {
       font-size: 1.25rem;
@@ -2160,14 +2248,14 @@ $red: #ff5757;
       }
     }
   }
+  .head {
+    padding: 1rem 0;
+    font-size: 1.4rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+    font-weight: 300;
+    color: rgba(0, 0, 0, 0.75);
+  }
   .settings {
-    .head {
-      padding: 1rem 0;
-      font-size: 1.4rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.6);
-      font-weight: 300;
-      color: rgba(0, 0, 0, 0.75);
-    }
     ul {
       li {
         padding: 2rem 0;
@@ -2226,6 +2314,132 @@ $red: #ff5757;
           .errMsg {
             margin-top: 1rem;
             color: $red;
+          }
+        }
+      }
+    }
+  }
+  .methods {
+    margin-top: 2rem;
+    display: grid;
+    grid-gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    li {
+      position: relative;
+      .actions {
+        z-index: 10;
+        display: none;
+        position: absolute;
+        right: 0.5rem;
+        top: 0.5rem;
+        grid-gap: 0.3rem;
+        button {
+          cursor: pointer;
+          color: white;
+          font-weight: 600;
+          padding: 0.25rem 1rem;
+          outline: none;
+          border: 2px solid $blue;
+          border-radius: 2rem;
+          background: $blue;
+          &:hover {
+            background: white;
+            color: $blue;
+          }
+          &.delete {
+            color: white;
+            border-color: $red;
+            background: $red;
+            &:hover {
+              background: white;
+              color: $red;
+            }
+          }
+        }
+      }
+      &:hover {
+        .actions {
+          display: flex;
+        }
+      }
+      .paymentMethod {
+        &:hover {
+          opacity: 1;
+        }
+        height: 100%;
+      }
+    }
+  }
+  .socials {
+    margin-top: 2rem;
+    .providers {
+      display: flex;
+      grid-gap: 1rem;
+      margin-top: 2rem;
+    }
+  }
+  padding-bottom: 8rem;
+}
+
+.modal.confirm {
+  border-radius: 0.7rem;
+  width: 100%;
+  display: grid;
+  max-width: 35rem;
+  .head {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 1.3rem;
+    box-shadow: 0 0 0.7rem rgba(0, 0, 0, 0.25);
+    border-radius: 0.7rem 0.7rem 0 0;
+    .modalName {
+      color: $blue;
+      font-weight: 500;
+    }
+    button {
+      border: none;
+      outline: none;
+      background: none;
+      cursor: pointer;
+    }
+  }
+  .content {
+    padding: 1.5rem;
+    .question {
+      font-size: 1.2rem;
+      margin-bottom: 3rem;
+    }
+    .actions {
+      margin-top: 2rem;
+      display: flex;
+      grid-gap: 1rem;
+      button {
+        margin: auto;
+        color: white;
+        border: none;
+        outline: none;
+        font-weight: bold;
+        width: max-content;
+        background: linear-gradient(139deg, $blue 0%, rgb(23, 55, 134) 100%);
+        font-size: 1rem;
+        padding: 0.65rem 2.5rem;
+        border-radius: 3rem;
+        cursor: pointer;
+        &:hover {
+          color: $blue;
+          background: none;
+          box-shadow: inset 0 0 0 2px $blue;
+        }
+        &.no {
+          background: linear-gradient(139deg, $blue 0%, $pink 100%);
+          &:hover {
+            color: $pink;
+            background: none;
+            box-shadow: inset 0 0 0 2px $pink;
           }
         }
       }

@@ -11,11 +11,9 @@ class ErrorBoundary extends React.Component {
     super(props);
     this.state = { hasError: false, reported: false };
   }
-
   static getDerivedStateFromError(error) {
     return { hasError: true };
   }
-
   componentDidCatch(error, errorInfo) {
     const options = {
       method: "POST",
@@ -34,7 +32,6 @@ class ErrorBoundary extends React.Component {
         }
       });
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -50,7 +47,6 @@ class ErrorBoundary extends React.Component {
         </div>
       );
     }
-
     return this.props.children;
   }
 }

@@ -13,7 +13,7 @@ const Support = ({ history, location, match }) => {
           <input
             type="text"
             required={true}
-            placeholder="Eg: How does the Skropay Hold Works"
+            placeholder="Eg: How does the Delivery pay Hold Works"
           />
           <button type="submit">
             <svg

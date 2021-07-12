@@ -1,9 +1,4 @@
-const {
-  handleSignIn,
-  signingIn,
-  signToken,
-  genCode,
-} = require("../config/passport.js");
+const { handleSignIn, signingIn, genCode } = require("../config/passport.js");
 
 app.post("/api/registerUser", (req, res) => {
   const { firstName, lastName, phone, email, password } = req.body;
@@ -52,15 +47,57 @@ app.post(
 app.get(
   "/api/authUser",
   passport.authenticate("userPrivate"),
-  (req, res) => {
-    const user = { ...req.user._doc };
-    ["pass", "__v"].forEach((key) => delete user[key]);
-    res.json({ code: "ok", user });
+  async (req, res) => {
+    const user = await User.aggregate([
+      { $match: { _id: req.user._id } },
+      {
+        $lookup: {
+          from: "paymentmethods",
+          localField: "paymentMethods",
+          foreignField: "_id",
+          as: "paymentMethods",
+        },
+      },
+    ]);
+    if (user.length) {
+      signingIn(user[0], res);
+    } else {
+      res.status(401).json({ message: "not logged in" });
+    }
   },
   (err, req, res, next) => {
     res.status(401).json({ code: 401, message: "invalid credentials" });
   }
 );
+app.post("/api/userLoginUsingSocial", (req, res) => {
+  User.aggregate([
+    {
+      $match: {
+        ...(req.body.googleId && { googleId: req.body.googleId }),
+        ...(req.body.facebookId && { facebookId: req.body.facebookId }),
+      },
+    },
+    {
+      $lookup: {
+        from: "paymentmethods",
+        localField: "paymentMethods",
+        foreignField: "_id",
+        as: "paymentMethods",
+      },
+    },
+  ])
+    .then((user) => {
+      if (user.length) {
+        signingIn(user[0], res);
+      } else {
+        res.status(401).json({ code: 401, message: "User does not exist." });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ message: "database error" });
+    });
+});
 
 app.get(
   "/api/viewUserProfile",
@@ -99,7 +136,6 @@ app.patch(
   "/api/editUserProfile",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    console.log(req.body);
     User.findOneAndUpdate(
       { _id: req.user._id },
       {
@@ -146,7 +182,7 @@ app.post("/api/sendUserOTP", async (req, res) => {
       })
       .catch((err) => {
         console.log(err);
-        console.log("something went wrong");
+        res.status(500).json({ message: "someting went wrong" });
       });
   } else {
     res.status(400).json({ message: "invalid request" });
@@ -182,7 +218,6 @@ app.put("/api/submitUserOTP", async (req, res) => {
 app.post("/api/sendUserForgotPassOTP", async (req, res) => {
   const { phone, email } = req.body;
   const code = genCode(6);
-  console.log(code);
   const [user, hash] = await Promise.all([
     User.findOne({ $or: [{ phone }, { email }] }),
     bcrypt.hash(code, 10),
@@ -206,7 +241,7 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
       })
       .catch((err) => {
         console.log(err);
-        console.log("something went wrong");
+        res.status(500).json({ message: "someting went wrong" });
       });
   } else {
     res.status(400).json({ message: "invalid request" });
