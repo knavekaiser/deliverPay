@@ -70,33 +70,38 @@ app.get(
   }
 );
 app.post("/api/userLoginUsingSocial", (req, res) => {
-  User.aggregate([
-    {
-      $match: {
-        ...(req.body.googleId && { googleId: req.body.googleId }),
-        ...(req.body.facebookId && { facebookId: req.body.facebookId }),
+  const { googleId, facebookId } = req.body;
+  if (googleId || facebookId) {
+    User.aggregate([
+      {
+        $match: {
+          ...(req.body.googleId && { googleId: req.body.googleId }),
+          ...(req.body.facebookId && { facebookId: req.body.facebookId }),
+        },
       },
-    },
-    {
-      $lookup: {
-        from: "paymentmethods",
-        localField: "paymentMethods",
-        foreignField: "_id",
-        as: "paymentMethods",
+      {
+        $lookup: {
+          from: "paymentmethods",
+          localField: "paymentMethods",
+          foreignField: "_id",
+          as: "paymentMethods",
+        },
       },
-    },
-  ])
-    .then((user) => {
-      if (user.length) {
-        signingIn(user[0], res);
-      } else {
-        res.status(401).json({ code: 401, message: "User does not exist." });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ message: "database error" });
-    });
+    ])
+      .then((user) => {
+        if (user.length) {
+          signingIn(user[0], res);
+        } else {
+          res.status(401).json({ code: 401, message: "User does not exist." });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ message: "database error" });
+      });
+  } else {
+    res.status(401).json({ code: 401, message: "user not logged in" });
+  }
 });
 
 app.get(

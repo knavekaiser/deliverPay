@@ -13,7 +13,7 @@ import "./App.scss";
 import Account from "./components/Account";
 
 function ProtectedRoute({ children, path, component }) {
-  const { user, setUser } = useContext(SiteContext);
+  const { user } = useContext(SiteContext);
   const history = useHistory();
   if (!user) {
     return (

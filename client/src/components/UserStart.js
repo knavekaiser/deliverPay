@@ -166,22 +166,25 @@ const LoginForm = () => {
       });
   };
   const responseGoogle = (e) => {
-    fetch("/api/userLoginUsingSocial", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ googleId: e.googleId }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        if (data.user) {
-          setUser(user);
-          history.push("/account/home");
-        } else if (data.code === 401) {
-          setInvadilCred("No account is associated with this Google account.");
-          setTimeout(() => setInvadilCred(null), 2000);
-        }
-      });
+    if (e.googleId) {
+      fetch("/api/userLoginUsingSocial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ googleId: e.googleId }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user) {
+            setUser(user);
+            history.push("/account/home");
+          } else if (data.code === 401) {
+            setInvadilCred(
+              "No account is associated with this Google account."
+            );
+            setTimeout(() => setInvadilCred(null), 2000);
+          }
+        });
+    }
   };
   return (
     <div className="formWrapper login">

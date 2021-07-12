@@ -1,9 +1,8 @@
 import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { SiteContext } from "../SiteContext";
-import { Route, Switch, useHistory, Redirect, Link } from "react-router-dom";
+import { Route, Switch, useHistory, Link } from "react-router-dom";
 import { Modal } from "./Modal.js";
 import { Combobox, NumberInput, Err_svg, Succ_svg, X_svg } from "./Elements";
-import Moment from "react-moment";
 import Hold from "./Hold.js";
 import Transactions from "./Transactions";
 import Wallet from "./Wallet";
@@ -18,7 +17,6 @@ const Home = () => {
   const [users, setUsers] = useState([]);
   const [recentPayments, setRecentPayments] = useState([]);
   const [client, setClient] = useState(null);
-  const [success, setSuccess] = useState(false);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
     fetch("/api/recentPayments")
