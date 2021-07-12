@@ -20,8 +20,19 @@ const signingIn = (user, res) => {
   res.cookie("access_token", token, { httpOnly: true, sameSite: true });
   res.status(200).json({ code: "ok", isAuthenticated: true, user: user });
 };
-const handleSignIn = (req, res) => {
-  const user = JSON.parse(JSON.stringify(req.user));
+const handleSignIn = async (req, res) => {
+  const user = await User.aggregate([
+    { $match: { _id: req.user._id } },
+    {
+      $lookup: {
+        from: "paymentmethods",
+        localField: "paymentMethods",
+        foreignField: "_id",
+        as: "paymentMethods",
+      },
+    },
+  ]);
+  signingIn(user[0], res);
   signingIn(user, res);
 };
 

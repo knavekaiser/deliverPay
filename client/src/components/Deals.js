@@ -2,8 +2,10 @@ import { useState, useEffect, useContext, useRef } from "react";
 import { Link, useHistory } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
 import Moment from "react-moment";
+import { Modal } from "./Modal";
 import moment from "moment";
 import { io } from "socket.io-client";
+import { MilestoneForm } from "./Account";
 
 const socket = io();
 
@@ -135,7 +137,9 @@ const Deals = ({ history, location, match }) => {
                 userCard={userCard}
               />
             ))}
-            {contacts.length === 0 && <div>Nothing yet</div>}
+            {contacts.length === 0 && (
+              <p className="placeholder">Start making payments now.</p>
+            )}
           </ul>
         </div>
       </div>
@@ -193,8 +197,10 @@ const Person = ({ client, messages, lastSeen, userCard }) => {
 
 const Chat = ({ chat, setChat, userCard, user, socket }) => {
   const chatWrapper = useRef(null);
+  const history = useHistory();
   const [value, setValue] = useState("");
   const [rooms, setRooms] = useState([]);
+  const [msg, setMsg] = useState(null);
   const submit = (e) => {
     e.preventDefault();
     if (value && rooms.length) {
@@ -236,7 +242,7 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
   }, [rooms]);
   return (
     <div className="chat">
-      {chat?.length > 0 ? (
+      {chat ? (
         <>
           <div className="chatHead">
             <div className="profile">
@@ -245,7 +251,7 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
                 {userCard.firstName + " " + userCard.lastName}
               </p>
             </div>
-            <Link className="pay" to="/account/deals">
+            <Link className="pay" to={`/account/deals/${userCard.phone}/pay`}>
               Pay
             </Link>
           </div>
@@ -335,6 +341,176 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
           <p>start a chat</p>
         </div>
       )}
+      <Modal
+        className="milestoneRequest"
+        open={history.location.pathname.match(/^\/account\/deals\/.+\/pay$/)}
+      >
+        <div className="head">
+          <p className="modalName">Create Milestone</p>
+          <button
+            onClick={() => {
+              history.push(`/account/deals/${userCard.phone}`);
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="15.557"
+              height="15.557"
+              viewBox="0 0 15.557 15.557"
+            >
+              <defs>
+                <clipPath id="clip-path">
+                  <rect width="15.557" height="15.557" fill="none" />
+                </clipPath>
+              </defs>
+              <g id="Cancel" clipPath="url(#clip-path)">
+                <path
+                  id="Union_3"
+                  data-name="Union 3"
+                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
+                  fill="#2699fb"
+                />
+              </g>
+            </svg>
+          </button>
+        </div>
+        <MilestoneForm
+          userType="buyer"
+          searchClient={userCard}
+          onSuccess={(milestone) => {
+            if (milestone.milestone) {
+              history.push(`/account/deals/${userCard.phone}`);
+            }
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  {milestone.milestone ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="158"
+                      height="158"
+                      viewBox="0 0 158 158"
+                    >
+                      <defs>
+                        <linearGradient
+                          id="linear-gradient"
+                          x1="-0.298"
+                          y1="-0.669"
+                          x2="1.224"
+                          y2="1.588"
+                          gradientUnits="objectBoundingBox"
+                        >
+                          <stop offset="0" stopColor="#336cf9" />
+                          <stop offset="1" stopColor="#1be6d6" />
+                        </linearGradient>
+                        <clipPath id="clip-path">
+                          <rect width="64" height="64" fill="none" />
+                        </clipPath>
+                      </defs>
+                      <g
+                        id="Group_163"
+                        data-name="Group 163"
+                        transform="translate(-0.426 -0.384)"
+                      >
+                        <g
+                          id="Group_103"
+                          data-name="Group 103"
+                          transform="translate(0 0)"
+                        >
+                          <rect
+                            id="Rectangle_1104"
+                            data-name="Rectangle 1104"
+                            width="158"
+                            height="158"
+                            rx="79"
+                            transform="translate(0.426 0.384)"
+                            fill="url(#linear-gradient)"
+                          />
+                        </g>
+                        <g
+                          id="Component_148_2"
+                          data-name="Component 148 – 2"
+                          transform="translate(47.426 58.384)"
+                          clipPath="url(#clip-path)"
+                        >
+                          <rect
+                            id="Rectangle_460"
+                            data-name="Rectangle 460"
+                            width="64"
+                            height="64"
+                            transform="translate(0 0)"
+                            fill="none"
+                          />
+                          <path
+                            id="Checkbox"
+                            d="M25.35,44.087,0,18.737l5.143-5.143L25.35,33.432,58.782,0l5.143,5.143Z"
+                            transform="translate(0 1.728)"
+                            fill="#fff"
+                          />
+                        </g>
+                      </g>
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="158"
+                      height="158"
+                      viewBox="0 0 158 158"
+                    >
+                      <defs>
+                        <linearGradient
+                          id="linear-gradient-red"
+                          x1="-0.298"
+                          y1="-0.669"
+                          x2="1.224"
+                          y2="1.588"
+                          gradientUnits="objectBoundingBox"
+                        >
+                          <stop offset="0" stopColor="#f93389" />
+                          <stop offset="1" stopColor="#e3003e" />
+                        </linearGradient>
+                      </defs>
+                      <rect
+                        id="Rectangle_1104"
+                        data-name="Rectangle 1104"
+                        width="158"
+                        height="158"
+                        rx="79"
+                        fill="url(#linear-gradient-red)"
+                      />
+                      <g
+                        id="Component_85_8"
+                        data-name="Component 85 – 8"
+                        transform="translate(49.472 49.472)"
+                      >
+                        <path
+                          id="Union_3"
+                          data-name="Union 3"
+                          d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
+                          fill="#fff"
+                        />
+                      </g>
+                    </svg>
+                  )}
+                  {milestone.milestone && (
+                    <h4 className="amount">₹{milestone.milestone?.amount}</h4>
+                  )}
+                  <h4>{milestone.message}</h4>
+                </div>
+                {milestone.milestone && (
+                  <Link to="/account/hold" onClick={() => setMsg(null)}>
+                    Check your Delivery pay Hold
+                  </Link>
+                )}
+              </>
+            );
+          }}
+        />
+      </Modal>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
     </div>
   );
 };

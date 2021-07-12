@@ -23,11 +23,14 @@ const Transactions = ({ history, location, match }) => {
   }, []);
   return (
     <div className="transcationContainer">
-      <p className="benner">Completed Skropay Hold Transactions</p>
+      <p className="benner">Completed Delivery pay Hold Transactions</p>
       <ul className="transactions">
         {transactions.map((transaction) => (
           <SingleTransaction key={transaction._id} transaction={transaction} />
         ))}
+        {transactions.length === 0 && (
+          <p className="placeholder">No transaction yet.</p>
+        )}
       </ul>
     </div>
   );
@@ -72,7 +75,7 @@ const SingleTransaction = ({ transaction }) => {
           <p>Amount</p>-<p className="amount">{transaction.amount}</p>
         </li>
         <li>
-          <p>Skropay Hold Date</p>-
+          <p>Delivery pay Hold Date</p>-
           <p>
             <Moment format="MMM DD, YYYY, hh:mm a">
               {transaction.createdAt}

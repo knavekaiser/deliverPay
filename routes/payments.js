@@ -7,7 +7,7 @@ app.get(
     Transaction.aggregate([
       {
         $match: {
-          user: new ObjectId("60e07eb145b56e38b8827073"),
+          user: new ObjectId(req.user._id),
           __t: "P2PTransaction",
         },
       },
@@ -146,7 +146,6 @@ app.put("/api/addMoney", passport.authenticate("userPrivate"), (req, res) => {
             .save()
             .then((dbRes) => {
               if (dbRes) {
-                console.log(dbRes);
                 User.findOneAndUpdate(
                   { _id: req.user._id },
                   {
@@ -403,6 +402,7 @@ app.post(
   }
 );
 
+// -------------------------- payment methods
 app.post(
   "/api/addPaymentMethod",
   passport.authenticate("userPrivate"),
@@ -455,7 +455,6 @@ app.post(
         res.status(400).json({ message: "bad request" });
       }
     } else if (type === "BankAccount") {
-      console.log(name, bank, ifsc, accountNumber);
       if (name && bank && ifsc && accountNumber) {
         new Model({ name, bank, ifsc, accountNumber })
           .save()
@@ -490,23 +489,50 @@ app.post(
     }
   }
 );
+app.patch(
+  "/api/editPaymentMethod",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    global[req.body.type]
+      .findOneAndUpdate({ _id: req.body._id }, { ...req.body }, { new: true })
+      .then((paymentMethod) => {
+        if (paymentMethod) {
+          res.json({ code: "ok", paymentMethod });
+        } else {
+          res.status(400).json({ code: 400, message: "bad request" });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ message: "server error" });
+      });
+  }
+);
 app.delete(
   "/api/deletePaymentMethod",
   passport.authenticate("userPrivate"),
   (req, res) => {
     PaymentMethod.findOneAndDelete({ _id: req.body._id })
       .then((dbRes) => {
-        return User.findOneAndUpdate(
-          { _id: req.user._id },
-          { $pull: { paymentMethods: req.body._id } }
-        );
+        if (dbRes) {
+          return User.findOneAndUpdate(
+            { _id: req.user._id },
+            { $pull: { paymentMethods: req.body._id } }
+          );
+        } else {
+          return null;
+        }
       })
       .then((newUser) => {
-        res.json({ message: "payment method deleted" });
+        if (newUser) {
+          res.json({ code: "ok", message: "payment method deleted" });
+        } else {
+          res.status(400).json({ code: 400, message: "bad request" });
+        }
       })
       .catch((err) => {
         console.log(err);
-        res.status(400).json({ message: "bad request" });
+        res.status(400).json({ code: 400, message: "bad request" });
       });
   }
 );
@@ -544,7 +570,6 @@ app.post(
                 });
               })
               .then((chatRes) => {
-                console.log(chatRes);
                 res.json({
                   message: "milestone requested",
                   milestone: milestone,
@@ -751,8 +776,16 @@ app.post(
                 return InitiateChat({
                   user: user._id,
                   client: seller._id,
-                }).then(([userChat, clientChat]) =>
-                  SendMessage({
+                }).then(([userChat, clientChat]) => {
+                  io.to(userChat._id.toString())
+                    .to(clientChat._id.toString())
+                    .emit("messageToUser", {
+                      type: "milestone",
+                      from: user._id,
+                      to: seller._id,
+                      text: `${req.user.firstName} created a milestone.`,
+                    });
+                  return SendMessage({
                     rooms: [userChat._id, clientChat._id],
                     message: {
                       type: "milestone",
@@ -760,8 +793,8 @@ app.post(
                       to: seller._id,
                       text: `${req.user.firstName} created a milestone.`,
                     },
-                  })
-                );
+                  });
+                });
               })
               .then((chatRes) => {
                 res.json({

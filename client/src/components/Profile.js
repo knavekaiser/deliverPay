@@ -1,22 +1,141 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { SiteContext } from "../SiteContext";
+import { BankCard, BankAccount, BankCardForm, NetBankingForm } from "./Wallet";
+import { Modal, Confirm } from "./Modal";
+import GoogleLogin from "react-google-login";
 
 async function updateProfileInfo(newData) {
   return fetch("/api/editUserProfile", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newData),
-  })
-    .then((res) => res.json())
-    .catch((err) => {
-      console.log(err);
-      alert("Could not update profile info");
-    });
+  }).then((res) => res.json());
 }
 
 const Profile = ({ history, match, location }) => {
   const { user, setUser } = useContext(SiteContext);
   const [mismatchPass, setMismatchPass] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const deletePaymentMethod = useCallback((method) => {
+    fetch("/api/deletePaymentMethod", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id: method._id }),
+    })
+      .then((res) => res.json())
+      .then(({ code }) => {
+        if (code === "ok") {
+          setUser((prev) => ({
+            ...prev,
+            paymentMethods: prev.paymentMethods.filter(
+              (item) => item._id !== method._id
+            ),
+          }));
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="158"
+                  height="158"
+                  viewBox="0 0 158 158"
+                >
+                  <defs>
+                    <linearGradient
+                      id="linear-gradient-red"
+                      x1="-0.298"
+                      y1="-0.669"
+                      x2="1.224"
+                      y2="1.588"
+                      gradientUnits="objectBoundingBox"
+                    >
+                      <stop offset="0" stopColor="#f93389" />
+                      <stop offset="1" stopColor="#e3003e" />
+                    </linearGradient>
+                  </defs>
+                  <rect
+                    id="Rectangle_1104"
+                    data-name="Rectangle 1104"
+                    width="158"
+                    height="158"
+                    rx="79"
+                    fill="url(#linear-gradient-red)"
+                  />
+                  <g
+                    id="Component_85_8"
+                    data-name="Component 85 – 8"
+                    transform="translate(49.472 49.472)"
+                  >
+                    <path
+                      id="Union_3"
+                      data-name="Union 3"
+                      d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
+                      fill="#fff"
+                    />
+                  </g>
+                </svg>
+                <h4>Payment method could not be deleted.</h4>
+              </div>
+            </>
+          );
+        }
+      });
+  }, []);
+  const addGoogleId = (e) => {
+    updateProfileInfo({ googleId: e.googleId })
+      .then((data) => setUser((prev) => ({ ...prev, googleId: e.googleId })))
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="158"
+              height="158"
+              viewBox="0 0 158 158"
+            >
+              <defs>
+                <linearGradient
+                  id="linear-gradient-red"
+                  x1="-0.298"
+                  y1="-0.669"
+                  x2="1.224"
+                  y2="1.588"
+                  gradientUnits="objectBoundingBox"
+                >
+                  <stop offset="0" stopColor="#f93389" />
+                  <stop offset="1" stopColor="#e3003e" />
+                </linearGradient>
+              </defs>
+              <rect
+                id="Rectangle_1104"
+                data-name="Rectangle 1104"
+                width="158"
+                height="158"
+                rx="79"
+                fill="url(#linear-gradient-red)"
+              />
+              <g
+                id="Component_85_8"
+                data-name="Component 85 – 8"
+                transform="translate(49.472 49.472)"
+              >
+                <path
+                  id="Union_3"
+                  data-name="Union 3"
+                  d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
+                  fill="#fff"
+                />
+              </g>
+            </svg>
+            <h4>Could not connect Google account.</h4>
+          </>
+        );
+      });
+  };
   return (
     <div className="profileContainer">
       <div className="benner">
@@ -66,7 +185,7 @@ const Profile = ({ history, match, location }) => {
         </div>
         <div>
           <p className="name">{user.firstName + " " + user.lastName}</p>
-          <p className="id">Skropay ID: {user.userId || user._id}</p>
+          <p className="id">Delivery pay ID: {user.userId || user._id}</p>
         </div>
       </div>
       <div className="settings">
@@ -235,10 +354,303 @@ const Profile = ({ history, match, location }) => {
             }
             value={`${user.address?.street || ""} ${user.address?.city || ""} ${
               user.address?.state || ""
-            } ${user.address?.zip}`}
+            } ${user.address?.zip || ""}`}
           />
         </ul>
       </div>
+      <div className="paymentMethods">
+        <div className="head">Payment Methods</div>
+        <ul className="methods">
+          {user.paymentMethods.map((method, i) => (
+            <li key={i}>
+              <div className="actions">
+                <button className="edit" onClick={() => setEdit(method.__t)}>
+                  Edit
+                </button>
+                <button
+                  className="delete"
+                  onClick={() => {
+                    return Confirm({
+                      label: "Payment method delete",
+                      question: "Do you want to delete this payment method?",
+                      callback: () => deletePaymentMethod(method),
+                    });
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+              {method.__t === "BankCard" && (
+                <>
+                  <BankCard card={method} />
+                  {edit === method.__t && (
+                    <Modal open={edit} className="editPaymentMethod">
+                      <div className="head">
+                        <p className="modalName">Edit Payment Method</p>
+                        <button onClick={() => setEdit(false)}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="15.557"
+                            height="15.557"
+                            viewBox="0 0 15.557 15.557"
+                          >
+                            <defs>
+                              <clipPath id="clip-path">
+                                <rect
+                                  width="15.557"
+                                  height="15.557"
+                                  fill="none"
+                                />
+                              </clipPath>
+                            </defs>
+                            <g id="Cancel" clipPath="url(#clip-path)">
+                              <path
+                                id="Union_3"
+                                data-name="Union 3"
+                                d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
+                                fill="#2699fb"
+                              />
+                            </g>
+                          </svg>
+                        </button>
+                      </div>
+                      <BankCardForm
+                        prefill={method}
+                        onSuccess={(paymentMethod) => {
+                          if (paymentMethod) {
+                            setEdit(false);
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="158"
+                                    height="158"
+                                    viewBox="0 0 158 158"
+                                  >
+                                    <defs>
+                                      <linearGradient
+                                        id="linear-gradient"
+                                        x1="-0.298"
+                                        y1="-0.669"
+                                        x2="1.224"
+                                        y2="1.588"
+                                        gradientUnits="objectBoundingBox"
+                                      >
+                                        <stop offset="0" stopColor="#336cf9" />
+                                        <stop offset="1" stopColor="#1be6d6" />
+                                      </linearGradient>
+                                      <clipPath id="clip-path">
+                                        <rect
+                                          width="64"
+                                          height="64"
+                                          fill="none"
+                                        />
+                                      </clipPath>
+                                    </defs>
+                                    <g
+                                      id="Group_163"
+                                      data-name="Group 163"
+                                      transform="translate(-0.426 -0.384)"
+                                    >
+                                      <g
+                                        id="Group_103"
+                                        data-name="Group 103"
+                                        transform="translate(0 0)"
+                                      >
+                                        <rect
+                                          id="Rectangle_1104"
+                                          data-name="Rectangle 1104"
+                                          width="158"
+                                          height="158"
+                                          rx="79"
+                                          transform="translate(0.426 0.384)"
+                                          fill="url(#linear-gradient)"
+                                        />
+                                      </g>
+                                      <g
+                                        id="Component_148_2"
+                                        data-name="Component 148 – 2"
+                                        transform="translate(47.426 58.384)"
+                                        clipPath="url(#clip-path)"
+                                      >
+                                        <rect
+                                          id="Rectangle_460"
+                                          data-name="Rectangle 460"
+                                          width="64"
+                                          height="64"
+                                          transform="translate(0 0)"
+                                          fill="none"
+                                        />
+                                        <path
+                                          id="Checkbox"
+                                          d="M25.35,44.087,0,18.737l5.143-5.143L25.35,33.432,58.782,0l5.143,5.143Z"
+                                          transform="translate(0 1.728)"
+                                          fill="#fff"
+                                        />
+                                      </g>
+                                    </g>
+                                  </svg>
+                                  <h4>Payment method updated.</h4>
+                                </div>
+                              </>
+                            );
+                          }
+                        }}
+                      />
+                    </Modal>
+                  )}
+                </>
+              )}
+              {method.__t === "BankAccount" && (
+                <>
+                  <BankAccount account={method} />
+                  {edit === method.__t && (
+                    <Modal open={edit} className="editPaymentMethod">
+                      <div className="head">
+                        <p className="modalName">Edit Payment Method</p>
+                        <button onClick={() => setEdit(false)}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="15.557"
+                            height="15.557"
+                            viewBox="0 0 15.557 15.557"
+                          >
+                            <defs>
+                              <clipPath id="clip-path">
+                                <rect
+                                  width="15.557"
+                                  height="15.557"
+                                  fill="none"
+                                />
+                              </clipPath>
+                            </defs>
+                            <g id="Cancel" clipPath="url(#clip-path)">
+                              <path
+                                id="Union_3"
+                                data-name="Union 3"
+                                d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
+                                fill="#2699fb"
+                              />
+                            </g>
+                          </svg>
+                        </button>
+                      </div>
+                      <NetBankingForm
+                        prefill={method}
+                        onSuccess={(paymentMethod) => {
+                          if (paymentMethod) {
+                            setEdit(false);
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="158"
+                                    height="158"
+                                    viewBox="0 0 158 158"
+                                  >
+                                    <defs>
+                                      <linearGradient
+                                        id="linear-gradient"
+                                        x1="-0.298"
+                                        y1="-0.669"
+                                        x2="1.224"
+                                        y2="1.588"
+                                        gradientUnits="objectBoundingBox"
+                                      >
+                                        <stop offset="0" stopColor="#336cf9" />
+                                        <stop offset="1" stopColor="#1be6d6" />
+                                      </linearGradient>
+                                      <clipPath id="clip-path">
+                                        <rect
+                                          width="64"
+                                          height="64"
+                                          fill="none"
+                                        />
+                                      </clipPath>
+                                    </defs>
+                                    <g
+                                      id="Group_163"
+                                      data-name="Group 163"
+                                      transform="translate(-0.426 -0.384)"
+                                    >
+                                      <g
+                                        id="Group_103"
+                                        data-name="Group 103"
+                                        transform="translate(0 0)"
+                                      >
+                                        <rect
+                                          id="Rectangle_1104"
+                                          data-name="Rectangle 1104"
+                                          width="158"
+                                          height="158"
+                                          rx="79"
+                                          transform="translate(0.426 0.384)"
+                                          fill="url(#linear-gradient)"
+                                        />
+                                      </g>
+                                      <g
+                                        id="Component_148_2"
+                                        data-name="Component 148 – 2"
+                                        transform="translate(47.426 58.384)"
+                                        clipPath="url(#clip-path)"
+                                      >
+                                        <rect
+                                          id="Rectangle_460"
+                                          data-name="Rectangle 460"
+                                          width="64"
+                                          height="64"
+                                          transform="translate(0 0)"
+                                          fill="none"
+                                        />
+                                        <path
+                                          id="Checkbox"
+                                          d="M25.35,44.087,0,18.737l5.143-5.143L25.35,33.432,58.782,0l5.143,5.143Z"
+                                          transform="translate(0 1.728)"
+                                          fill="#fff"
+                                        />
+                                      </g>
+                                    </g>
+                                  </svg>
+                                  <h4>Payment method updated.</h4>
+                                </div>
+                              </>
+                            );
+                          }
+                        }}
+                      />
+                    </Modal>
+                  )}
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="socials">
+        <div className="head">Connect Social Accounts</div>
+        <ul className="providers">
+          <GoogleLogin
+            disabled={user.googleId}
+            className="google"
+            clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+            buttonText="Connect with Google"
+            onSuccess={addGoogleId}
+            onFailure={addGoogleId}
+            cookiePolicy={"single_host_origin"}
+          />
+        </ul>
+      </div>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
     </div>
   );
 };
@@ -278,7 +690,6 @@ const DataEdit = ({ label, fields, value, onError }) => {
           setUser(user);
           setEdit(false);
         } else {
-          console.log(user);
           alert("someting went wrong");
         }
       })

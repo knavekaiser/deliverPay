@@ -181,7 +181,6 @@ app.patch(
   "/api/updateLastSeen",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    console.log(req.body._id);
     if (req.body.rooms) {
       Chat.findOneAndUpdate(
         {

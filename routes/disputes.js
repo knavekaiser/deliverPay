@@ -3,7 +3,6 @@ app.post(
   passport.authenticate("userPrivate"),
   async (req, res) => {
     const { issue, milestoneId, defendantId, _case } = req.body;
-    // console.log(defendant, milestone, issue);
     const [defendant, milestone] = await Promise.all([
       User.findOne({ _id: defendantId }),
       Milestone.findOne({
