@@ -12,7 +12,7 @@ const cookieExtractor = (req) => {
 };
 
 const signToken = (_id) => {
-  return jwt.sign({ iss: "skropay", sub: _id }, process.env.JWT_SECRET);
+  return jwt.sign({ iss: "deliveryPay", sub: _id }, process.env.JWT_SECRET);
 };
 const signingIn = (user, res) => {
   const token = signToken(user._id);
