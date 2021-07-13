@@ -449,7 +449,7 @@ $red: #ff5757;
             grid-gap: 0.5rem;
             li {
               display: grid;
-              grid-template-columns: 5.75rem 1rem 1fr;
+              grid-template-columns: 6.25rem 1rem 1fr;
               grid-auto-flow: column;
               color: rgba(0, 0, 0, 0.79);
               .role {
@@ -1692,16 +1692,78 @@ $red: #ff5757;
       }
       background: $lightGreen2;
       margin: 2rem 0;
-      padding: 1.5rem;
+      padding: 2rem;
+      padding-bottom: 2.5rem;
       border-radius: 1rem;
-      h1 {
-        margin-top: 1.5rem;
-        font-size: 2.5rem;
-        font-weight: 400;
+      display: flex;
+      grid-gap: 1.5rem;
+      .currentBalance {
+        display: grid;
+        grid-template-rows: min-content 1fr min-content;
+        h1 {
+          margin: auto;
+          margin-left: 0;
+          margin-bottom: 0;
+          font-size: 2.5rem;
+          font-weight: 400;
+        }
+        .updateTime {
+          margin: auto;
+          margin-bottom: 0;
+          font-size: 0.85rem;
+          color: rgba(0, 0, 0, 0.8);
+        }
       }
-      .updateTime {
-        font-size: 0.85rem;
-        color: rgba(0, 0, 0, 0.8);
+      .graph {
+        margin: auto;
+        margin-right: 0;
+        .label {
+          width: 100%;
+          text-align: right;
+          margin-bottom: 1rem;
+        }
+        .bars {
+          border-bottom: 2px solid #0099ff;
+          border-top: 1px dashed rgba(0, 0, 0, 0.15);
+          height: 7rem;
+          display: flex;
+          grid-gap: 1rem;
+          direction: rtl;
+          position: relative;
+          &:before {
+            color: rgba(0, 0, 0, 0.52);
+            direction: ltr;
+            content: attr(data-max);
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translateY(-60%);
+            font-size: 0.8rem;
+            background: $lightGreen2;
+            padding-right: 0.25rem;
+          }
+          li {
+            display: grid;
+            position: relative;
+            .bar {
+              border-radius: 1rem 1rem 0 0;
+              margin: auto;
+              margin-bottom: 0;
+              width: 1.5rem;
+              background: #acc4ff;
+              box-shadow: inset 0 0 0 1px #89abff;
+            }
+            .month {
+              width: 2rem;
+              position: absolute;
+              bottom: -1.8rem;
+              font-size: 0.85rem;
+              transform: rotate(315deg);
+              color: rgba(0, 0, 0, 0.5);
+            }
+          }
+        }
       }
     }
     .addWithdraw {

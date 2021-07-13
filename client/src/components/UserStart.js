@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useRef } from "react";
 import { SiteContext } from "../SiteContext";
 import { Route, Switch, useHistory, Link } from "react-router-dom";
 import { Checkbox } from "./Elements";
-import GoogleLogin from "react-google-login";
+import { GoogleLogin } from "react-google-login";
 require("../components/styles/userStart.scss");
 
 const RegisterForm = () => {
@@ -166,11 +166,11 @@ const LoginForm = () => {
       });
   };
   const responseGoogle = (e) => {
-    if (e.googleId) {
+    if (e.tokenId) {
       fetch("/api/userLoginUsingSocial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ googleId: e.googleId }),
+        body: JSON.stringify({ googleToken: e.tokenId }),
       })
         .then((res) => res.json())
         .then((data) => {

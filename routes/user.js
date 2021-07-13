@@ -1,4 +1,16 @@
 const { handleSignIn, signingIn, genCode } = require("../config/passport.js");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+async function verify(token) {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const userid = payload["sub"];
+  return userid || null;
+}
 
 app.post("/api/registerUser", (req, res) => {
   const { firstName, lastName, phone, email, password } = req.body;
@@ -69,16 +81,16 @@ app.get(
     res.status(401).json({ code: 401, message: "invalid credentials" });
   }
 );
-app.post("/api/userLoginUsingSocial", (req, res) => {
-  const { googleId, facebookId } = req.body;
+app.post("/api/userLoginUsingSocial", async (req, res) => {
+  const { googleToken, facebookId } = req.body;
+  const googleId = await verify(googleToken);
   if (googleId || facebookId) {
+    const query = {
+      ...(req.body.googleId && { googleId }),
+      ...(req.body.facebookId && { facebookId }),
+    };
     User.aggregate([
-      {
-        $match: {
-          ...(req.body.googleId && { googleId: req.body.googleId }),
-          ...(req.body.facebookId && { facebookId: req.body.facebookId }),
-        },
-      },
+      { $match: query },
       {
         $lookup: {
           from: "paymentmethods",

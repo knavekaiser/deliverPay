@@ -33,7 +33,6 @@ const handleSignIn = async (req, res) => {
     },
   ]);
   signingIn(user[0], res);
-  signingIn(user, res);
 };
 
 function genCode(length) {

@@ -1,6 +1,90 @@
 let base64 = require("base-64");
 
 app.get(
+  "/api/dashboardData",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const today = new Date();
+    today.setYear(today.getFullYear() - 1);
+    today.setMonth(today.getMonth() + 1);
+    today.setDate(1);
+    Promise.all([
+      Transaction.aggregate([
+        {
+          $match: {
+            user: new ObjectId(req.user._id),
+            createdAt: {
+              $gte: new Date(today.toISOString().substr(0, 10)),
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $month: "$createdAt",
+            },
+            balance: {
+              $sum: "$amount",
+            },
+            date: {
+              $first: "$createdAt",
+            },
+          },
+        },
+        {
+          $sort: {
+            createdAt: 1,
+          },
+        },
+        {
+          $limit: 12,
+        },
+      ]),
+    ])
+      .then(([monthlyBalance]) => {
+        const monthName = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        const months = [];
+        for (var i = 0; i < 12; i++) {
+          const month =
+            new Date(
+              new Date().setMonth(new Date().getMonth() - i)
+            ).getMonth() + 1;
+          const data = monthlyBalance.find((item) => item._id === month);
+          if (data) {
+            months.push({
+              _id: monthName[month - 1],
+              balance: data.balance,
+            });
+          } else {
+            months.push({ _id: monthName[month - 1], balance: null });
+          }
+        }
+        res.json({
+          code: "ok",
+          balance: req.user.balance,
+          monthlyBalance: months,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(400).json({ code: 400, message: "someting went wrong" });
+      });
+  }
+);
+app.get(
   "/api/recentPayments",
   passport.authenticate("userPrivate"),
   (req, res) => {
@@ -267,13 +351,13 @@ app.post(
   "/api/withdrawMoney",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    console.log("this");
     const { amount, paymentMethod, accountDetail } = req.body;
     if (+amount > req.user.balance) {
-      res.status(403).json({ message: "insufficient fund" });
+      res.status(403).json({ code: 403, message: "insufficient fund" });
       return;
     }
     let fundAccountDetail;
+    console.log(accountDetail);
     switch (paymentMethod) {
       case "BankAccount":
         fundAccountDetail = {
@@ -412,6 +496,7 @@ app.post(
       type,
       brand,
       name,
+      nameOnCard,
       cardNumber,
       exp,
       cvv,
@@ -421,12 +506,12 @@ app.post(
     } = req.body;
     const Model = global[type];
     if (type === "BankCard") {
-      if (brand && name && cardNumber && cvv && exp) {
+      if (brand && nameOnCard && cardNumber && cvv && exp) {
         new Model({
           ...req.body,
           firstName: req.user.firstName,
           lastName: req.user.lastName,
-          nameOnCard: name,
+          nameOnCard,
         })
           .save()
           .then((method) => {
@@ -494,19 +579,25 @@ app.patch(
   "/api/editPaymentMethod",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    global[req.body.type]
-      .findOneAndUpdate({ _id: req.body._id }, { ...req.body }, { new: true })
-      .then((paymentMethod) => {
-        if (paymentMethod) {
-          res.json({ code: "ok", paymentMethod });
-        } else {
-          res.status(400).json({ code: 400, message: "bad request" });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({ message: "server error" });
-      });
+    const { type } = req.body;
+    if (global[type]) {
+      global[type]
+        .findOneAndUpdate({ _id: req.body._id }, { ...req.body }, { new: true })
+        .then((paymentMethod) => {
+          console.log(paymentMethod);
+          if (paymentMethod) {
+            res.json({ code: "ok", paymentMethod });
+          } else {
+            res.status(400).json({ code: 400, message: "bad request" });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ message: "server error" });
+        });
+    } else {
+      res.status(500).json({ message: "type is required" });
+    }
   }
 );
 app.delete(

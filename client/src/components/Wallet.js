@@ -45,11 +45,11 @@ function loadScript(src) {
 const Wallet = ({ history, location, match }) => {
   const { user, setUser } = useContext(SiteContext);
   const [balance, setBalance] = useState(0);
+  const [monthlyBalance, setMonthlyBalance] = useState([]);
   const [addMoneyAmount, setAddMoneyAmount] = useState("");
   const [addMoneySuccess, setAddMoneySuccess] = useState(false);
   const [addMoneyFailed, setAddMoneyFailed] = useState(false);
   const [withdrawMoneyAmount, setWithdrawMoneyAmount] = useState("");
-  const [withdrawMoneySuccess, setWithdrawMoneySuccess] = useState(false);
   const [withdrawMoneyFail, setWithdrawMoneyFail] = useState(false);
   const [withdrawOptions, setWithdrawOptions] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -98,16 +98,43 @@ const Wallet = ({ history, location, match }) => {
       .then((res) => res.json())
       .then((data) => {
         setLoading(false);
-        if (data.transaction) {
+        if (data.code === "ok") {
           setUser((prev) => ({
             ...prev,
             balance: prev.balance - data.transaction.amount,
           }));
           setBalance((prev) => prev - data.transaction.amount);
           history.push("/account/wallet");
-          setWithdrawMoneySuccess(data.transaction);
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Succ_svg />
+                <h4 className="amount">₹{data.transaction?.amount}</h4>
+                <h4>Money withdrawed!</h4>
+              </div>
+            </>
+          );
+        } else if (data.code === 403) {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Insufficient fun.</h4>
+              </div>
+            </>
+          );
         } else {
-          setWithdrawMoneyFail(true);
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not withdraw money. Please try again.</h4>
+              </div>
+            </>
+          );
         }
       })
       .catch((err) => {
@@ -154,16 +181,17 @@ const Wallet = ({ history, location, match }) => {
         );
       });
   };
-  const handleOrder = (order, card) => {
+  const handleOrder = (order, method) => {
     const Razorpay = window.Razorpay;
     if (Razorpay) {
       const options = {
         key: "rzp_test_bLCP8mfYRRYzX5",
         amount: order.amount,
         currency: order.currency,
+        accept_partial: false,
         name: `${user.firstName} ${user.lastName}`,
         description: "add money to wallet",
-        image: "/logo.svg",
+        image: "/logo_big.jpg",
         order_id: order.id,
         handler: (res) => {
           fetch("/api/addMoney", {
@@ -202,18 +230,35 @@ const Wallet = ({ history, location, match }) => {
         },
         modal: { ondismiss: () => setLoading(false) },
         theme: { color: "#336cf9" },
+        customer: {
+          name: method.name || method.nameOnCard,
+          contact: user.phone,
+          email: user.email,
+        },
+        notify: {
+          sms: true,
+          email: true,
+        },
+        reminder_enable: true,
         options: {
           checkout: {
             prefill: {
-              method: "card",
-              "card[name]": card.nameOnCard,
-              "card[number]": card.cardNumber,
-              "card[expiry]": card.exp,
-              "card[cvv]": card.cvv,
+              ...(method.__t === "BankCard" && {
+                method: "card",
+                "card[name]": method.nameOnCard,
+                "card[number]": +method.cardNumber,
+                "card[expiry]": method.exp,
+                "card[cvv]": +method.cvv,
+              }),
+              ...(method.__t === "BankAccount" && {
+                method: "netBanking",
+                bank: "HDCF",
+              }),
             },
           },
         },
       };
+      console.log(options);
       const rzp1 = new Razorpay(options);
       rzp1.on("payment.failed", (res) => {
         setAddMoneyFailed(true);
@@ -228,11 +273,23 @@ const Wallet = ({ history, location, match }) => {
   };
   useEffect(() => {
     loadScript("https://checkout.razorpay.com/v1/checkout.js");
-    fetch("/api/viewUserProfile")
+    fetch("/api/dashboardData")
       .then((res) => res.json())
       .then((data) => {
-        setBalance(data?.balance || 0);
-        setUser((prev) => ({ ...prev, paymentMethods: data.paymentMethods }));
+        if (data.code === "ok") {
+          setMonthlyBalance(data.monthlyBalance);
+          setBalance(data.balance);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not update balance.</h4>
+              </div>
+            </>
+          );
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -271,6 +328,7 @@ const Wallet = ({ history, location, match }) => {
               <Moment format="ddd, DD MM YYYY">{new Date()}</Moment>
             </p>
           </div>
+          <Graph data={monthlyBalance} />
         </div>
         <div className="addWithdraw">
           <div className="add money">
@@ -525,78 +583,6 @@ const Wallet = ({ history, location, match }) => {
           <h4>Money added!</h4>
         </div>
       </Modal>
-      <Modal open={withdrawMoneySuccess} className="msg">
-        <button onClick={() => setWithdrawMoneySuccess(null)}>Okay</button>
-        <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="158"
-            height="158"
-            viewBox="0 0 158 158"
-          >
-            <defs>
-              <linearGradient
-                id="linear-gradient"
-                x1="-0.298"
-                y1="-0.669"
-                x2="1.224"
-                y2="1.588"
-                gradientUnits="objectBoundingBox"
-              >
-                <stop offset="0" stopColor="#336cf9" />
-                <stop offset="1" stopColor="#1be6d6" />
-              </linearGradient>
-              <clipPath id="clip-path">
-                <rect width="64" height="64" fill="none" />
-              </clipPath>
-            </defs>
-            <g
-              id="Group_163"
-              data-name="Group 163"
-              transform="translate(-0.426 -0.384)"
-            >
-              <g
-                id="Group_103"
-                data-name="Group 103"
-                transform="translate(0 0)"
-              >
-                <rect
-                  id="Rectangle_1104"
-                  data-name="Rectangle 1104"
-                  width="158"
-                  height="158"
-                  rx="79"
-                  transform="translate(0.426 0.384)"
-                  fill="url(#linear-gradient)"
-                />
-              </g>
-              <g
-                id="Component_148_2"
-                data-name="Component 148 – 2"
-                transform="translate(47.426 58.384)"
-                clipPath="url(#clip-path)"
-              >
-                <rect
-                  id="Rectangle_460"
-                  data-name="Rectangle 460"
-                  width="64"
-                  height="64"
-                  transform="translate(0 0)"
-                  fill="none"
-                />
-                <path
-                  id="Checkbox"
-                  d="M25.35,44.087,0,18.737l5.143-5.143L25.35,33.432,58.782,0l5.143,5.143Z"
-                  transform="translate(0 1.728)"
-                  fill="#fff"
-                />
-              </g>
-            </g>
-          </svg>
-          <h4 className="amount">₹{withdrawMoneySuccess?.amount}</h4>
-          <h4>Money withdrawed!</h4>
-        </div>
-      </Modal>
       <Modal open={withdrawMoneyFail} className="msg">
         <button
           onClick={() => {
@@ -703,6 +689,27 @@ const Wallet = ({ history, location, match }) => {
   );
 };
 
+const Graph = ({ data }) => {
+  const max = data.sort((a, b) => (a.balance < b.balance ? 1 : -1))[0]?.balance;
+  return (
+    <div className="graph">
+      <p className="label">Analytics</p>
+      <ul className="bars" data-max={`₹ ${max}`}>
+        {data.map((month, i) => {
+          return (
+            <li key={i}>
+              <div
+                className="bar"
+                style={{ height: `${month.balance / (max / 100)}%` }}
+              />
+              <label className="month">{month._id}</label>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
 const PaymentOption = ({ label, action }) => {
   const { user, setUser } = useContext(SiteContext);
   return (
@@ -824,7 +831,7 @@ export const BankCardForm = ({ prefill, onSuccess }) => {
       body: JSON.stringify({
         type: "BankCard",
         brand,
-        name,
+        nameOnCard: name,
         cardNumber,
         exp: `${expMonth}/${expYear}`,
         cvv,
@@ -1089,7 +1096,7 @@ export const BankCard = ({ card, onClick }) => {
     <div className="paymentMethod card" onClick={() => onClick?.(card)}>
       <img
         className="logo"
-        src={card.brand === "visa" ? "/payment_visa.png" : "/payment_ms.png"}
+        src={card.brand === "visa" ? "/payment_visa.png" : "/payment_mc.png"}
       />
       <p className="cardNumber">
         **** **** **** **** {card.cardNumber.substr(-4)}

@@ -218,10 +218,9 @@ io.on("connection", async (socket) => {
           });
         });
       } else {
-        console.log("could not verify");
+        console.log("could not verify for socket");
         socket.disconnect();
       }
-      return;
     }
   );
 });

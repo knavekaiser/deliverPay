@@ -9,6 +9,7 @@ import Wallet from "./Wallet";
 import Support from "./Support";
 import Profile from "./Profile";
 import Deals from "./Deals";
+import { GoogleLogout } from "react-google-login";
 require("./styles/account.scss");
 
 const Home = () => {
@@ -810,6 +811,16 @@ const ProfileAvatar = () => {
   const [menu, setMenu] = useState(false);
   const [invite, setInvite] = useState(false);
   const [msg, setMsg] = useState(null);
+  const logout = (e) => {
+    console.log(e);
+  };
+  // <GoogleLogout
+  // clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+  // buttonText="Logout"
+  // onLogoutSuccess={logout}
+  // >
+  // test
+  // </GoogleLogout>
   return (
     <>
       <div className="profile">

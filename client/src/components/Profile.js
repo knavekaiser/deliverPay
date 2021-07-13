@@ -16,36 +16,7 @@ async function updateProfileInfo(newData) {
 const Profile = ({ history, match, location }) => {
   const { user, setUser } = useContext(SiteContext);
   const [mismatchPass, setMismatchPass] = useState(false);
-  const [edit, setEdit] = useState(false);
   const [msg, setMsg] = useState(null);
-  const deletePaymentMethod = useCallback((method) => {
-    fetch("/api/deletePaymentMethod", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ _id: method._id }),
-    })
-      .then((res) => res.json())
-      .then(({ code }) => {
-        if (code === "ok") {
-          setUser((prev) => ({
-            ...prev,
-            paymentMethods: prev.paymentMethods.filter(
-              (item) => item._id !== method._id
-            ),
-          }));
-        } else {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Payment method could not be deleted.</h4>
-              </div>
-            </>
-          );
-        }
-      });
-  }, []);
   const addGoogleId = (e) => {
     updateProfileInfo({ googleId: e.googleId })
       .then((data) => setUser((prev) => ({ ...prev, googleId: e.googleId })))
@@ -288,139 +259,7 @@ const Profile = ({ history, match, location }) => {
         <div className="head">Payment Methods</div>
         <ul className="methods">
           {user.paymentMethods.map((method, i) => (
-            <li key={i}>
-              <div className="actions">
-                <button className="edit" onClick={() => setEdit(method.__t)}>
-                  Edit
-                </button>
-                <button
-                  className="delete"
-                  onClick={() => {
-                    return Confirm({
-                      label: "Payment method delete",
-                      question: "Do you want to delete this payment method?",
-                      callback: () => deletePaymentMethod(method),
-                    });
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-              {method.__t === "BankCard" && (
-                <>
-                  <BankCard card={method} />
-                  {edit === method.__t && (
-                    <Modal open={edit} className="editPaymentMethod">
-                      <div className="head">
-                        <p className="modalName">Edit Payment Method</p>
-                        <button onClick={() => setEdit(false)}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="15.557"
-                            height="15.557"
-                            viewBox="0 0 15.557 15.557"
-                          >
-                            <defs>
-                              <clipPath id="clip-path">
-                                <rect
-                                  width="15.557"
-                                  height="15.557"
-                                  fill="none"
-                                />
-                              </clipPath>
-                            </defs>
-                            <g id="Cancel" clipPath="url(#clip-path)">
-                              <path
-                                id="Union_3"
-                                data-name="Union 3"
-                                d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                                fill="#2699fb"
-                              />
-                            </g>
-                          </svg>
-                        </button>
-                      </div>
-                      <BankCardForm
-                        prefill={method}
-                        onSuccess={(paymentMethod) => {
-                          if (paymentMethod) {
-                            setEdit(false);
-                            setMsg(
-                              <>
-                                <button onClick={() => setMsg(null)}>
-                                  Okay
-                                </button>
-                                <div>
-                                  <Succ_svg />
-                                  <h4>Payment method updated.</h4>
-                                </div>
-                              </>
-                            );
-                          }
-                        }}
-                      />
-                    </Modal>
-                  )}
-                </>
-              )}
-              {method.__t === "BankAccount" && (
-                <>
-                  <BankAccount account={method} />
-                  {edit === method.__t && (
-                    <Modal open={edit} className="editPaymentMethod">
-                      <div className="head">
-                        <p className="modalName">Edit Payment Method</p>
-                        <button onClick={() => setEdit(false)}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="15.557"
-                            height="15.557"
-                            viewBox="0 0 15.557 15.557"
-                          >
-                            <defs>
-                              <clipPath id="clip-path">
-                                <rect
-                                  width="15.557"
-                                  height="15.557"
-                                  fill="none"
-                                />
-                              </clipPath>
-                            </defs>
-                            <g id="Cancel" clipPath="url(#clip-path)">
-                              <path
-                                id="Union_3"
-                                data-name="Union 3"
-                                d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                                fill="#2699fb"
-                              />
-                            </g>
-                          </svg>
-                        </button>
-                      </div>
-                      <NetBankingForm
-                        prefill={method}
-                        onSuccess={(paymentMethod) => {
-                          if (paymentMethod) {
-                            setEdit(false);
-                            setMsg(
-                              <>
-                                <button onClick={() => setMsg(null)}>
-                                  Okay
-                                </button>
-                                <div>
-                                  <Succ_svg />
-                                  <h4>Payment method updated.</h4>
-                                </div>
-                              </>
-                            );
-                          }
-                        }}
-                      />
-                    </Modal>
-                  )}
-                </>
-              )}
-            </li>
+            <SinglePaymentMethod key={i} setMsg={setMsg} method={method} />
           ))}
         </ul>
       </div>
@@ -442,6 +281,161 @@ const Profile = ({ history, match, location }) => {
         {msg}
       </Modal>
     </div>
+  );
+};
+const SinglePaymentMethod = ({ method, setMsg }) => {
+  const { setUser } = useContext(SiteContext);
+  const [edit, setEdit] = useState(false);
+  const deletePaymentMethod = useCallback((method) => {
+    fetch("/api/deletePaymentMethod", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id: method._id }),
+    })
+      .then((res) => res.json())
+      .then(({ code }) => {
+        if (code === "ok") {
+          setUser((prev) => ({
+            ...prev,
+            paymentMethods: prev.paymentMethods.filter(
+              (item) => item._id !== method._id
+            ),
+          }));
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Payment method could not be deleted.</h4>
+              </div>
+            </>
+          );
+        }
+      });
+  }, []);
+  return (
+    <li>
+      <div className="actions">
+        <button className="edit" onClick={() => setEdit(method.__t)}>
+          Edit
+        </button>
+        <button
+          className="delete"
+          onClick={() => {
+            return Confirm({
+              label: "Payment method delete",
+              question: "Do you want to delete this payment method?",
+              callback: () => deletePaymentMethod(method),
+            });
+          }}
+        >
+          Delete
+        </button>
+      </div>
+      {method.__t === "BankCard" && (
+        <>
+          <BankCard card={method} />
+          {edit === method.__t && (
+            <Modal open={edit} className="editPaymentMethod">
+              <div className="head">
+                <p className="modalName">Edit Payment Method</p>
+                <button onClick={() => setEdit(false)}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="15.557"
+                    height="15.557"
+                    viewBox="0 0 15.557 15.557"
+                  >
+                    <defs>
+                      <clipPath id="clip-path">
+                        <rect width="15.557" height="15.557" fill="none" />
+                      </clipPath>
+                    </defs>
+                    <g id="Cancel" clipPath="url(#clip-path)">
+                      <path
+                        id="Union_3"
+                        data-name="Union 3"
+                        d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
+                        fill="#2699fb"
+                      />
+                    </g>
+                  </svg>
+                </button>
+              </div>
+              <BankCardForm
+                prefill={method}
+                onSuccess={(paymentMethod) => {
+                  if (paymentMethod) {
+                    setEdit(false);
+                    setMsg(
+                      <>
+                        <button onClick={() => setMsg(null)}>Okay</button>
+                        <div>
+                          <Succ_svg />
+                          <h4>Payment method updated.</h4>
+                        </div>
+                      </>
+                    );
+                  }
+                }}
+              />
+            </Modal>
+          )}
+        </>
+      )}
+      {method.__t === "BankAccount" && (
+        <>
+          <BankAccount account={method} />
+          {edit === method.__t && (
+            <Modal open={edit} className="editPaymentMethod">
+              <div className="head">
+                <p className="modalName">Edit Payment Method</p>
+                <button onClick={() => setEdit(false)}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="15.557"
+                    height="15.557"
+                    viewBox="0 0 15.557 15.557"
+                  >
+                    <defs>
+                      <clipPath id="clip-path">
+                        <rect width="15.557" height="15.557" fill="none" />
+                      </clipPath>
+                    </defs>
+                    <g id="Cancel" clipPath="url(#clip-path)">
+                      <path
+                        id="Union_3"
+                        data-name="Union 3"
+                        d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
+                        fill="#2699fb"
+                      />
+                    </g>
+                  </svg>
+                </button>
+              </div>
+              <NetBankingForm
+                prefill={method}
+                onSuccess={(paymentMethod) => {
+                  if (paymentMethod) {
+                    setEdit(false);
+                    setMsg(
+                      <>
+                        <button onClick={() => setMsg(null)}>Okay</button>
+                        <div>
+                          <Succ_svg />
+                          <h4>Payment method updated.</h4>
+                        </div>
+                      </>
+                    );
+                  }
+                }}
+              />
+            </Modal>
+          )}
+        </>
+      )}
+    </li>
   );
 };
 
