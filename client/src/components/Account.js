@@ -9,7 +9,50 @@ import Wallet from "./Wallet";
 import Support from "./Support";
 import Profile from "./Profile";
 import Deals from "./Deals";
+import QRCode from "qrcode.react";
 import { GoogleLogout } from "react-google-login";
+import {
+  EmailShareButton,
+  FacebookShareButton,
+  HatenaShareButton,
+  InstapaperShareButton,
+  LineShareButton,
+  LinkedinShareButton,
+  LivejournalShareButton,
+  MailruShareButton,
+  OKShareButton,
+  PinterestShareButton,
+  PocketShareButton,
+  RedditShareButton,
+  TelegramShareButton,
+  TumblrShareButton,
+  TwitterShareButton,
+  ViberShareButton,
+  VKShareButton,
+  WhatsappShareButton,
+  WorkplaceShareButton,
+  EmailIcon,
+  FacebookIcon,
+  FacebookMessengerIcon,
+  HatenaIcon,
+  InstapaperIcon,
+  LineIcon,
+  LinkedinIcon,
+  LivejournalIcon,
+  MailruIcon,
+  OKIcon,
+  PinterestIcon,
+  PocketIcon,
+  RedditIcon,
+  TelegramIcon,
+  TumblrIcon,
+  TwitterIcon,
+  ViberIcon,
+  VKIcon,
+  WeiboIcon,
+  WhatsappIcon,
+  WorkplaceIcon,
+} from "react-share";
 require("./styles/account.scss");
 
 const Home = () => {
@@ -821,6 +864,7 @@ const ProfileAvatar = () => {
   // >
   // test
   // </GoogleLogout>
+  const referLink = `${window.location.origin}/u/join?referer=${user._id}`;
   return (
     <>
       <div className="profile">
@@ -836,7 +880,13 @@ const ProfileAvatar = () => {
               More about us
             </Link>
             <div className="referral">
-              <button>Invite now</button>
+              <button
+                onClick={() => {
+                  setInvite(true);
+                }}
+              >
+                Invite now
+              </button>
               <p>Refer and earn flat ₹50/- cashback to your wallet</p>
             </div>
             <button
@@ -882,7 +932,74 @@ const ProfileAvatar = () => {
         )}
       </div>
       {menu && <div className="backdrop" onClick={() => setMenu(false)} />}
-      <Modal open={invite}>coming soon</Modal>
+      <Modal
+        className="invite"
+        open={invite}
+        onBackdropClick={() => setInvite(false)}
+      >
+        <div className="imgWrapper">
+          <QRCode value={referLink} size={250} renderAs="svg" />
+        </div>
+        <div className="shareBtns">
+          <EmailShareButton url={referLink}>
+            <EmailIcon />
+          </EmailShareButton>
+          <FacebookShareButton url={referLink}>
+            <FacebookIcon />
+          </FacebookShareButton>
+          <HatenaShareButton url={referLink}>
+            <HatenaIcon />
+          </HatenaShareButton>
+          <InstapaperShareButton url={referLink}>
+            <InstapaperIcon />
+          </InstapaperShareButton>
+          <LineShareButton url={referLink}>
+            <LineIcon />
+          </LineShareButton>
+          <LinkedinShareButton url={referLink}>
+            <LinkedinIcon />
+          </LinkedinShareButton>
+          <LivejournalShareButton url={referLink}>
+            <LivejournalIcon />
+          </LivejournalShareButton>
+          <MailruShareButton url={referLink}>
+            <MailruIcon />
+          </MailruShareButton>
+          <OKShareButton url={referLink}>
+            <OKIcon />
+          </OKShareButton>
+          <PinterestShareButton url={referLink}>
+            <PinterestIcon />
+          </PinterestShareButton>
+          <PocketShareButton url={referLink}>
+            <PocketIcon />
+          </PocketShareButton>
+          <RedditShareButton url={referLink}>
+            <RedditIcon />
+          </RedditShareButton>
+          <TelegramShareButton url={referLink}>
+            <TelegramIcon />
+          </TelegramShareButton>
+          <TumblrShareButton url={referLink}>
+            <TumblrIcon />
+          </TumblrShareButton>
+          <TwitterShareButton url={referLink}>
+            <TwitterIcon />
+          </TwitterShareButton>
+          <ViberShareButton url={referLink}>
+            <ViberIcon />
+          </ViberShareButton>
+          <VKShareButton url={referLink}>
+            <VKIcon />
+          </VKShareButton>
+          <WhatsappShareButton url={referLink}>
+            <WhatsappIcon />
+          </WhatsappShareButton>
+          <WorkplaceShareButton url={referLink}>
+            <WorkplaceIcon />
+          </WorkplaceShareButton>
+        </div>
+      </Modal>
     </>
   );
 };

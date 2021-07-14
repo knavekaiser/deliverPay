@@ -56,10 +56,9 @@ $red: #ff5757;
           border-bottom: 1px solid rgba(0, 0, 0, 0.1);
           margin-bottom: 1.5rem;
           button {
-            display: none;
+            cursor: pointer;
           }
           p {
-            display: none;
             font-size: 0.8rem;
             color: rgba(0, 0, 0, 0.6);
             white-space: nowrap;
@@ -97,6 +96,7 @@ $red: #ff5757;
     display: flex;
     grid-gap: 1.25rem;
     .sidebar {
+      flex-shrink: 0;
       border-radius: 1rem;
       width: 15rem;
       padding: 1.5rem;
@@ -180,8 +180,45 @@ $red: #ff5757;
     }
   }
 }
+.modal.invite {
+  background: none !important;
+  display: grid;
+  justify-content: center;
+  overflow: auto;
+  grid-gap: 2rem;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  max-height: 100vh !important;
+  .imgWrapper {
+    background: white;
+    padding: 1.5rem;
+    width: min-content;
+    border-radius: 0.7rem;
+    display: grid;
+    place-items: center;
+    margin: auto;
+  }
+  .shareBtns {
+    padding-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    grid-gap: 1rem;
+    max-width: 25rem;
+    button {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+  }
+}
+
 ::-webkit-scrollbar {
   width: 2px;
+  height: 2px;
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(#a2a2a2, 0.44);
@@ -693,6 +730,15 @@ $red: #ff5757;
             color: $pink;
             box-shadow: inset 0 0 0 2px $pink;
             background: none;
+          }
+          &.disputeRes {
+            color: white;
+            background: linear-gradient(138deg, $pink 0%, $red 130%);
+            &:hover {
+              background: white;
+              color: $pink;
+              box-shadow: inset 0 0 0 2px $pink;
+            }
           }
         }
       }
@@ -1675,6 +1721,7 @@ $red: #ff5757;
   padding-right: 1rem;
   .leftSection {
     flex: 1;
+    display: grid;
     .nameTag {
       h2 {
         font-weight: 400;
@@ -1833,21 +1880,50 @@ $red: #ff5757;
       }
     }
     .rewards {
-      display: none;
       margin-top: 1.5rem;
       .label {
         font-size: 1.25rem;
         font-weight: 500;
         margin-bottom: 1rem;
       }
+      overflow-x: scroll;
       .cards {
         display: flex;
         grid-gap: 1rem;
+        padding: 1rem;
         li {
-          height: 6rem;
-          width: 6rem;
+          flex-shrink: 0;
+          height: 10rem;
+          width: 10rem;
           border-radius: 1rem;
           box-shadow: 0 0 0.3rem rgba(0, 0, 0, 0.1);
+          padding: 1rem;
+          padding-top: 0.7rem;
+          display: grid;
+          grid-gap: 0.25rem;
+          grid-template-rows: min-content 1fr min-content;
+          .rewardName {
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-align: center;
+          }
+          .amount {
+            font-size: 2rem;
+            font-weight: 500;
+          }
+          .rewardDscr {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.55);
+          }
+          .redeem {
+            color: $blue;
+            font-weight: 600;
+            border: none;
+            outline: none;
+            background: none;
+            width: 100%;
+            text-align: center;
+          }
         }
       }
     }

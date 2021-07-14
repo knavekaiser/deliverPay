@@ -75,7 +75,7 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
   const [msg, setMsg] = useState(null);
   const submit = (e) => {
     e.preventDefault();
-    // upload files here
+    const fileLinks = []; // upload files here
     fetch("/api/fileDispute", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,7 +83,7 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
         issue,
         milestoneId: milestone._id,
         defendantId: milestone.client._id,
-        _case: { dscr, caseFiles },
+        _case: { dscr, caseFiles: fileLinks },
       }),
     })
       .then((res) => {

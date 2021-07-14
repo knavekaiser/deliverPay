@@ -12,9 +12,10 @@ async function verify(token) {
   return userid || null;
 }
 
-app.post("/api/registerUser", (req, res) => {
+app.post("/api/registerUser", async (req, res) => {
   const { firstName, lastName, phone, email, password } = req.body;
   if (firstName && lastName && phone && email && password) {
+    const referer = await User.findOne({ _id: req.body.referer });
     bcrypt
       .hash(password, 10)
       .then((hash) => {
@@ -26,7 +27,45 @@ app.post("/api/registerUser", (req, res) => {
       })
       .then((dbRes) => {
         if (dbRes) {
-          signingIn(dbRes, res);
+          signingIn(dbRes._doc, res);
+          if (referer) {
+            new Reward({
+              name: "Referral reward",
+              amount: 50,
+              dscr: "cashback",
+            })
+              .save()
+              .then((reward) => {
+                User.findOneAndUpdate(
+                  { _id: referer },
+                  { $addToset: { rewards: reward._id } },
+                  { new: true }
+                )
+                  .then((user) => {
+                    if (user) {
+                      notify(
+                        referer,
+                        JSON.stringify({
+                          title: "Referral reward!",
+                          body:
+                            "Congratulations, you just got ₹50 cashback from Delivery Pay Referral program.",
+                        })
+                      );
+                    }
+                  })
+                  .catch((err) => {
+                    if (err.name === "MongoError") {
+                      User.findOneAndUpdate(
+                        { _id: referer },
+                        { rewards: [reward._id] },
+                        { new: true }
+                      ).then((user) => {
+                        console.log(user.rewards);
+                      });
+                    }
+                  });
+              });
+          }
         } else {
           res.status(500).json({ message: "something went wrong" });
         }
@@ -164,7 +203,8 @@ app.patch(
       { new: true }
     )
       .then((user) => {
-        res.json({ message: "profile updated", user });
+        delete user._doc.pass;
+        res.json({ message: "profile updated", user: user._doc });
       })
       .catch((err) => {
         console.log(err);
@@ -330,161 +370,3 @@ app.patch("/api/userResetPass", async (req, res) => {
     }
   }
 });
-
-app.get(
-  "/api/getAllLedgers",
-  passport.authenticate("userPrivate"),
-  (req, res) => {
-    PaymentLedger.find({ user: req.user._id })
-      .then((dbRes) => {
-        res.json(dbRes);
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({ message: "something went wrong" });
-      });
-  }
-);
-app.get(
-  "/api/getSingleLedger",
-  passport.authenticate("userPrivate"),
-  (req, res) => {
-    if (req.query._id) {
-      PaymentLedger.aggregate([
-        { $match: { _id: ObjectId(req.query._id) } },
-        {
-          $lookup: {
-            from: "books",
-            as: "bookings",
-            localField: "product",
-            foreignField: "_id",
-          },
-        },
-        {
-          $lookup: {
-            from: "chats",
-            as: "chats",
-            localField: "product",
-            foreignField: "_id",
-          },
-        },
-        {
-          $lookup: {
-            from: "teleconsults",
-            as: "tele",
-            localField: "product",
-            foreignField: "_id",
-          },
-        },
-        {
-          $lookup: {
-            from: "orders",
-            as: "orders",
-            localField: "product",
-            foreignField: "_id",
-          },
-        },
-        {
-          $lookup: {
-            from: "diagnosticbookings",
-            as: "diagnostics",
-            localField: "product",
-            foreignField: "_id",
-          },
-        },
-        {
-          $set: {
-            product: {
-              $switch: {
-                branches: [
-                  {
-                    case: {
-                      $eq: [
-                        {
-                          $size: "$bookings",
-                        },
-                        1,
-                      ],
-                    },
-                    then: {
-                      $first: "$bookings",
-                    },
-                  },
-                  {
-                    case: {
-                      $eq: [
-                        {
-                          $size: "$orders",
-                        },
-                        1,
-                      ],
-                    },
-                    then: {
-                      $first: "$orders",
-                    },
-                  },
-                  {
-                    case: {
-                      $eq: [
-                        {
-                          $size: "$chats",
-                        },
-                        1,
-                      ],
-                    },
-                    then: {
-                      $first: "$chats",
-                    },
-                  },
-                  {
-                    case: {
-                      $eq: [
-                        {
-                          $size: "$tele",
-                        },
-                        1,
-                      ],
-                    },
-                    then: {
-                      $first: "$tele",
-                    },
-                  },
-                  {
-                    case: {
-                      $eq: [
-                        {
-                          $size: "$diagnostics",
-                        },
-                        1,
-                      ],
-                    },
-                    then: {
-                      $first: "$diagnostics",
-                    },
-                  },
-                ],
-                default: null,
-              },
-            },
-          },
-        },
-        {
-          $unset: ["bookings", "chats", "tele", "orders", "diagnostics"],
-        },
-      ])
-        .then((dbRes) => {
-          if (dbRes.length) {
-            res.json(dbRes[0]);
-          } else {
-            res.status(400).json({ message: "bad request" });
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          res.status(500).json({ message: "something went wrong" });
-        });
-    } else {
-      res.status(400).json({ message: "bad request" });
-    }
-  }
-);

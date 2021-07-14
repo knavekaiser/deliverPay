@@ -99,6 +99,18 @@ const milestoneModel = new Schema(
 );
 global.Milestone = mongoose.model("Milestone", milestoneModel);
 
+const rewardModel = new Schema(
+  {
+    name: { type: String },
+    dscr: { type: String },
+    img: { type: String },
+    amount: { type: Number },
+    redeemed: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+global.Reward = mongoose.model("Reward", rewardModel);
+
 const paymentMethodModel = new Schema(
   {
     dscr: { type: String },

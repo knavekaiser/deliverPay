@@ -555,6 +555,100 @@ export const Prog_runningBack = () => {
   );
 };
 
+export const Plus_svg = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+    >
+      <line
+        id="Line_29"
+        data-name="Line 29"
+        y2="20"
+        transform="translate(10)"
+        fill="none"
+        stroke="#006dff"
+        strokeWidth="2"
+      />
+      <line
+        id="Line_30"
+        data-name="Line 30"
+        x2="20"
+        transform="translate(0 10)"
+        fill="none"
+        stroke="#006dff"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+};
+export const Minus_svg = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+    >
+      <line
+        id="Line_30"
+        data-name="Line 30"
+        x2="20"
+        transform="translate(0 10)"
+        fill="none"
+        stroke="#006dff"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+};
+export const Arrow_up_svg = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+    >
+      <g
+        id="Symbol_82"
+        data-name="Symbol 82"
+        transform="translate(-507 1272) rotate(-90)"
+      >
+        <path
+          id="Path_10"
+          data-name="Path 10"
+          d="M9,0,7.364,1.636l6.195,6.195H0v2.338H13.558L7.364,16.364,9,18l9-9Z"
+          transform="translate(1254 507)"
+          fill="#336cf9"
+        />
+      </g>
+    </svg>
+  );
+};
+export const Arrow_down_svg = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+    >
+      <g id="_1" data-name=" 1" transform="translate(525 -1254) rotate(90)">
+        <path
+          id="Path_10"
+          data-name="Path 10"
+          d="M9,0,7.364,1.636l6.195,6.195H0v2.338H13.558L7.364,16.364,9,18l9-9Z"
+          transform="translate(1254 507)"
+          fill="#ff0080"
+        />
+      </g>
+    </svg>
+  );
+};
+
 export const Checkbox = ({ defaultValue, required, onChange }) => {
   const [checked, setChecked] = useState(defaultValue);
   return (

@@ -1,13 +1,18 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { SiteContext } from "../SiteContext";
-import { Route, Switch, useHistory, Link } from "react-router-dom";
+import { Route, Switch, useHistory, useLocation, Link } from "react-router-dom";
 import { Checkbox } from "./Elements";
 import { GoogleLogin } from "react-google-login";
 require("../components/styles/userStart.scss");
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 const RegisterForm = () => {
   const { user, setUser } = useContext(SiteContext);
   const history = useHistory();
+  const query = useQuery();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,6 +40,7 @@ const RegisterForm = () => {
         phone,
         email,
         password: pass,
+        ...(query.get("referer") && { referer: query.get("referer") }),
       }),
     })
       .then((res) => res.json())

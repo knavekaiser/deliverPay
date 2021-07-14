@@ -11,6 +11,7 @@ const disputeModel = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Milestone",
       required: true,
+      unique: true,
     },
     plaintiff: {
       _id: { type: Schema.Types.ObjectId, ref: "User", required: true },

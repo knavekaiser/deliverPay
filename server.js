@@ -108,6 +108,26 @@ require("./routes/payments.js");
 require("./routes/disputes.js");
 require("./routes/chats.js");
 
+app.post("/api/contactUsRequest", (req, res) => {
+  const { name, email, phone, message } = req.body;
+  if (name && message && (email || phone)) {
+    new ContactUs({ ...req.body })
+      .save()
+      .then((dbRes) => {
+        res.json({ message: "request submitted" });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ message: "something went wrong" });
+      });
+  } else {
+    res.status(400).json({
+      code: 400,
+      message: "name, message and phone/email is required",
+    });
+  }
+});
+
 // notification
 app.post("/api/subscribe", passport.authenticate("userPrivate"), (req, res) => {
   new NotificationSubscription({ ...req.body, client: req.user._id })

@@ -10,7 +10,15 @@ import {
 import { SiteContext } from "../SiteContext";
 import { Link, Route } from "react-router-dom";
 import { Modal } from "./Modal";
-import { Combobox, Succ_svg, Err_svg } from "./Elements";
+import {
+  Combobox,
+  Succ_svg,
+  Err_svg,
+  Plus_svg,
+  Minus_svg,
+  Arrow_up_svg,
+  Arrow_down_svg,
+} from "./Elements";
 import Moment from "react-moment";
 import moment from "moment";
 function generateGreetings() {
@@ -47,6 +55,7 @@ const Wallet = ({ history, location, match }) => {
   const [balance, setBalance] = useState(0);
   const [monthlyBalance, setMonthlyBalance] = useState([]);
   const [addMoneyAmount, setAddMoneyAmount] = useState("");
+  const [rewards, setRewards] = useState([]);
   const [addMoneySuccess, setAddMoneySuccess] = useState(false);
   const [addMoneyFailed, setAddMoneyFailed] = useState(false);
   const [withdrawMoneyAmount, setWithdrawMoneyAmount] = useState("");
@@ -279,6 +288,7 @@ const Wallet = ({ history, location, match }) => {
         if (data.code === "ok") {
           setMonthlyBalance(data.monthlyBalance);
           setBalance(data.balance);
+          setRewards(data.rewards);
         } else {
           setMsg(
             <>
@@ -370,9 +380,89 @@ const Wallet = ({ history, location, match }) => {
         <div className="rewards">
           <p className="label">Rewards</p>
           <ul className="cards">
-            <li></li>
-            <li></li>
-            <li></li>
+            {rewards.map((item, i) => (
+              <li key={i}>
+                <p className="rewardName">{item.name}</p>
+                <div>
+                  {item.img && <img src={item.img} />}
+                  {item.amount && <p className="amount">₹{item.amount}</p>}
+                  <p className="rewardDscr">{item.dscr}</p>
+                </div>
+                {!item.redeemed && (
+                  <button
+                    className="redeem"
+                    onClick={() => {
+                      setMsg(
+                        <>
+                          <div>
+                            <h4>Redeeming Reward...</h4>
+                          </div>
+                        </>
+                      );
+                      fetch("/api/redeemReward", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ _id: item._id }),
+                      })
+                        .then((res) => res.json())
+                        .then((data) => {
+                          if (data.code === "ok") {
+                            setRewards((prev) =>
+                              prev.map((item) => {
+                                if (item._id === data.reward._id) {
+                                  return data.reward;
+                                } else {
+                                  return item;
+                                }
+                              })
+                            );
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <Succ_svg />
+                                  <h4>Reward succefully redeemed</h4>
+                                </div>
+                              </>
+                            );
+                          } else {
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <Err_svg />
+                                  <h4>Could not redeem reward.</h4>
+                                </div>
+                              </>
+                            );
+                          }
+                        })
+                        .catch((err) => {
+                          console.log(err);
+                          setMsg(
+                            <>
+                              <button onClick={() => setMsg(null)}>Okay</button>
+                              <div>
+                                <Err_svg />
+                                <h4>
+                                  Could not redeem reward. Make sure you're
+                                  online.
+                                </h4>
+                              </div>
+                            </>
+                          );
+                        });
+                    }}
+                  >
+                    Redeem
+                  </button>
+                )}
+              </li>
+            ))}
           </ul>
         </div>
       </div>
@@ -694,7 +784,7 @@ const Graph = ({ data }) => {
   return (
     <div className="graph">
       <p className="label">Analytics</p>
-      <ul className="bars" data-max={`₹ ${max}`}>
+      <ul className="bars" data-max={`₹ ${max || 0}`}>
         {data.map((month, i) => {
           return (
             <li key={i}>
@@ -1366,31 +1456,7 @@ const SingleTransaction = ({ transaction }) => {
       icon = (
         <>
           <div className="icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-            >
-              <line
-                id="Line_29"
-                data-name="Line 29"
-                y2="20"
-                transform="translate(10)"
-                fill="none"
-                stroke="#006dff"
-                strokeWidth="2"
-              />
-              <line
-                id="Line_30"
-                data-name="Line 30"
-                x2="20"
-                transform="translate(0 10)"
-                fill="none"
-                stroke="#006dff"
-                strokeWidth="2"
-              />
-            </svg>
+            <Plus_svg />
           </div>
           <p className="detail">Money added to wallet</p>
         </>
@@ -1400,22 +1466,7 @@ const SingleTransaction = ({ transaction }) => {
       icon = (
         <>
           <div className="icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-            >
-              <line
-                id="Line_30"
-                data-name="Line 30"
-                x2="20"
-                transform="translate(0 10)"
-                fill="none"
-                stroke="#006dff"
-                strokeWidth="2"
-              />
-            </svg>
+            <Minus_svg />
           </div>
           <p className="detail">Money withdrawal from Wallet</p>
         </>
@@ -1426,26 +1477,7 @@ const SingleTransaction = ({ transaction }) => {
         transaction.amount < 0 ? (
           <>
             <div className="icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 18 18"
-              >
-                <g
-                  id="Symbol_82"
-                  data-name="Symbol 82"
-                  transform="translate(-507 1272) rotate(-90)"
-                >
-                  <path
-                    id="Path_10"
-                    data-name="Path 10"
-                    d="M9,0,7.364,1.636l6.195,6.195H0v2.338H13.558L7.364,16.364,9,18l9-9Z"
-                    transform="translate(1254 507)"
-                    fill="#336cf9"
-                  />
-                </g>
-              </svg>
+              <Arrow_up_svg />
             </div>
             <p className="detail">
               Paid to{" "}
@@ -1459,40 +1491,36 @@ const SingleTransaction = ({ transaction }) => {
         ) : (
           <>
             <div className="icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 18 18"
-              >
-                <g
-                  id="_1"
-                  data-name=" 1"
-                  transform="translate(525 -1254) rotate(90)"
-                >
-                  <path
-                    id="Path_10"
-                    data-name="Path 10"
-                    d="M9,0,7.364,1.636l6.195,6.195H0v2.338H13.558L7.364,16.364,9,18l9-9Z"
-                    transform="translate(1254 507)"
-                    fill="#ff0080"
-                  />
-                </g>
-              </svg>
+              <Arrow_down_svg />
             </div>
             <p className="detail">
               Received from{" "}
               <span className="userName">
-                {transaction.client.firstName +
+                {transaction.client?.firstName +
                   " " +
-                  transaction.client.lastName}
+                  transaction.client?.lastName}
               </span>
             </p>
           </>
         );
       break;
     default:
-      icon = null;
+      icon =
+        transaction.amount < 0 ? (
+          <>
+            <div className="icon">
+              <Minus_svg />
+            </div>
+            <p className="detail">{transaction.note}</p>
+          </>
+        ) : (
+          <>
+            <div className="icon">
+              <Plus_svg />
+            </div>
+            <p className="detail">{transaction.note}</p>
+          </>
+        );
   }
   return (
     <li className="transaction">

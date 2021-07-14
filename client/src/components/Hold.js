@@ -89,6 +89,14 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
   const [releaseForm, setReleaseForm] = useState(false);
   const [disputeForm, setDisputeForm] = useState(false);
   const [msg, setMsg] = useState(null);
+  let myCase = null;
+  let disputeFiledBy = null;
+  if (milestone.dispute?.plaintiff._id === milestone.client._id) {
+    myCase = milestone.dispute?.defendant?.case?.dscr;
+    disputeFiledBy = "client";
+  } else if (milestone.dispute?.defendant._id === milestone.client._id) {
+    disputeFiledBy = "self";
+  }
   return (
     <li className={`milestone ${milestone.role}`} key={milestone._id}>
       <div className="clientDetail">
@@ -167,9 +175,19 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
                 Released
               </Link>
             )}
-            {milestone.status === "dispute" && (
+            {((disputeFiledBy === "client" && myCase) ||
+              disputeFiledBy === "self") && (
               <Link className="disputed" to={`#`}>
                 Dispute
+              </Link>
+            )}
+            {disputeFiledBy === "client" && !myCase && (
+              <Link
+                className="disputeRes"
+                to={"#"}
+                onClick={() => setDisputeForm(true)}
+              >
+                Approve Dispute
               </Link>
             )}
           </div>
@@ -264,7 +282,13 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
                 Manual verification
               </Link>
             )}
-            {milestone.status === "dispute" && (
+            {((disputeFiledBy === "client" && myCase) ||
+              disputeFiledBy === "self") && (
+              <Link className="disputed" to={`#`}>
+                Dispute
+              </Link>
+            )}
+            {disputeFiledBy === "client" && !myCase && (
               <Link
                 className="disputeRes"
                 to={"#"}

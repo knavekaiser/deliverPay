@@ -40,8 +40,9 @@ app.get(
           $limit: 12,
         },
       ]),
+      User.findOne({ _id: req.user._id }, "rewards").populate("rewards"),
     ])
-      .then(([monthlyBalance]) => {
+      .then(([monthlyBalance, { rewards }]) => {
         const monthName = [
           "Jan",
           "Feb",
@@ -76,6 +77,7 @@ app.get(
           code: "ok",
           balance: req.user.balance,
           monthlyBalance: months,
+          rewards,
         });
       })
       .catch((err) => {
@@ -187,6 +189,58 @@ app.get(
         console.log(err);
         res.status(500).json({ message: "something went wrong" });
       });
+  }
+);
+
+app.post(
+  "/api/redeemReward",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { _id } = req.body;
+    if (_id) {
+      Reward.findOne({ _id, redeemed: false }).then((reward) => {
+        if (reward) {
+          new Transaction({
+            user: req.user._id,
+            amount: reward.amount,
+            note: "referral cashback",
+          })
+            .save()
+            .then((transaction) => {
+              User.findOneAndUpdate(
+                { _id: req.user._id },
+                {
+                  $inc: { balance: reward.amount },
+                  $addToSet: { transactions: transaction._id },
+                },
+                { new: true }
+              ).then((user) => {
+                if (user) {
+                  Reward.findOneAndUpdate(
+                    { _id },
+                    { redeemed: true },
+                    { new: true }
+                  ).then((newReward) => {
+                    res.json({
+                      code: "ok",
+                      message: "reward succefully redeemed",
+                      reward: newReward,
+                    });
+                  });
+                }
+              });
+            })
+            .catch((err) => {
+              console.log(err);
+              res.status(500).json({ code: 500, message: "database error" });
+            });
+        } else {
+          res.status(400).json({ code: 400 });
+        }
+      });
+    } else {
+      res.status(400).json({ code: 400, message: "_id is required" });
+    }
   }
 );
 
@@ -331,6 +385,27 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
         "client.createdAt": 0,
         "client.updatedAt": 0,
         "client.__v": 0,
+      },
+    },
+    {
+      $lookup: {
+        from: "disputes",
+        let: { mId: "$_id" },
+        as: "dispute",
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$milestoneId", "$$mId"],
+              },
+            },
+          },
+        ],
+      },
+    },
+    {
+      $set: {
+        dispute: { $first: "$dispute" },
       },
     },
     {
@@ -778,14 +853,6 @@ app.patch(
                   client: milestone.seller._id,
                 })
                   .then(([userChat, clientChat]) => {
-                    io.to(userChat._id.toString())
-                      .to(clientChat._id.toString())
-                      .emit("messageToUser", {
-                        type: "milestone",
-                        from: milestone.buyer._id,
-                        to: milestone.seller._id,
-                        text: `${req.user.firstName} approved a milestone.`,
-                      });
                     return SendMessage({
                       rooms: [userChat._id, clientChat._id],
                       message: {
@@ -883,14 +950,6 @@ app.post(
                   user: user._id,
                   client: seller._id,
                 }).then(([userChat, clientChat]) => {
-                  io.to(userChat._id.toString())
-                    .to(clientChat._id.toString())
-                    .emit("messageToUser", {
-                      type: "milestone",
-                      from: user._id,
-                      to: seller._id,
-                      text: `${req.user.firstName} created a milestone.`,
-                    });
                   return SendMessage({
                     rooms: [userChat._id, clientChat._id],
                     message: {

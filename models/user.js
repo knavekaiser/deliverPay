@@ -48,7 +48,7 @@ const userModel = new Schema(
       },
     ],
     chats: [{ type: Schema.Types.ObjectId, ref: "Chat" }],
-    rewards: [{}],
+    rewards: [{ type: Schema.Types.ObjectId, ref: "Reward" }],
     notifications: [
       new Schema(
         {
@@ -94,3 +94,14 @@ const OTPModel = new Schema(
   { timestamp: true }
 );
 global.OTP = mongoose.model("OTP", OTPModel);
+
+const contactUsModel = new Schema(
+  {
+    name: { type: String, required: true },
+    phone: { type: String },
+    email: { type: String },
+    message: { type: String, required: true },
+  },
+  { timestamps: true }
+);
+global.ContactUs = mongoose.model("ContactUs", contactUsModel);
