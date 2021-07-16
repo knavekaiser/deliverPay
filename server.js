@@ -106,6 +106,7 @@ app.get(
 require("./routes/user.js");
 require("./routes/payments.js");
 require("./routes/disputes.js");
+require("./routes/products.js");
 require("./routes/chats.js");
 
 app.post("/api/contactUsRequest", (req, res) => {
@@ -115,6 +116,26 @@ app.post("/api/contactUsRequest", (req, res) => {
       .save()
       .then((dbRes) => {
         res.json({ message: "request submitted" });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ message: "something went wrong" });
+      });
+  } else {
+    res.status(400).json({
+      code: 400,
+      message: "name, message and phone/email is required",
+    });
+  }
+});
+app.post("/api/workRequest", (req, res) => {
+  const { firstName, lastName, email, phone, dscr } = req.body;
+  if (firstName && lastName && (email || phone) && dscr) {
+    console.log(req.body);
+    new WorkRequest({ ...req.body })
+      .save()
+      .then((dbRes) => {
+        res.json({ code: "ok", message: "request submitted" });
       })
       .catch((err) => {
         console.log(err);
@@ -219,14 +240,6 @@ io.on("connection", async (socket) => {
                 }),
                 "User"
               );
-              io.to(rooms[0].toString())
-                .to(rooms[1].toString())
-                .emit("messageToUser", {
-                  ...message,
-                  from: decoded.sub,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                });
             } else {
               socket.emit("sendFail", { err: "room does not exists" });
             }

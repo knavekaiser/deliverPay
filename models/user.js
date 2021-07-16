@@ -59,6 +59,7 @@ const userModel = new Schema(
         { timestamps: true }
       ),
     ],
+    notificationLastRead: { type: Date },
     paymentMethods: [{ type: Schema.Types.ObjectId, ref: "PaymentMethod" }],
     profileImg: { type: String, default: "/profile-user.jpg" },
   },
@@ -105,3 +106,15 @@ const contactUsModel = new Schema(
   { timestamps: true }
 );
 global.ContactUs = mongoose.model("ContactUs", contactUsModel);
+
+const workRequestModel = new Schema(
+  {
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    email: { type: String },
+    phone: { type: String },
+    dscr: { type: String, required: true },
+  },
+  { timestamps: true }
+);
+global.WorkRequest = mongoose.model("WorkRequest", workRequestModel);

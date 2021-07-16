@@ -40,6 +40,19 @@ global.WithdrawMoney = Transaction.discriminator(
   })
 );
 
+const razorOrderIdModel = new Schema(
+  {
+    user: { type: Schema.Types.ObjectId, required: true },
+    id: { type: String, required: true, unique: true },
+    currency: { type: String, required: true },
+    amount: { type: String, required: true },
+    status: { type: String, default: "pending" },
+    expireAt: { type: Date, default: Date.now, index: { expires: "120m" } },
+  },
+  { timestamps: true }
+);
+global.RazorOrderId = mongoose.model("RazorOrderId", razorOrderIdModel);
+
 const milestoneModel = new Schema(
   {
     buyer: {
@@ -71,29 +84,33 @@ const milestoneModel = new Schema(
       ],
       default: "pending",
     },
-    product: {
-      type: { type: String, required: true },
-      dscr: { type: String, required: true },
-      deliveryDetail: {
-        timeOfDelivery: { type: Date },
+    products: [
+      {
         name: { type: String, required: true },
-        phone: { type: String, required: true },
-        alternatePhone: { type: String },
-        landmark: { type: String },
-        street: { type: String },
-        city: { type: String },
-        state: { type: String },
-        country: { type: String },
-        location: {
-          type: { type: String, enum: ["Point"] },
-          coordinates: [{ type: Number }],
-        },
+        dscr: { type: String, required: true },
+        imgaes: [{ type: String }],
+      },
+    ],
+    deliveryDetail: {
+      timeOfDelivery: { type: Date },
+      name: { type: String, required: true },
+      phone: { type: String, required: true },
+      alternatePhone: { type: String },
+      landmark: { type: String },
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      country: { type: String },
+      location: {
+        type: { type: String, enum: ["Point"] },
+        coordinates: [{ type: Number }],
       },
     },
     releaseDate: { type: Date },
     amount: { type: Number, required: true },
     verification: { type: String, default: "smooth" },
     dispute: { type: Schema.Types.ObjectId, ref: "Dispute" },
+    dscr: { type: String },
   },
   { timestamps: true }
 );
@@ -145,3 +162,15 @@ global.BankCard = PaymentMethod.discriminator(
     cvv: { type: String, required: true },
   })
 );
+
+const productModel = new Schema(
+  {
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    name: { type: String, required: true },
+    dscr: { type: String, required: true },
+    images: [{ type: String }],
+    price: { type: Number, required: true },
+  },
+  { timestamps: true }
+);
+global.Product = mongoose.model("Product", productModel);

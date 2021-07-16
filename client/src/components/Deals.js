@@ -52,8 +52,8 @@ const Deals = ({ history, location, match }) => {
         (chat) => chat.client.phone === match.params.phone
       );
       if (person) {
-        const { client, messages, status } = person;
-        setUserCard({ ...client, status, messages });
+        const { client, messages, status, lastSeen } = person;
+        setUserCard({ ...client, status, messages, lastSeen });
       }
     }
   }, [match.params, contacts]);
@@ -250,6 +250,10 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
               <img src={userCard.profileImg} />
               <p className="name">
                 {userCard.firstName + " " + userCard.lastName}
+                <span className="lastSeen">
+                  Last seen:{" "}
+                  <Moment format="hh:mma, MMM DD">{userCard.lastSeen}</Moment>
+                </span>
               </p>
             </div>
             <Link className="pay" to={`/account/deals/${userCard.phone}/pay`}>
@@ -266,7 +270,7 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
                   Math.abs(
                     new Date(msg.createdAt).getTime() -
                       new Date(chat[i + 1]?.createdAt).getTime()
-                  ) > 300000;
+                  ) > 120000;
                 const dateStamp =
                   moment(msg.createdAt).format("YYYY-MM-DD") !==
                     moment(chat[i - 1]?.createdAt).format("YYYY-MM-DD") ||

@@ -1,4 +1,12 @@
 let base64 = require("base-64");
+const crypto = require("crypto");
+
+const verifyRazorSignature = (orderId, paymentId, razorSignature) => {
+  const hmac = crypto.createHmac("sha256", process.env.RAZOR_PAY_SECRET);
+  hmac.update(orderId + "|" + paymentId);
+  let generatedSignature = hmac.digest("hex");
+  return razorSignature === generatedSignature;
+};
 
 app.get(
   "/api/dashboardData",
@@ -259,8 +267,20 @@ app.post(
         currency: "INR",
         receipt: req.user._id.toString(),
       })
-      .then((order) => {
-        res.json({ code: "ok", order });
+      .then((order) =>
+        new RazorOrderId({
+          ...order,
+          user: req.user._id,
+          status: "pending",
+          amount: amount,
+        }).save()
+      )
+      .then((savedOrder) => {
+        res.json({
+          code: "ok",
+          order: savedOrder,
+          key: process.env.RAZOR_PAY_ID,
+        });
       })
       .catch((err) => {
         console.log(err);
@@ -268,57 +288,80 @@ app.post(
       });
   }
 );
-app.put("/api/addMoney", passport.authenticate("userPrivate"), (req, res) => {
-  const { transactionId } = req.body;
-  if (transactionId) {
-    razorpay.payments
-      .fetch(transactionId)
-      .then((razorRes) => {
-        if (razorRes) {
-          new AddMoney({
-            transactionId: razorRes.id,
-            amount: razorRes.amount / 100,
-            paymentMethod: razorRes.method,
-            user: req.user._id,
-          })
-            .save()
-            .then((dbRes) => {
-              if (dbRes) {
-                User.findOneAndUpdate(
-                  { _id: req.user._id },
-                  {
-                    $inc: { balance: dbRes.amount },
-                    $addToSet: { transactions: dbRes._id },
-                  },
+app.put(
+  "/api/addMoney",
+  passport.authenticate("userPrivate"),
+  async (req, res) => {
+    const { transactionId, razorSignature, razorOrderId } = req.body;
+    const serverOrderId = await RazorOrderId.findOne({
+      id: razorOrderId,
+      user: req.user._id,
+      status: "pending",
+    });
+    if (transactionId && razorSignature && serverOrderId) {
+      if (
+        verifyRazorSignature(serverOrderId.id, transactionId, razorSignature)
+      ) {
+        razorpay.payments
+          .fetch(transactionId)
+          .then((razorRes) => {
+            if (razorRes) {
+              Promise.all([
+                new AddMoney({
+                  transactionId: razorRes.id,
+                  amount: razorRes.amount / 100,
+                  paymentMethod: razorRes.method,
+                  user: req.user._id,
+                }).save(),
+                RazorOrderId.findOneAndUpdate(
+                  { id: serverOrderId.id },
+                  { state: "successful", expireAt: null },
                   { new: true }
-                ).then((updated) => {
-                  res.json({
-                    code: "ok",
-                    transaction: dbRes,
-                    user: {
-                      balance: updated.balance,
-                      transactions: updated.transactions,
-                    },
-                  });
+                ),
+              ])
+                .then(([moneyReciept, updatedOrder]) => {
+                  if (moneyReciept) {
+                    User.findOneAndUpdate(
+                      { _id: req.user._id },
+                      {
+                        $inc: { balance: moneyReciept.amount },
+                        $addToSet: { transactions: moneyReciept._id },
+                      },
+                      { new: true }
+                    ).then((updated) => {
+                      res.json({
+                        code: "ok",
+                        transaction: moneyReciept,
+                        user: {
+                          balance: updated.balance,
+                          transactions: updated.transactions,
+                        },
+                      });
+                    });
+                  }
+                })
+                .catch((err) => {
+                  console.log(err);
+                  res.status(400).json({ message: "bad request" });
                 });
-              }
-            })
-            .catch((err) => {
-              console.log(err);
+            } else {
               res.status(400).json({ message: "bad request" });
-            });
-        } else {
-          res.status(400).json({ message: "bad request" });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(400).json({ message: "bad request" });
-      });
-  } else {
-    res.status(400).json({ message: "incomplete request" });
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(400).json({ message: "bad request" });
+          });
+      } else {
+        res
+          .status(400)
+          .json({ code: 400, message: "invalid payment signature" });
+      }
+    } else {
+      res.status(400).json({ message: "incomplete request" });
+    }
   }
-});
+);
 app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
   Milestone.aggregate([
     {
@@ -432,7 +475,6 @@ app.post(
       return;
     }
     let fundAccountDetail;
-    console.log(accountDetail);
     switch (paymentMethod) {
       case "BankAccount":
         fundAccountDetail = {
@@ -659,7 +701,6 @@ app.patch(
       global[type]
         .findOneAndUpdate({ _id: req.body._id }, { ...req.body }, { new: true })
         .then((paymentMethod) => {
-          console.log(paymentMethod);
           if (paymentMethod) {
             res.json({ code: "ok", paymentMethod });
           } else {
@@ -709,9 +750,9 @@ app.post(
   "/api/requestMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { buyer_id, amount, product } = req.body;
+    const { buyer_id, amount, products } = req.body;
     const buyer = await User.findOne({ _id: buyer_id });
-    if (buyer && product) {
+    if (buyer && products) {
       new Milestone({
         ...req.body,
         status: "pending",
@@ -833,7 +874,7 @@ app.patch(
               amount: -Math.abs(milestone.amount),
               user: req.user._id,
               client: milestone.seller,
-              dscr: milestone.product.dscr,
+              dscr: milestone.dscr,
               note: "milestone creation",
             })
               .save()
@@ -902,7 +943,7 @@ app.post(
   "/api/createMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { amount, seller, product } = req.body;
+    const { amount, seller, dscr } = req.body;
     if (+amount > req.user.balance) {
       res.status(403).json({ message: "insufficient fund" });
       return;
@@ -922,7 +963,7 @@ app.post(
               amount: -Math.abs(milestone.amount),
               user: req.user._id,
               client: milestone.seller,
-              dscr: milestone.product.dscr,
+              dscr: milestone.dscr,
               note: "milestone creation",
             })
               .save()
@@ -1015,7 +1056,7 @@ app.patch(
             user: req.user._id,
             client: milestone.client,
             note: "milestone increase",
-            dscr: milestone.product.dscr,
+            dscr: milestone.dscr,
           }).save(),
           new P2PTransaction({
             amount,
@@ -1089,7 +1130,7 @@ app.patch(
             user: req.user._id,
             client: milestone.seller,
             note: "milestone decrease",
-            dscr: milestone.product.dscr,
+            dscr: milestone.dscr,
           }).save(),
           new P2PTransaction({
             amount,
@@ -1097,7 +1138,7 @@ app.patch(
             user: milestone.seller._id,
             client: milestone.buyer,
             note: "milestone release",
-            dscr: milestone.product.dscr,
+            dscr: milestone.dscr,
           }).save(),
           Milestone.findOneAndUpdate(
             { _id: milestone._id },
@@ -1234,7 +1275,7 @@ app.delete(
               user: req.user._id,
               client: milestone.seller,
               note,
-              dscr: milestone.product.dscr,
+              dscr: milestone.dscr,
             })
               .save()
               .then((transaction) => {

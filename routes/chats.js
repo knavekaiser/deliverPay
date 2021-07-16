@@ -1,3 +1,10 @@
+app.get("/api/inviteUser", passport.authenticate("userPrivate"), (req, res) => {
+  const { q, origin } = req.query;
+  const messageBody = `${req.user.firstName} ${req.user.lastName} invites you to join Delivery Pay. Join Delivery Pay to make safe transactions. ${origin}/u/join?referer=${req.user._id}`;
+  // send message here
+  res.json({ code: "ok", message: "invitation sent" });
+});
+
 app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
   const { q } = req.query;
   User.find(

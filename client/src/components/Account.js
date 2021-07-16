@@ -2,10 +2,19 @@ import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { SiteContext } from "../SiteContext";
 import { Route, Switch, useHistory, Link } from "react-router-dom";
 import { Modal } from "./Modal.js";
-import { Combobox, NumberInput, Err_svg, Succ_svg, X_svg } from "./Elements";
+import {
+  Combobox,
+  NumberInput,
+  Err_svg,
+  Succ_svg,
+  X_svg,
+  Plus_svg,
+  Minus_svg,
+} from "./Elements";
 import Hold from "./Hold.js";
 import Transactions from "./Transactions";
 import Wallet from "./Wallet";
+import Products from "./Products";
 import Support from "./Support";
 import Profile from "./Profile";
 import Deals from "./Deals";
@@ -53,15 +62,84 @@ import {
   WhatsappIcon,
   WorkplaceIcon,
 } from "react-share";
+import Moment from "react-moment";
 require("./styles/account.scss");
 
 const Home = () => {
   const history = useHistory();
+  const [value, setValue] = useState("");
   const [userType, setUserType] = useState("");
   const [users, setUsers] = useState([]);
   const [recentPayments, setRecentPayments] = useState([]);
   const [client, setClient] = useState(null);
   const [msg, setMsg] = useState(null);
+  const fetchUsers = useCallback(
+    (e) => {
+      setValue(e.target.value);
+      fetch(`/api/getUsers?q=${value}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) {
+            setUsers(data);
+          }
+        });
+      if (e.target.value === "") {
+        setUsers([]);
+      }
+    },
+    [value]
+  );
+  const inviteUser = useCallback(() => {
+    if (value.match(/^\+?[789]\d{9}$/)) {
+      fetch(`/api/inviteUser?q=${value}origin=${window.location.origin}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.code === "ok") {
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Succ_svg />
+                  <h4>Invitation sent.</h4>
+                </div>
+              </>
+            );
+          } else {
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Err_svg />
+                  <h4>Invitation could not be sent. Please try again.</h4>
+                </div>
+              </>
+            );
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Invitation could not be sent. Make sure you're online.</h4>
+              </div>
+            </>
+          );
+        });
+    } else {
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>Enter a valid phone number to send invitation.</h4>
+          </div>
+        </>
+      );
+    }
+  }, [value]);
   useEffect(() => {
     fetch("/api/recentPayments")
       .then((res) => res.json())
@@ -129,19 +207,7 @@ const Home = () => {
                 onBlur={() => {
                   setTimeout(() => setUsers([]), 500);
                 }}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    fetch(`/api/getUsers?q=${e.target.value}`)
-                      .then((res) => res.json())
-                      .then((data) => {
-                        if (data) {
-                          setUsers(data);
-                        }
-                      });
-                  } else {
-                    setUsers([]);
-                  }
-                }}
+                onChange={fetchUsers}
               />
             </section>
             {users.length ? (
@@ -166,8 +232,31 @@ const Home = () => {
                     </Link>
                   </li>
                 ))}
+                {users.length === 0 && (
+                  <li>
+                    <div className="profile">
+                      <p className="name">{value}</p>
+                    </div>
+                    <Link className="sendReq" onClick={inviteUser} to="#">
+                      Invite
+                    </Link>
+                  </li>
+                )}
               </ul>
             ) : null}
+            {value && users.length === 0 && (
+              <ul className="searchResult">
+                <li>
+                  <div className="profile">
+                    <img src="/profile-user.jpg" />
+                    <p className="name">{value}</p>
+                  </div>
+                  <Link className="sendReq" onClick={inviteUser} to="#">
+                    Invite
+                  </Link>
+                </li>
+              </ul>
+            )}
           </form>
         </div>
       )}
@@ -197,19 +286,7 @@ const Home = () => {
                 onBlur={() => {
                   setTimeout(() => setUsers([]), 500);
                 }}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    fetch(`/api/getUsers?q=${e.target.value}`)
-                      .then((res) => res.json())
-                      .then((data) => {
-                        if (data) {
-                          setUsers(data);
-                        }
-                      });
-                  } else {
-                    setUsers([]);
-                  }
-                }}
+                onChange={fetchUsers}
               />
             </section>
             {users.length ? (
@@ -238,6 +315,19 @@ const Home = () => {
                 ))}
               </ul>
             ) : null}
+            {value && users.length === 0 && (
+              <ul className="searchResult">
+                <li>
+                  <div className="profile">
+                    <img src="/profile-user.jpg" />
+                    <p className="name">{value}</p>
+                  </div>
+                  <Link className="sendReq" onClick={inviteUser} to="#">
+                    Invite
+                  </Link>
+                </li>
+              </ul>
+            )}
           </form>
         </div>
       )}
@@ -737,6 +827,87 @@ function Account({ location }) {
             </Link>
           </li>
           <li
+            className={`products ${
+              location.pathname.startsWith("/account/products")
+                ? "active"
+                : undefined
+            }`}
+          >
+            <Link to="/account/products">
+              <div className="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="19.872"
+                  height="21.086"
+                  viewBox="0 0 19.872 21.086"
+                >
+                  <g
+                    id="Group_4"
+                    data-name="Group 4"
+                    transform="translate(0 5.63)"
+                  >
+                    <g id="Path_288" data-name="Path 288" fill="none">
+                      <path
+                        d="M1,0H18.872a1,1,0,0,1,1,1V14.456a1,1,0,0,1-1,1H1a1,1,0,0,1-1-1V1A1,1,0,0,1,1,0Z"
+                        stroke="none"
+                      />
+                      <path
+                        d="M 2 2.000001907348633 L 2 13.45590209960938 L 17.87188148498535 13.45590209960938 L 17.87188148498535 2.000001907348633 L 2 2.000001907348633 M 1 1.9073486328125e-06 L 18.87188148498535 1.9073486328125e-06 C 19.42416000366211 1.9073486328125e-06 19.87188148498535 0.4477119445800781 19.87188148498535 1.000001907348633 L 19.87188148498535 14.45590209960938 C 19.87188148498535 15.00819206237793 19.42416000366211 15.45590209960938 18.87188148498535 15.45590209960938 L 1 15.45590209960938 C 0.4477100372314453 15.45590209960938 0 15.00819206237793 0 14.45590209960938 L 0 1.000001907348633 C 0 0.4477119445800781 0.4477100372314453 1.9073486328125e-06 1 1.9073486328125e-06 Z"
+                        stroke="none"
+                        fill="#fff"
+                      />
+                    </g>
+                    <g
+                      id="Rectangle_3"
+                      data-name="Rectangle 3"
+                      transform="translate(0 8.832)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <rect
+                        width="19.872"
+                        height="6.624"
+                        rx="2"
+                        stroke="none"
+                      />
+                      <rect
+                        x="1"
+                        y="1"
+                        width="17.872"
+                        height="4.624"
+                        rx="1"
+                        fill="none"
+                      />
+                    </g>
+                  </g>
+                  <g
+                    id="Rectangle_1134"
+                    data-name="Rectangle 1134"
+                    transform="translate(4)"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2"
+                  >
+                    <path
+                      d="M2,0h8a2,2,0,0,1,2,2V7a0,0,0,0,1,0,0H0A0,0,0,0,1,0,7V2A2,2,0,0,1,2,0Z"
+                      stroke="none"
+                    />
+                    <rect
+                      x="1"
+                      y="1"
+                      width="10"
+                      height="5"
+                      rx="1"
+                      fill="none"
+                    />
+                  </g>
+                </svg>
+              </div>
+              Products
+            </Link>
+          </li>
+          <li
             className={`support ${
               location.pathname.startsWith("/account/support")
                 ? "active"
@@ -838,6 +1009,7 @@ function Account({ location }) {
             <Route path="/account/wallet" component={Wallet} />
             <Route path="/account/hold" component={Hold} />
             <Route path="/account/transactions" component={Transactions} />
+            <Route path="/account/products" component={Products} />
             <Route path="/account/support" component={Support} />
             <Route path="/account/profile" component={Profile} />
             <Route path="/" component={Home} />
@@ -853,6 +1025,8 @@ const ProfileAvatar = () => {
   const menuRef = useRef(null);
   const [menu, setMenu] = useState(false);
   const [invite, setInvite] = useState(false);
+  const [noti, setNoti] = useState(false);
+  const [unread, setUnread] = useState(false);
   const [msg, setMsg] = useState(null);
   const logout = (e) => {
     console.log(e);
@@ -864,11 +1038,68 @@ const ProfileAvatar = () => {
   // >
   // test
   // </GoogleLogout>
+  useEffect(() => {
+    if (noti) {
+      fetch("/api/editUserProfile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          notificationLastRead: new Date(),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user) {
+            setUser((prev) => ({
+              ...prev,
+              notificationLastRead: user.notificationLastRead,
+            }));
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [noti]);
+  useEffect(() => {
+    const newNoti = user.notifications.find((item) => {
+      return new Date(item.createdAt) > new Date(user.notificationLastRead);
+    });
+    if (newNoti) {
+      setUnread(true);
+    }
+    if (noti) {
+      setUnread(false);
+    }
+  }, [noti, user]);
   const referLink = `${window.location.origin}/u/join?referer=${user._id}`;
   return (
     <>
       <div className="profile">
-        <p className="name">{user?.firstName + " " + user?.lastName}</p>
+        <button
+          className={`bell ${unread ? "unread" : ""}`}
+          onClick={() => setNoti(true)}
+        >
+          <svg
+            id="bell"
+            xmlns="http://www.w3.org/2000/svg"
+            width="15.918"
+            height="16"
+            viewBox="0 0 15.918 16"
+          >
+            <path
+              id="Path_1"
+              data-name="Path 1"
+              d="M15,14H10a2,2,0,0,1-4,0H1a.961.961,0,0,1-.9-.7,1.068,1.068,0,0,1,.3-1.1A4.026,4.026,0,0,0,2,9V6A6,6,0,0,1,14,6V9a4.026,4.026,0,0,0,1.6,3.2.947.947,0,0,1,.3,1.1A.961.961,0,0,1,15,14Z"
+              transform="translate(-0.063)"
+              fill="#fff"
+              fillRule="evenodd"
+            />
+          </svg>
+        </button>
+        <p className="name">
+          {user?.firstName + " " + user?.lastName || user.phone}
+        </p>
         <img
           src={user?.profileImg}
           className="avatar"
@@ -930,8 +1161,30 @@ const ProfileAvatar = () => {
             </button>
           </div>
         )}
+        {noti && (
+          <ul className="notiWrapper">
+            {user.notifications.reverse().map((item, i) => {
+              return (
+                <li key={i}>
+                  <Moment format="hh:mm">{item.createdAt}</Moment>
+                  <p className="title">{item.title}</p>
+                  <p className="body">{item.body}</p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
-      {menu && <div className="backdrop" onClick={() => setMenu(false)} />}
+      {menu ||
+        (noti && (
+          <div
+            className="backdrop"
+            onClick={() => {
+              setMenu(false);
+              setNoti(false);
+            }}
+          />
+        ))}
       <Modal
         className="invite"
         open={invite}
@@ -1006,8 +1259,10 @@ const ProfileAvatar = () => {
 
 export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
   const { user, setUser } = useContext(SiteContext);
+  const [search, setSearch] = useState("");
   const [type, setType] = useState("product");
   const [addressForm, setAddressForm] = useState(false);
+  const [products, setProducts] = useState([]);
   const [client, setClient] = useState({
     ...(userType === "seller" ? searchClient : user),
   });
@@ -1017,6 +1272,9 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
   const [dscr, setDscr] = useState("");
   const [amount, setAmount] = useState("");
   const [msg, setMsg] = useState(null);
+  const [productResult, setProductResult] = useState([]);
+  const [showSelectedProducts, setShowSelectedProducts] = useState(false);
+  const searchInput = useRef(null);
   const sellerSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -1026,15 +1284,13 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
         body: JSON.stringify({
           buyer_id: client._id,
           amount,
-          product: {
-            dscr,
-            type,
-            deliveryDetail: {
-              phone: client.phone,
-              name: client.firstName + " " + client.lastName,
-              ...client.address,
-              timeOfDelivery: deliveryTime,
-            },
+          products,
+          dscr,
+          deliveryDetail: {
+            phone: client.phone,
+            name: client.firstName + " " + client.lastName,
+            ...client.address,
+            timeOfDelivery: deliveryTime,
           },
         }),
       })
@@ -1078,15 +1334,12 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
         body: JSON.stringify({
           seller: { ...searchClient },
           amount,
-          product: {
-            dscr,
-            type,
-            deliveryDetail: {
-              phone: client.phone,
-              name: client.firstName + " " + client.lastName,
-              ...client.address,
-              timeOfDelivery: deliveryTime,
-            },
+          dscr,
+          deliveryDetail: {
+            phone: client.phone,
+            name: client.firstName + " " + client.lastName,
+            ...client.address,
+            timeOfDelivery: deliveryTime,
           },
         }),
       })
@@ -1109,6 +1362,41 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
     },
     [client, searchClient, amount, dscr, type, deliveryTime]
   );
+  useEffect(() => {
+    if (search) {
+      fetch(`/api/products?q=${search}&perPage=8`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.products) {
+            setProductResult(data.products);
+          }
+        });
+    }
+  }, [search]);
+  useEffect(() => {
+    if (products.length === 0) {
+      setShowSelectedProducts(false);
+    }
+  }, [products]);
+  // <section>
+  // <label>Type of Transaction</label>
+  // <Combobox
+  // defaultValue={0}
+  // options={[
+  //   {
+  //     label: "Product",
+  //     value: "product",
+  //   },
+  //   {
+  //     label: "Service",
+  //     value: "service",
+  //   },
+  // ]}
+  // onChange={(e) => {
+  //   setType(e.value);
+  // }}
+  // />
+  // </section>
   return (
     <>
       <form
@@ -1116,25 +1404,102 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
         onSubmit={userType === "seller" ? sellerSubmit : buyerSubmit}
       >
         <section className="transactionDetail">
-          <section>
-            <label>Type of Transaction</label>
-            <Combobox
-              defaultValue={0}
-              options={[
-                {
-                  label: "Product",
-                  value: "product",
-                },
-                {
-                  label: "Service",
-                  value: "service",
-                },
-              ]}
-              onChange={(e) => {
-                setType(e.value);
-              }}
-            />
-          </section>
+          {userType === "seller" && (
+            <>
+              <section className="products">
+                <label>Products</label>
+                <div className="count">
+                  <p className="totalProduct">
+                    {products.length} items selected.
+                  </p>
+                  {products.length > 0 && (
+                    <button
+                      type="button"
+                      className={showSelectedProducts ? "open" : undefined}
+                      onClick={() =>
+                        setShowSelectedProducts(!showSelectedProducts)
+                      }
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="11.872"
+                        height="18"
+                        viewBox="0 0 11.872 18"
+                      >
+                        <path
+                          id="Path_36"
+                          data-name="Path 36"
+                          d="M9,11.872,0,2.725,2.681,0,9,6.423,15.319,0,18,2.725Z"
+                          transform="translate(11.872) rotate(90)"
+                          fill="rgba(0, 0, 0, 0.5)"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {showSelectedProducts && (
+                  <ul>
+                    {products.map((product) => (
+                      <li key={product._id}>
+                        <img src={product.images[0]} />
+                        <div className="productDetail">
+                          <p className="name">{product.name}</p>
+                          <p className="price">₹ {product.price}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() =>
+                            setProducts((prev) =>
+                              prev.filter((item) => item._id !== product._id)
+                            )
+                          }
+                        >
+                          <Minus_svg />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              <section className="productSearch">
+                <label>Search products</label>
+                <input
+                  ref={searchInput}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && productResult.length > 0 && (
+                  <ul className="productSearchList">
+                    {productResult.map((product) => (
+                      <li key={product._id}>
+                        <img src={product.images[0]} />
+                        <div className="productDetail">
+                          <p className="name">{product.name}</p>
+                          <p className="price">₹ {product.price}</p>
+                        </div>
+                        {!products.some((item) => item._id === product._id) ? (
+                          <button
+                            type="button"
+                            className="btn"
+                            onClick={() => {
+                              setProducts((prev) => [...prev, product]);
+                              searchInput.current.focus();
+                            }}
+                          >
+                            <Plus_svg />
+                          </button>
+                        ) : (
+                          <p className="addedLabel">Added</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>{" "}
+            </>
+          )}
           <section className="amount">
             <label>Amount</label>
             <NumberInput

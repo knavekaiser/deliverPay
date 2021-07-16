@@ -61,7 +61,10 @@ app.post(
                     res.json({
                       code: "ok",
                       message: "case submitted",
-                      milestone,
+                      milestone: {
+                        ...milestone._doc,
+                        dispute,
+                      },
                     });
                   });
                 });

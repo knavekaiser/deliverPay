@@ -160,10 +160,10 @@ const Wallet = ({ history, location, match }) => {
       body: JSON.stringify({ amount: addMoneyAmount }),
     })
       .then((res) => res.json())
-      .then(({ order }) => {
+      .then(({ order, key }) => {
         setLoading(false);
         if (order) {
-          handleOrder(order, card);
+          handleOrder(order, key, card);
         } else {
           setMsg(
             <>
@@ -190,11 +190,11 @@ const Wallet = ({ history, location, match }) => {
         );
       });
   };
-  const handleOrder = (order, method) => {
+  const handleOrder = (order, key, method) => {
     const Razorpay = window.Razorpay;
     if (Razorpay) {
       const options = {
-        key: "rzp_test_bLCP8mfYRRYzX5",
+        key,
         amount: order.amount,
         currency: order.currency,
         accept_partial: false,
@@ -206,7 +206,11 @@ const Wallet = ({ history, location, match }) => {
           fetch("/api/addMoney", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ transactionId: res.razorpay_payment_id }),
+            body: JSON.stringify({
+              transactionId: res.razorpay_payment_id,
+              razorSignature: res.razorpay_signature,
+              razorOrderId: res.razorpay_order_id,
+            }),
           })
             .then((res) => res.json())
             .then(({ code, user, transaction, message }) => {
@@ -361,7 +365,21 @@ const Wallet = ({ history, location, match }) => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                history.push("/account/wallet/withdrawMoney");
+                if (withdrawMoneyAmount > balance) {
+                  setMsg(
+                    <>
+                      <button onClick={() => setMsg(null)}>Okay</button>
+                      <div>
+                        <Err_svg />
+                        <h4>
+                          Enter an amount less or equal to currect balance.
+                        </h4>
+                      </div>
+                    </>
+                  );
+                } else {
+                  history.push("/account/wallet/withdrawMoney");
+                }
               }}
             >
               <input

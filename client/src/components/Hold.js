@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Modal } from "./Modal";
+import { Modal, Confirm } from "./Modal";
 import {
   Err_svg,
   Step_tick,
@@ -97,6 +97,66 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
   } else if (milestone.dispute?.defendant._id === milestone.client._id) {
     disputeFiledBy = "self";
   }
+  const approveMilestone = () => {
+    fetch("/api/approveMilestone", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        milestone_id: milestone._id,
+        amount: milestone.amount,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setMilestones((prev) =>
+            prev.map((item) => {
+              if (item._id === data.milestone._id) {
+                return {
+                  ...data.milestone,
+                  client: milestone.client,
+                  role: milestone.role,
+                };
+              } else {
+                return item;
+              }
+            })
+          );
+        } else if (data.code === 403) {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not approve milestone due to low balance.</h4>
+              </div>
+            </>
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not approve milestone. Please try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not approve milestone. Make sure you're online</h4>
+            </div>
+          </>
+        );
+      });
+  };
   return (
     <li className={`milestone ${milestone.role}`} key={milestone._id}>
       <div className="clientDetail">
@@ -112,7 +172,7 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
               <p>Role</p>-<p className="role">{milestone.role}</p>
             </li>
             <li>
-              <p>Product Detail</p>-<p>{milestone.product?.dscr}</p>
+              <p>Product Detail</p>-<p>{milestone.dscr}</p>
             </li>
             <li>
               <p>Transaction ID</p>-<p>{milestone._id}</p>
@@ -120,7 +180,7 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
           </ul>
         </div>
       </div>
-      <ul className={`steps ${milestone.status}`}>
+      <ul className={`steps ${milestone.status} ${milestone.dispute?.status}`}>
         <li className="step pending">
           <div className="icons">
             <Step_tick className="default" />
@@ -196,71 +256,13 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
             {milestone.status === "pending" && (
               <Link
                 to={`/account/hold/${milestone._id}/approve`}
-                onClick={() => {
-                  fetch("/api/approveMilestone", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      milestone_id: milestone._id,
-                      amount: milestone.amount,
-                    }),
+                onClick={() =>
+                  Confirm({
+                    label: "Milestone Approval",
+                    question: "You sure want to approve this milestone?",
+                    callback: approveMilestone,
                   })
-                    .then((res) => res.json())
-                    .then((data) => {
-                      if (data.code === "ok") {
-                        setMilestones((prev) => {
-                          const newMilestones = [...prev];
-                          const index = newMilestones.findIndex(
-                            (item) => item._id === milestone._id
-                          );
-                          newMilestones[index] = {
-                            ...milestone,
-                            client: prev[index].client,
-                          };
-                          return newMilestones;
-                        });
-                      } else if (data.code === 403) {
-                        setMsg(
-                          <>
-                            <button onClick={() => setMsg(null)}>Okay</button>
-                            <div>
-                              <Err_svg />
-                              <h4>
-                                Could not approve milestone due to low balance.
-                              </h4>
-                            </div>
-                          </>
-                        );
-                      } else {
-                        setMsg(
-                          <>
-                            <button onClick={() => setMsg(null)}>Okay</button>
-                            <div>
-                              <Err_svg />
-                              <h4>
-                                Could not approve milestone. Please try again.
-                              </h4>
-                            </div>
-                          </>
-                        );
-                      }
-                    })
-                    .catch((err) => {
-                      console.log(err);
-                      setMsg(
-                        <>
-                          <button onClick={() => setMsg(null)}>Okay</button>
-                          <div>
-                            <Err_svg />
-                            <h4>
-                              Could not approve milestone. Make sure you're
-                              online
-                            </h4>
-                          </div>
-                        </>
-                      );
-                    });
-                }}
+                }
               >
                 Approve
               </Link>
@@ -333,18 +335,19 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
           milestone={milestone}
           setReleaseForm={setReleaseForm}
           onSuccess={(milestone) => {
-            setMilestones((prev) => {
-              const newMilestones = [...prev];
-              const index = newMilestones.findIndex(
-                (item) => item._id === milestone._id
-              );
-              newMilestones[index] = {
-                ...milestone,
-                client: prev[index].client,
-                role: prev[index].role,
-              };
-              return newMilestones;
-            });
+            setMilestones((prev) =>
+              prev.map((item) => {
+                if (item._id === milestone._id) {
+                  return {
+                    ...milestone,
+                    client: item.client,
+                    role: item.role,
+                  };
+                } else {
+                  return item;
+                }
+              })
+            );
             setReleaseForm(false);
           }}
         />
@@ -379,18 +382,19 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
           milestone={milestone}
           setDisputeForm={setDisputeForm}
           onSuccess={(milestone) => {
-            setMilestones((prev) => {
-              const newMilestones = [...prev];
-              const index = newMilestones.findIndex(
-                (item) => item._id === milestone._id
-              );
-              newMilestones[index] = {
-                ...milestone,
-                client: prev[index].client,
-                role: prev[index].role,
-              };
-              return newMilestones;
-            });
+            setMilestones((prev) =>
+              prev.map((item) => {
+                if (item._id === milestone._id) {
+                  return {
+                    ...milestone,
+                    client: item.client,
+                    role: item.role,
+                  };
+                } else {
+                  return item;
+                }
+              })
+            );
             setDisputeForm(false);
           }}
         />
