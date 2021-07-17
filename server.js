@@ -186,7 +186,7 @@ app.get("*", (req, res) =>
 const socketIO = require("socket.io");
 global.io = socketIO(
   app.listen(PORT, () => {
-    console.log("skropay backend listening to port:", PORT);
+    console.log("Delivery Pay backend listening to port:", PORT);
   })
 );
 

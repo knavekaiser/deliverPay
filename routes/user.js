@@ -125,7 +125,7 @@ app.post("/api/userLoginUsingSocial", async (req, res) => {
   const googleId = await verify(googleToken);
   if (googleId || facebookId) {
     const query = {
-      ...(req.body.googleId && { googleId }),
+      ...(googleId && { googleId }),
       ...(req.body.facebookId && { facebookId }),
     };
     User.aggregate([
