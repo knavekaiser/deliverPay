@@ -19,7 +19,18 @@ const Profile = ({ history, match, location }) => {
   const [msg, setMsg] = useState(null);
   const addGoogleId = (e) => {
     updateProfileInfo({ googleId: e.googleId })
-      .then((data) => setUser((prev) => ({ ...prev, googleId: e.googleId })))
+      .then((data) => {
+        setUser((prev) => ({ ...prev, googleId: e.googleId }));
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Succ_svg />
+              <h4>Google account successfully connected.</h4>
+            </div>
+          </>
+        );
+      })
       .catch((err) => {
         console.log(err);
         setMsg(
