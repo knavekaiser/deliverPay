@@ -1049,10 +1049,11 @@ const ProfileAvatar = () => {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log(data);
           if (data.user) {
             setUser((prev) => ({
               ...prev,
-              notificationLastRead: user.notificationLastRead,
+              notificationLastRead: data.user.notificationLastRead,
             }));
           }
         })
@@ -1175,16 +1176,15 @@ const ProfileAvatar = () => {
           </ul>
         )}
       </div>
-      {menu ||
-        (noti && (
-          <div
-            className="backdrop"
-            onClick={() => {
-              setMenu(false);
-              setNoti(false);
-            }}
-          />
-        ))}
+      {(menu || noti) && (
+        <div
+          className="backdrop"
+          onClick={() => {
+            setMenu(false);
+            setNoti(false);
+          }}
+        />
+      )}
       <Modal
         className="invite"
         open={invite}
