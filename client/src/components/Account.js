@@ -530,10 +530,19 @@ const AddressForm = ({ client, onSuccess, onCancel }) => {
 function Account({ location }) {
   const { user } = useContext(SiteContext);
   return (
-    <div className="account">
+    <div
+      className={`account ${
+        location.pathname.startsWith("/account/deals/") ? "chatSection" : ""
+      }`}
+    >
       <header>
         <Link to="/">
           <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
+          <img
+            className="logo_small"
+            src="/logo_sqr.jpg"
+            alt="Delivery pay logo"
+          />
         </Link>
         <ProfileAvatar />
       </header>
@@ -1016,6 +1025,293 @@ function Account({ location }) {
           </Switch>
         </main>
       </div>
+      <ul className="mobileMenu">
+        <li
+          className={
+            location.pathname === "/account" ||
+            location.pathname.startsWith("/account/home")
+              ? "active"
+              : undefined
+          }
+        >
+          <Link to="/account/home">
+            <div className="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="21.648"
+                height="21.513"
+                viewBox="0 0 21.648 21.513"
+              >
+                <path
+                  id="Path_287"
+                  data-name="Path 287"
+                  d="M21.387,10.488A1.079,1.079,0,0,0,21.3,8.979L11.626.289a1.185,1.185,0,0,0-1.576,0L.342,9.44A1.073,1.073,0,0,0,.3,10.95l.245.258A1.043,1.043,0,0,0,2,11.321l.724-.665v9.762A1.071,1.071,0,0,0,3.78,21.5H7.563A1.071,1.071,0,0,0,8.62,20.418V13.591h4.81v6.828a1.04,1.04,0,0,0,.269.761.987.987,0,0,0,.723.323H18.45a1.071,1.071,0,0,0,1.057-1.084V10.776l.449.4c.245.222.765.042,1.168-.4Z"
+                  transform="translate(-0.008 0.011)"
+                  fill="#fff"
+                />
+              </svg>
+            </div>
+            Home
+          </Link>
+        </li>
+        <li
+          className={`deals ${
+            location.pathname.startsWith("/account/deals")
+              ? "active"
+              : undefined
+          }`}
+        >
+          <Link to="/account/deals">
+            <div className="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="26.55"
+                height="25.219"
+                viewBox="0 0 26.55 25.219"
+              >
+                <path
+                  id="Path_1"
+                  data-name="Path 1"
+                  d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+                  transform="translate(255.198 195.071)"
+                  fill="#fff"
+                />
+              </svg>
+            </div>
+            Deals
+          </Link>
+        </li>
+        <li
+          className={
+            location.pathname.startsWith("/account/wallet")
+              ? "active"
+              : undefined
+          }
+        >
+          <Link to="/account/wallet">
+            <div className="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20.886"
+                height="22.948"
+                viewBox="0 0 20.886 22.948"
+              >
+                <g
+                  id="Rectangle_2"
+                  data-name="Rectangle 2"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="2"
+                >
+                  <rect width="20.886" height="16.244" rx="2" stroke="none" />
+                  <rect
+                    x="1"
+                    y="1"
+                    width="18.886"
+                    height="14.244"
+                    rx="1"
+                    fill="none"
+                  />
+                </g>
+                <g
+                  id="Rectangle_3"
+                  data-name="Rectangle 3"
+                  transform="translate(0 9.283)"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="2"
+                >
+                  <rect width="20.886" height="6.962" rx="2" stroke="none" />
+                  <rect
+                    x="1"
+                    y="1"
+                    width="18.886"
+                    height="4.962"
+                    rx="1"
+                    fill="none"
+                  />
+                </g>
+                <path
+                  id="Path_2"
+                  data-name="Path 2"
+                  d="M-180.174-182v7.923l4.1-4.653,3.932,4.653V-182Z"
+                  transform="translate(186.6 197.025)"
+                  fill="#fff"
+                />
+              </svg>
+            </div>
+            Wallet
+          </Link>
+        </li>
+        <li
+          className={`hold ${
+            location.pathname.startsWith("/account/hold") ? "active" : undefined
+          }`}
+        >
+          <Link to="/account/hold">
+            <div className="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="27"
+                viewBox="0 0 22 27"
+              >
+                <text
+                  id="_3"
+                  data-name="3"
+                  transform="translate(14 14) rotate(180)"
+                  fill="#fff"
+                  fontSize="10"
+                  fontFamily="Ebrima-Bold, Ebrima"
+                  fontWeight="700"
+                >
+                  <tspan x="0" y="0">
+                    3
+                  </tspan>
+                </text>
+                <g
+                  id="Group_166"
+                  data-name="Group 166"
+                  transform="translate(-534.967 -611.816)"
+                >
+                  <g
+                    id="Rectangle_1132"
+                    data-name="Rectangle 1132"
+                    transform="translate(534.967 620.816)"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2"
+                  >
+                    <rect width="22" height="18" rx="4" stroke="none" />
+                    <rect
+                      x="1"
+                      y="1"
+                      width="20"
+                      height="16"
+                      rx="3"
+                      fill="none"
+                    />
+                  </g>
+                  <g
+                    id="Rectangle_1133"
+                    data-name="Rectangle 1133"
+                    transform="translate(539.967 611.816)"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2"
+                  >
+                    <path
+                      d="M6.5,0h0A6.5,6.5,0,0,1,13,6.5V11a0,0,0,0,1,0,0H0a0,0,0,0,1,0,0V6.5A6.5,6.5,0,0,1,6.5,0Z"
+                      stroke="none"
+                    />
+                    <path
+                      d="M6.5,1h0A5.5,5.5,0,0,1,12,6.5V9.214a.786.786,0,0,1-.786.786H1.786A.786.786,0,0,1,1,9.214V6.5A5.5,5.5,0,0,1,6.5,1Z"
+                      fill="none"
+                    />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            Hold
+          </Link>
+        </li>
+        <li
+          className={`trans ${
+            location.pathname.startsWith("/account/transactions")
+              ? "active"
+              : undefined
+          }`}
+        >
+          <Link to="/account/transactions">
+            <div className="icon">
+              <svg
+                id="Group_283"
+                data-name="Group 283"
+                xmlns="http://www.w3.org/2000/svg"
+                width="28.407"
+                height="25.407"
+                viewBox="0 0 28.407 25.407"
+              >
+                <g
+                  id="Path_4"
+                  data-name="Path 4"
+                  transform="translate(3)"
+                  fill="none"
+                >
+                  <path
+                    d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
+                    stroke="none"
+                  />
+                  <path
+                    d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
+                    stroke="none"
+                    fill="#fff"
+                  />
+                </g>
+                <g
+                  id="Polygon_1"
+                  data-name="Polygon 1"
+                  transform="translate(6.001 12.353) rotate(-150)"
+                  fill="#fff"
+                >
+                  <path
+                    d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
+                    stroke="none"
+                  />
+                  <path
+                    d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
+                    stroke="none"
+                    fill="#fff"
+                  />
+                </g>
+                <g
+                  id="Rectangle_4"
+                  data-name="Rectangle 4"
+                  transform="translate(0 11.86) rotate(-22)"
+                  fill="#336cf9"
+                  stroke="#336cf9"
+                  strokeWidth="1"
+                >
+                  <rect width="6.929" height="4.619" stroke="none" />
+                  <rect
+                    x="0.5"
+                    y="0.5"
+                    width="5.929"
+                    height="3.619"
+                    fill="none"
+                  />
+                </g>
+                <g
+                  id="Group_5"
+                  data-name="Group 5"
+                  transform="translate(15.704 4.888)"
+                >
+                  <line
+                    id="Line_3"
+                    data-name="Line 3"
+                    y2="9.239"
+                    transform="translate(0 0)"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2"
+                  />
+                  <line
+                    id="Line_4"
+                    data-name="Line 4"
+                    x2="6.929"
+                    y2="2.31"
+                    transform="translate(0 9.239)"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2"
+                  />
+                </g>
+              </svg>
+            </div>
+            Transactions
+          </Link>
+        </li>
+      </ul>
     </div>
   );
 }
@@ -1049,7 +1345,6 @@ const ProfileAvatar = () => {
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
           if (data.user) {
             setUser((prev) => ({
               ...prev,
@@ -1107,9 +1402,12 @@ const ProfileAvatar = () => {
           onClick={() => setMenu(!menu)}
         />
         {menu && (
-          <div className="menu" ref={menuRef}>
-            <Link className="aboutUs" to="/aboutUs">
+          <div className="menu" ref={menuRef} onClick={() => setMenu(false)}>
+            <Link className="link" to="/aboutUs">
               More about us
+            </Link>
+            <Link className="link settings" to="/account/profile">
+              Settings
             </Link>
             <div className="referral">
               <button

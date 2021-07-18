@@ -7,7 +7,7 @@ $pink: #f64bbd;
 $red: #ff5757;
 
 .account {
-  height: 100vh;
+  height: calc(var(--vh) * 100);
   display: grid;
   grid-template-rows: min-content 1fr;
   header {
@@ -17,8 +17,12 @@ $red: #ff5757;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    .logo {
+    .logo,
+    .logo_small {
       max-height: 2.8rem;
+    }
+    .logo_small {
+      display: none;
     }
     .profile {
       position: relative;
@@ -35,13 +39,18 @@ $red: #ff5757;
         box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.2);
         border-radius: 0.7rem;
         display: grid;
-        .aboutUs {
+        .link {
           font-weight: 500;
           color: $blue;
           display: inline-block;
           margin: auto;
-          margin-top: -0.5rem;
           margin-right: 0;
+          &.settings {
+            display: none;
+          }
+        }
+        .link:not(:last-child) {
+          margin-bottom: 1rem;
         }
         button {
           border: none;
@@ -91,6 +100,7 @@ $red: #ff5757;
       }
     }
     .backdrop {
+      z-index: 5;
       position: fixed;
       top: 0;
       left: 0;
@@ -190,6 +200,10 @@ $red: #ff5757;
       flex: 1;
     }
   }
+  .mobileMenu {
+    z-index: 100;
+    display: none;
+  }
 }
 .modal.invite {
   background: none !important;
@@ -200,7 +214,7 @@ $red: #ff5757;
   &::-webkit-scrollbar {
     display: none;
   }
-  max-height: 100vh !important;
+  max-height: calc(var(--vh) * 100);
   .imgWrapper {
     background: white;
     padding: 1.5rem;
@@ -236,7 +250,7 @@ $red: #ff5757;
 }
 
 .homeContainer {
-  overflow-y: scroll;
+  overflow-y: auto;
   height: calc(100% + 2rem);
   margin: -1rem 0;
   padding: 1rem 0;
@@ -1030,6 +1044,9 @@ $red: #ff5757;
         display: flex;
         grid-gap: 1rem;
         align-items: center;
+        .back {
+          display: none;
+        }
         img {
           height: 3rem;
           width: 3rem;
@@ -1177,7 +1194,7 @@ $red: #ff5757;
   }
 }
 
-.transcationContainer {
+.transactionContainer {
   height: calc(100% + 2rem);
   overflow-y: auto;
   margin: -1rem 0;
@@ -1240,7 +1257,7 @@ $red: #ff5757;
         }
         &.amountDate {
           li {
-            grid-template-columns: 7.5rem 1rem 12rem;
+            grid-template-columns: 5.9rem 1rem 1fr;
           }
         }
         &.statusMethod {
@@ -1690,7 +1707,7 @@ $red: #ff5757;
       .exp,
       .cvv {
         label {
-          margin-bottom: 0.7rem;
+          margin-bottom: 0.4rem;
           font-size: 0.8rem;
         }
       }
@@ -3012,6 +3029,491 @@ $red: #ff5757;
           }
         }
       }
+    }
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .account {
+    header {
+      padding: 0.5rem 1rem;
+      .logo {
+        display: none;
+      }
+      .logo_small {
+        display: block;
+      }
+      .profile {
+        .menu {
+          .link.settings {
+            display: block;
+          }
+        }
+        .notiWrapper {
+          position: fixed;
+          left: 1rem;
+          width: calc(100vw - 2rem);
+          top: 3rem;
+        }
+      }
+    }
+    .content {
+      padding: 0;
+      .sidebar {
+        display: none;
+      }
+      .homeContainer,
+      .holdContainer {
+        .benner {
+          background: none;
+          padding: 1.5rem;
+          text-align: center;
+          margin-bottom: 1rem;
+          h4 {
+            font-size: 1.5rem;
+          }
+          p {
+            color: rgba(0, 0, 0, 0.55);
+            font-size: 1rem;
+          }
+        }
+      }
+      .homeContainer {
+        .userType {
+          padding: 1rem;
+          img {
+            height: 4rem;
+          }
+          .btn {
+            padding: 2rem;
+          }
+          .option {
+            margin: 0 auto;
+          }
+        }
+        .search {
+          padding: 1.5rem;
+          .searchResult {
+            li {
+              a {
+                width: min-content;
+              }
+            }
+          }
+        }
+        .recentPayments {
+          padding: 1.5rem;
+        }
+      }
+    }
+    .mobileMenu {
+      box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem 0.5rem 0 0;
+      background: $lightGreen2;
+      display: grid;
+      padding: 0.5rem;
+      grid-template-columns: repeat(5, 20%);
+      li {
+        a {
+          display: grid;
+          justify-content: center;
+          font-size: 0.8rem;
+          color: rgba(0, 0, 0, 0.5);
+        }
+        text-align: center;
+        .icon {
+          margin: auto;
+          background: white;
+          padding: 0.5rem;
+          border-radius: 5rem;
+          box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.17);
+          height: 3rem;
+          width: 3rem;
+          display: grid;
+          place-items: center;
+          margin-bottom: 0.5rem;
+        }
+        &:not(.active) {
+          .icon {
+            svg {
+              path {
+                stroke: $blue;
+                fill: $blue;
+              }
+              rect {
+                stroke: $blue;
+              }
+              text {
+                fill: $blue;
+                tspan {
+                }
+              }
+            }
+          }
+        }
+        &.hold {
+          #Rectangle_1133 {
+            path {
+              fill: none;
+            }
+          }
+        }
+        &.trans {
+          .icon {
+            svg {
+              #Path_4 {
+                path:nth-child(1) {
+                  fill: none;
+                }
+              }
+              #Rectangle_4 {
+                rect {
+                  stroke: none;
+                  fill: white;
+                }
+              }
+              #Group_5 {
+                line {
+                  stroke: $blue;
+                }
+              }
+            }
+          }
+        }
+        &.active {
+          .icon {
+            background: $blue;
+          }
+          &.trans {
+            .icon {
+              svg {
+                #Path_4 {
+                  path:nth-child(1) {
+                    fill: none;
+                  }
+                }
+                #Rectangle_4 {
+                  rect {
+                    stroke: none;
+                    fill: $blue;
+                  }
+                }
+                #Group_5 {
+                  line {
+                    stroke: white;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    &.chatSection {
+      grid-template-rows: 1fr;
+      header {
+        display: none;
+      }
+      .mobileMenu {
+        display: none;
+      }
+    }
+  }
+  .milestonesForm {
+    .transactionDetail {
+      order: 2;
+      margin-bottom: 2rem;
+      .products,
+      .productSearchList {
+        li {
+          .btn {
+            display: grid;
+          }
+        }
+      }
+    }
+    .clientDetail {
+      order: 1;
+      width: 100%;
+      .detail {
+        width: 90%;
+      }
+      .deliveryTime {
+        input {
+          font-size: 1.2rem;
+          background: white;
+        }
+        margin-bottom: 2rem;
+      }
+    }
+  }
+  .chatContainer {
+    padding: 0 1rem;
+    .contactsContainer {
+      grid-template-rows: min-content 1fr;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    .userCard {
+      display: none;
+    }
+    .chat {
+      display: none;
+    }
+    &.chatOpen {
+      padding: 0;
+      .contactsContainer {
+        display: none;
+      }
+      .chat {
+        display: grid;
+        .chatHead {
+          .profile {
+            .back {
+              display: grid;
+              place-items: center;
+              margin-right: -0.5rem;
+              border: none;
+              outline: none;
+              background: none;
+            }
+          }
+        }
+      }
+    }
+  }
+  .walletContainer {
+    .leftSection {
+      .nameTag {
+        margin: 1rem 0;
+        margin-bottom: 1.5rem;
+      }
+      .balance {
+        width: 100%;
+        margin: auto;
+        padding: 1rem 1rem;
+        padding-bottom: 2.5rem;
+        justify-content: center;
+        flex-direction: column;
+        .currentBalance {
+          text-align: center;
+          h1 {
+            width: 100%;
+          }
+          .updateTime {
+            display: none;
+          }
+        }
+        .graph {
+          width: 100%;
+          .bars {
+            grid-gap: 0.5rem;
+            li {
+              .bar {
+                width: 1rem;
+              }
+              .month {
+                font-size: 0.75rem;
+              }
+            }
+          }
+        }
+      }
+      .addWithdraw {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+    }
+    .rightSection {
+      .savedCards {
+        padding: 0 0.5rem;
+        .wrapper {
+          margin: 0 1rem;
+          .addPaymentMethod {
+            right: 2.5rem;
+          }
+          .cards {
+            li {
+              .paymentMethod {
+                padding: 1rem 1.5rem;
+                &.bankAccount {
+                  .bank {
+                    font-size: 1rem;
+                  }
+                }
+                &.card {
+                  .logo {
+                    height: 1.5rem;
+                  }
+                  .cardNumber {
+                    font-size: 1.4rem;
+                    margin: 0.5rem 0;
+                  }
+                  .exp {
+                    text-align: left;
+                  }
+                }
+              }
+            }
+          }
+        }
+        .next {
+          right: -0.25rem;
+        }
+        .prev {
+          left: -0.25rem;
+        }
+      }
+      .transactions {
+        max-height: calc((var(--vh) * 100) - 180px);
+        margin-bottom: 1rem;
+      }
+    }
+  }
+  .paymentMethod {
+    padding: 1.5rem;
+    &.bankAccount {
+      .bank {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+  .addressForm {
+    grid-gap: 1.5rem;
+    section {
+      grid-column: 1/3;
+    }
+  }
+  .paymentMethodsForm {
+    .addPaymentMethod {
+      .paymentOption {
+        display: grid;
+        grid-gap: 1rem;
+        .paymentMethodForm {
+          margin: 0 !important;
+          width: 100%;
+        }
+      }
+    }
+  }
+  .paymentMethodForm {
+    margin: 0;
+    section {
+      grid-gap: 0.5rem;
+      width: 100%;
+      input {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+    .inputs {
+      grid-row-gap: 1.5rem;
+      .exp {
+        padding-right: 1rem !important;
+      }
+      .cvv {
+        margin-left: 0.5rem !important;
+        max-width: 4rem !important;
+      }
+      .exp,
+      .cvv {
+        label {
+          margin: 0 !important;
+        }
+      }
+    }
+  }
+  .holdContainer {
+    margin: 0;
+    padding: 1rem;
+    .benner {
+      padding: 0 !important;
+    }
+    .head {
+      top: -1.1rem;
+    }
+    .milestones {
+      margin-bottom: 2rem;
+      .milestone {
+        .steps {
+          display: none;
+        }
+        grid-gap: 1rem;
+        .clientDetail {
+          font-size: 0.8rem;
+          .milestoneDetail {
+            ul {
+              li {
+                grid-template-columns: 5.75rem 1rem 1fr;
+              }
+            }
+          }
+        }
+        .clas {
+          h4 {
+            font-size: 2rem;
+          }
+          margin: auto;
+        }
+      }
+    }
+  }
+  .transactionContainer {
+    margin: 0;
+    padding: 1rem;
+    .benner {
+      padding-top: 0;
+    }
+    .transactions {
+      .transaction {
+        grid-gap: 1.5rem;
+      }
+      margin-bottom: 2rem;
+    }
+  }
+  .profileContainer {
+    margin: 0;
+    padding: 1rem 1.5rem;
+    .benner {
+      padding: 0;
+      grid-gap: 1rem;
+      .profileImg {
+        flex-shrink: 0;
+      }
+    }
+    .settings {
+      ul {
+        li {
+          flex-wrap: wrap;
+          grid-gap: 1rem;
+          form {
+            grid-gap: 1rem;
+            flex-basis: 100%;
+            .btns {
+              width: 6rem;
+            }
+          }
+        }
+      }
+    }
+    .paymentMethods {
+      .methods {
+        li {
+          .actions {
+            display: flex;
+          }
+        }
+      }
+    }
+    .socials {
+      margin-bottom: 3rem;
+    }
+  }
+  .modal.editPaymentMethod {
+    width: 100%;
+    .paymentMethodForm {
+      margin: 0;
+      min-width: min-content;
     }
   }
 }

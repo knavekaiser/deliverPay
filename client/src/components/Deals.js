@@ -88,7 +88,7 @@ const Deals = ({ history, location, match }) => {
     });
   }, []);
   return (
-    <div className="chatContainer">
+    <div className={`chatContainer ${userCard ? "chatOpen" : ""}`}>
       <div className="contactsContainer">
         <div className="userCard">
           {userCard ? (
@@ -147,6 +147,7 @@ const Deals = ({ history, location, match }) => {
       <Chat
         chat={chat}
         userCard={userCard}
+        setUserCard={setUserCard}
         user={user}
         socket={socket}
         setChat={setChat}
@@ -196,12 +197,13 @@ const Person = ({ client, messages, lastSeen, userCard }) => {
   );
 };
 
-const Chat = ({ chat, setChat, userCard, user, socket }) => {
+const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
   const chatWrapper = useRef(null);
   const history = useHistory();
   const [value, setValue] = useState("");
   const [rooms, setRooms] = useState([]);
   const [msg, setMsg] = useState(null);
+  const inputRef = useRef(null);
   const submit = (e) => {
     e.preventDefault();
     if (value && rooms.length) {
@@ -212,6 +214,7 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
           text: value,
         },
       });
+      inputRef.current.focus();
       setValue("");
     }
   };
@@ -247,11 +250,33 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
         <>
           <div className="chatHead">
             <div className="profile">
+              <button
+                className="back"
+                onClick={() => {
+                  history.push("/account/deals");
+                  setChat(null);
+                  setUserCard(null);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    id="Path_10"
+                    data-name="Path 10"
+                    d="M8,0,6.545,1.455l5.506,5.506H0V9.039H12.052L6.545,14.545,8,16l8-8Z"
+                    transform="translate(16 16) rotate(180)"
+                    fill="#2699fb"
+                  />
+                </svg>
+              </button>
               <img src={userCard.profileImg} />
               <p className="name">
                 {userCard.firstName + " " + userCard.lastName}
                 <span className="lastSeen">
-                  Last seen:{" "}
                   <Moment format="hh:mma, MMM DD">{userCard.lastSeen}</Moment>
                 </span>
               </p>
@@ -301,6 +326,7 @@ const Chat = ({ chat, setChat, userCard, user, socket }) => {
           <form onSubmit={submit}>
             <section>
               <input
+                ref={inputRef}
                 type="text"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}

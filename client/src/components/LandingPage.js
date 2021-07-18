@@ -19,7 +19,7 @@ function LandingPage({ history }) {
       <header>
         <div className="innerWrapper">
           <div className="links">
-            <Link to="/">
+            <Link className="logoLink" to="/">
               <img
                 className="logo"
                 src="/logo_land.jpg"

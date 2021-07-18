@@ -5,7 +5,7 @@ $red: #ff5757;
 .userStart {
   padding: 2rem;
   display: flex;
-  min-height: 100vh;
+  height: calc(var(--vh) * 100);
   grid-gap: 3rem;
   margin: auto;
   max-width: 1460px;
@@ -181,6 +181,50 @@ $red: #ff5757;
   .socials {
     button {
       width: 100%;
+    }
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .userStart {
+    flex-direction: column;
+    padding: 1rem;
+    grid-gap: 1rem;
+    height: auto;
+    .banner {
+      padding: 1rem 0;
+      header {
+        text-align: center;
+        margin: auto;
+        h3 {
+          max-width: 100%;
+          font-size: 1.5rem;
+          margin-bottom: 1rem;
+        }
+        p {
+          font-size: 1rem;
+        }
+      }
+      .illustration {
+        display: none;
+      }
+    }
+    .forms {
+      min-height: auto;
+      .formWrapper {
+        padding: 1.25rem;
+        grid-gap: 1.75rem !important;
+        .title {
+          font-size: 1.2rem;
+        }
+        form {
+          grid-gap: 0.5rem;
+          grid-row-gap: 1rem;
+        }
+        .links {
+          margin: 1rem auto;
+        }
+      }
     }
   }
 }

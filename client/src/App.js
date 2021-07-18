@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { SiteContext } from "./SiteContext";
 import {
   Route,
@@ -36,8 +36,17 @@ function ProtectedRoute({ children, path, component }) {
   );
 }
 
+function resizeWindow() {
+  let vh = window.innerHeight * 0.01;
+  document.body.style.setProperty("--vh", `${vh}px`);
+}
+
 function App() {
   const [mobile, setMobile] = useState(window.innerWidth <= 480);
+  useEffect(() => {
+    window.addEventListener("resize", () => resizeWindow());
+    resizeWindow();
+  }, []);
   return (
     <div className="App">
       <BrowserRouter>

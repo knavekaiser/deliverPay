@@ -2,7 +2,7 @@ $blue: #336cf9;
 $green: #1be6d6;
 
 .landingPage {
-  min-height: 100vh;
+  height: calc(var(--vh) * 100);
   display: grid;
   .innerWrapper {
     padding: 0 2rem;
@@ -30,7 +30,8 @@ $green: #1be6d6;
           font-size: 1.5rem;
           color: $blue;
           font-weight: bold;
-          display: inline-block;
+          display: flex;
+          align-items: center;
         }
         position: relative;
       }
@@ -59,8 +60,10 @@ $green: #1be6d6;
         display: flex;
         grid-gap: 2rem;
         a {
+          flex: 1;
+          max-width: 50%;
           border-radius: 2rem;
-          width: 10vw;
+          width: max-content;
           text-align: center;
           border: 2px solid white;
           color: white;
@@ -127,4 +130,104 @@ $green: #1be6d6;
     rgba(51, 108, 249, 1) 42%,
     rgba(27, 230, 214, 1) 100%
   );
+}
+
+@media only screen and (max-width: 1100px) {
+  .landingPage {
+    header {
+      .innerWrapper {
+        height: 100px;
+        .links {
+          grid-gap: 1.25rem;
+          .logo {
+            height: 45px;
+          }
+        }
+        .clas {
+          grid-gap: 1rem;
+        }
+        .path {
+          width: min-content;
+          svg {
+            transform: scale(1.18);
+          }
+        }
+      }
+    }
+    .content {
+      .innerWrapper {
+        .text {
+          flex-basis: 55%;
+          h1 {
+            font-size: 3.4rem;
+          }
+          p {
+            font-size: 1.2rem;
+          }
+        }
+      }
+    }
+  }
+}
+@media only screen and (max-width: 480px) {
+  .landingPage {
+    grid-template-rows: min-content 1fr;
+    header {
+      .innerWrapper {
+        height: min-content;
+        flex-wrap: wrap;
+        grid-gap: 1rem;
+        padding: 0.5rem;
+        .links {
+          a:not(.logoLink) {
+            display: none;
+          }
+          .logoLink {
+            margin: auto;
+          }
+          grid-gap: 1rem;
+          .logo {
+            height: 40px;
+          }
+        }
+        .clas {
+          grid-gap: 0.5rem;
+          a {
+            max-width: 90%;
+            flex: 1;
+          }
+        }
+        .path {
+          display: none;
+        }
+      }
+    }
+    .content {
+      display: grid;
+      place-items: center;
+      .innerWrapper {
+        flex-direction: column;
+        grid-gap: 2rem;
+        .text {
+          order: 2;
+          h1 {
+            font-size: 8vw;
+          }
+          p {
+            display: none;
+          }
+          .clas {
+            display: grid;
+            grid-gap: 2rem;
+            text-align: center;
+          }
+        }
+        .illustration {
+          order: 1;
+          width: 100%;
+          max-width: 100%;
+        }
+      }
+    }
+  }
 }

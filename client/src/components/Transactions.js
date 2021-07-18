@@ -33,7 +33,7 @@ const Transactions = ({ history, location, match }) => {
       });
   }, []);
   return (
-    <div className="transcationContainer">
+    <div className="transactionContainer">
       <p className="benner">Completed Delivery pay Hold Transactions</p>
       <ul className="transactions">
         {transactions.map((transaction) => (
@@ -89,7 +89,7 @@ const SingleTransaction = ({ transaction }) => {
           <p>Amount</p>-<p className="amount">{transaction.amount}</p>
         </li>
         <li>
-          <p>Delivery pay Hold Date</p>-
+          <p>Hold Date</p>-
           <p>
             <Moment format="MMM DD, YYYY, hh:mm a">
               {transaction.createdAt}

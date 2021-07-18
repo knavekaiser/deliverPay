@@ -18,18 +18,59 @@ const Profile = ({ history, match, location }) => {
   const [mismatchPass, setMismatchPass] = useState(false);
   const [msg, setMsg] = useState(null);
   const addGoogleId = (e) => {
-    updateProfileInfo({ googleId: e.googleId })
+    if (e.googleId) {
+      updateProfileInfo({ googleId: e.googleId })
+        .then((data) => {
+          setUser((prev) => ({ ...prev, googleId: e.googleId }));
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Succ_svg />
+                <h4>Google account successfully connected.</h4>
+              </div>
+            </>
+          );
+        })
+        .catch((err) => {
+          console.log(err);
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not connect Google account.</h4>
+              </div>
+            </>
+          );
+        });
+    }
+  };
+  const disconnectFromGoogle = (e) => {
+    updateProfileInfo({ googleId: null })
       .then((data) => {
-        setUser((prev) => ({ ...prev, googleId: e.googleId }));
-        setMsg(
-          <>
-            <button onClick={() => setMsg(null)}>Okay</button>
-            <div>
-              <Succ_svg />
-              <h4>Google account successfully connected.</h4>
-            </div>
-          </>
-        );
+        if (data.user) {
+          setUser((prev) => ({ ...prev, googleId: null }));
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Succ_svg />
+                <h4>Successfully disconnected Google.</h4>
+              </div>
+            </>
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not disconnect Google account. Please try again.</h4>
+              </div>
+            </>
+          );
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -38,7 +79,7 @@ const Profile = ({ history, match, location }) => {
             <button onClick={() => setMsg(null)}>Okay</button>
             <div>
               <Err_svg />
-              <h4>Could not connect Google account.</h4>
+              <h4>Could not disconnect Google account.</h4>
             </div>
           </>
         );
@@ -277,15 +318,25 @@ const Profile = ({ history, match, location }) => {
       <div className="socials">
         <div className="head">Connect Social Accounts</div>
         <ul className="providers">
-          <GoogleLogin
-            disabled={user.googleId}
-            className="google"
-            clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
-            buttonText="Connect with Google"
-            onSuccess={addGoogleId}
-            onFailure={addGoogleId}
-            cookiePolicy={"single_host_origin"}
-          />
+          {user.googleId ? (
+            <GoogleLogin
+              className="google"
+              clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+              buttonText="Disconnect from Google"
+              onSuccess={disconnectFromGoogle}
+              onFailure={disconnectFromGoogle}
+              cookiePolicy={"single_host_origin"}
+            />
+          ) : (
+            <GoogleLogin
+              className="google"
+              clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+              buttonText="Connect with Google"
+              onSuccess={addGoogleId}
+              onFailure={addGoogleId}
+              cookiePolicy={"single_host_origin"}
+            />
+          )}
         </ul>
       </div>
       <Modal className="msg" open={msg}>

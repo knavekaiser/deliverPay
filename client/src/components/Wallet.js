@@ -481,6 +481,9 @@ const Wallet = ({ history, location, match }) => {
                 )}
               </li>
             ))}
+            {rewards.length === 0 ? (
+              <li className="placeholder">Nothing yet.</li>
+            ) : null}
           </ul>
         </div>
       </div>
@@ -1246,7 +1249,6 @@ export const Cards = ({ paymentMethods }) => {
   }, [index]);
   return (
     <div className="savedCards">
-      <p className="label">Saved Cards</p>
       <div className="wrapper" ref={container}>
         <ul className="cards" style={wrapperStyle}>
           {paymentMethods.map((method, i) => (

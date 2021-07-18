@@ -177,6 +177,9 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
             <li>
               <p>Transaction ID</p>-<p>{milestone._id}</p>
             </li>
+            <li className="status">
+              <p>Status</p>-<p>{milestone.status}</p>
+            </li>
           </ul>
         </div>
       </div>
