@@ -25,7 +25,6 @@ const Deals = ({ history, location, match }) => {
     fetch("/api/getChat")
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         setContacts(() =>
           data.map((chat) => {
             const status = "";
@@ -226,9 +225,6 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
     }
   };
   useEffect(() => {
-    chatWrapper.current?.scrollBy(0, 9999999999999);
-  }, [chat]);
-  useEffect(() => {
     socket.on("connectedToRoom", ({ rooms }) => {
       setRooms(rooms);
     });
@@ -251,6 +247,9 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
       }
     };
   }, [rooms]);
+  useEffect(() => {
+    chatWrapper.current?.scrollBy(0, 9999999999999);
+  }, [chat]);
   return (
     <div className="chat">
       {chat ? (

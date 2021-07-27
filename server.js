@@ -12,6 +12,7 @@ require("./models/user");
 require("./models/payment");
 require("./models/dispute");
 require("./models/chat");
+require("./models/support");
 require("dotenv").config();
 const PORT = process.env.PORT || 3001;
 const URI = process.env.MONGO_URI;

@@ -1,75 +1,557 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Link, Route, Switch } from "react-router-dom";
-import { Arrow_left_svg, Combobox } from "./Elements";
+import { Modal, Confirm } from "./Modal";
+import Moment from "react-moment";
+import moment from "moment";
+import {
+  Arrow_left_svg,
+  Combobox,
+  X_svg,
+  Err_svg,
+  Succ_svg,
+  Paginaiton,
+  Chev_down_svg,
+} from "./Elements";
+import { DateRange } from "react-date-range";
+import { TicketForm, TicketReplyForm } from "./Forms";
+require("./styles/singleTicket.scss");
+require("./styles/table.scss");
 
-const Tickets = () => {
+export const Tickets = ({ history, location, pathname }) => {
+  const dateFilterRef = useRef();
+  const [ticketForm, setTicketForm] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [total, setTotal] = useState(0);
   const [tickets, setTickets] = useState([]);
-  const [status, setStatus] = useState("");
+  const [sort, setSort] = useState({ column: "createdAt", order: "dsc" });
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(),
+    endDate: new Date(),
+  });
+  const [dateOpen, setDateOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [perPage, setPerPage] = useState(20);
+  const [datePickerStyle, setDatePickerStyle] = useState({});
+  const [dateFilter, setDateFilter] = useState(false);
+  useLayoutEffect(() => {
+    const {
+      height,
+      y,
+      width,
+      x,
+    } = dateFilterRef.current.getBoundingClientRect();
+    setDatePickerStyle({
+      position: "fixed",
+      top: height + y + 4,
+      right: window.innerWidth - x - width,
+    });
+  }, []);
   useEffect(() => {
-    fetch(`/api/getTickets?${status ? `status=${status}` : ""}`)
+    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
+    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
+    const lastDate = moment(
+      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
+    ).format("YYYY-MM-DD");
+    fetch(
+      `/api/getTickets?page=${page}&perPage=${perPage}&sort=${
+        sort.column
+      }&order=${sort.order}${search && "&q=" + search}${
+        dateFilter ? "&dateFrom=" + startDate + "&dateTo=" + lastDate : ""
+      }`
+    )
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        if (data.code === "ok") {
+          setTickets(data.tickets.tickets);
+          setTotal(data.tickets.pageInfo[0]?.count || 0);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not get tickets.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get tickets. Make sure you're online.</h4>
+            </div>
+          </>
+        );
       });
-  }, [status]);
+  }, [page, perPage, sort.column, sort.order, search, dateFilter]);
   return (
-    <div className="ticketContainer">
-      <Link to="/account/support">
-        <Arrow_left_svg />
-        Back
-      </Link>
-      <p className="benner">Tickets</p>
-      <div className="content">
-        <div className="head">
-          <section>
-            <label>Show</label>
-            <Combobox
-              defaultValue={0}
-              options={[
-                { label: "Open", value: "open" },
-                { label: "Closed", value: "closed" },
-                { label: "All", value: "" },
-              ]}
-              onChange={(e) => setStatus(e.value)}
-            />
-          </section>
-        </div>
-        <table className="tickets">
-          <thead>
-            <tr>
-              <th>Department</th>
-              <th>Subject</th>
-              <th>Status</th>
-              <th>Last Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map((ticket) => (
-              <tr key={ticket._id} className="ticket">
-                <td>{ticket.department}</td>
-                <td>{ticket.issue}</td>
-                <td>{ticket.status}</td>
-                <td>{ticket.updatedAt}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="table ticketContainer">
+      <div style={{ display: "none" }}>
+        <X_svg />
       </div>
+      <div className="head">
+        <h3>Tickets</h3>
+        <button onClick={() => setTicketForm(true)}>Open Ticket</button>
+      </div>
+      <div className="filters">
+        <section>
+          <label>Total:</label>
+          {total}
+        </section>
+        <section>
+          <label>Per Page:</label>
+          <Combobox
+            defaultValue={0}
+            options={[
+              { label: "20", value: 20 },
+              { label: "30", value: 30 },
+              { label: "50", value: 50 },
+            ]}
+            onChange={(e) => setPerPage(e.value)}
+          />
+        </section>
+        <section className="search">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="23"
+            height="23"
+            viewBox="0 0 23 23"
+          >
+            <path
+              id="Icon_ionic-ios-search"
+              data-name="Icon ionic-ios-search"
+              d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
+              transform="translate(-4.5 -4.493)"
+              fill="#707070"
+              opacity="0.74"
+            />
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search issue"
+          />
+          {search && (
+            <button onClick={() => setSearch("")}>
+              <X_svg />
+            </button>
+          )}
+        </section>
+        <section
+          className={`date ${dateFilter ? "open" : ""}`}
+          ref={dateFilterRef}
+        >
+          <svg
+            onClick={() => setDateOpen(true)}
+            xmlns="http://www.w3.org/2000/svg"
+            width="30.971"
+            height="30.971"
+            viewBox="0 0 30.971 30.971"
+          >
+            <path
+              id="Path_299"
+              data-name="Path 299"
+              d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
+              fill="#336cf9"
+            />
+          </svg>
+          {dateFilter && (
+            <>
+              <div className="dates">
+                <p>
+                  From:{" "}
+                  <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
+                </p>
+                <p>
+                  To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
+                </p>
+              </div>
+              <button
+                className="clearDateFilter"
+                onClick={() => {
+                  setDateRange({
+                    startDate: new Date(),
+                    endDate: new Date(),
+                  });
+                  setDateFilter(false);
+                }}
+              >
+                <X_svg />
+              </button>
+            </>
+          )}
+        </section>
+      </div>
+      <table cellSpacing={0} cellPadding={0}>
+        <thead>
+          <tr>
+            <th
+              className={
+                sort.column === "createdAt" ? "sort" + " " + sort.order : ""
+              }
+              onClick={() => {
+                setSort((prev) => ({
+                  column: "createdAt",
+                  order: prev.order === "dsc" ? "asc" : "dsc",
+                }));
+              }}
+            >
+              Date <Chev_down_svg />
+            </th>
+            <th
+              className={
+                sort.column === "issue" ? "sort" + " " + sort.order : ""
+              }
+              onClick={() => {
+                setSort((prev) => ({
+                  column: "issue",
+                  order: prev.order === "dsc" ? "asc" : "dsc",
+                }));
+              }}
+            >
+              Issue <Chev_down_svg />
+            </th>
+            <th
+              className={
+                sort.column === "status" ? "sort" + " " + sort.order : ""
+              }
+              onClick={() => {
+                setSort((prev) => ({
+                  column: "status",
+                  order: prev.order === "dsc" ? "asc" : "dsc",
+                }));
+              }}
+            >
+              Status <Chev_down_svg />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {tickets.map((item) => (
+            <tr
+              key={item._id}
+              onClick={() =>
+                history.push(`/account/support/ticket/${item._id}`)
+              }
+            >
+              <td>
+                <Moment format="hh:mm a, DD MMM, YYYY">{item.createdAt}</Moment>
+              </td>
+              <td>{item.issue}</td>
+              <td>{item.status}</td>
+            </tr>
+          ))}
+          {setTickets.length === 0 && (
+            <tr className="placeholder">
+              <td>Nothing yet.</td>
+            </tr>
+          )}
+        </tbody>
+        <tfoot>
+          <tr>
+            <Paginaiton
+              total={total}
+              perPage={perPage}
+              currentPage={page}
+              btns={5}
+              setPage={setPage}
+            />
+          </tr>
+        </tfoot>
+      </table>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
+      <Modal
+        open={dateOpen}
+        onBackdropClick={() => setDateOpen(false)}
+        backdropClass="datePicker"
+        style={datePickerStyle}
+      >
+        <DateRange
+          className="dateRange"
+          ranges={[dateRange]}
+          onChange={(e) => {
+            setDateRange(e.range1);
+            if (e.range1.endDate !== e.range1.startDate) {
+              setDateOpen(false);
+              setDateFilter(true);
+            }
+          }}
+        />
+      </Modal>
+      <Modal open={ticketForm} className="formModal ticketFormModal">
+        <div className="head">
+          <p className="modalName">Open Ticket</p>
+          <button onClick={() => setTicketForm(false)}>
+            <X_svg />
+          </button>
+        </div>
+        <TicketForm
+          onSuccess={(newTicket) => {
+            console.log(newTicket);
+            setTicketForm(false);
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Succ_svg />
+                  <h4>Ticket successfully submitted.</h4>
+                </div>
+              </>
+            );
+            setTickets((prev) => [newTicket, ...prev]);
+          }}
+        />
+      </Modal>
     </div>
   );
 };
-const SingleTicket = ({ ticket, setTickets }) => {
+export const SingleTicket = ({ history, match }) => {
+  const [ticket, setTicket] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [replyForm, setReplyForm] = useState(false);
+  useEffect(() => {
+    fetch(`/api/singleTicket?_id=${match.params._id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setTicket(data.ticket);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => history.push("/account/support/ticket")}>
+                Go Back
+              </button>
+              <div>
+                <Err_svg />
+                <h4>Ticket could not be found.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => history.push("/account/support/ticket")}>
+              Go Back
+            </button>
+            <div>
+              <Err_svg />
+              <h4>Ticket could not be found.</h4>
+            </div>
+          </>
+        );
+      });
+  }, []);
+  if (ticket) {
+    return (
+      <div className="ticket">
+        <div className="detail">
+          <Link to="/account/support/ticket" className="back">
+            <Arrow_left_svg />
+            Go Back
+          </Link>
+          <ul className="summery">
+            <li className="head">Ticket Summery</li>
+            <li>
+              <label>Issue:</label>
+              <p>{ticket.issue}</p>
+            </li>
+            <li>
+              <label>Status:</label>
+              <p>{ticket.status}</p>
+            </li>
+            <li>
+              <label>Created at:</label>
+              <p>
+                <Moment format="hh:mm a, DD MMM, YYYY">
+                  {ticket.createdAt}
+                </Moment>
+              </p>
+            </li>
+            <li>
+              <label>Last Activity:</label>
+              <p>
+                <Moment format="hh:mm a, DD MMM, YYYY">
+                  {ticket.updatedAt}
+                </Moment>
+              </p>
+            </li>
+          </ul>
+          <ul className="milestoneDetail">
+            <li className="head">Milestone Detail</li>
+            {ticket.milestone ? (
+              <>
+                <li>
+                  <label>Amount:</label>
+                  <p>{ticket.milestone.amount}</p>
+                </li>
+                <li>
+                  <label>Status:</label>
+                  <p>{ticket.milestone.status}</p>
+                </li>
+                <li>
+                  <label>Created at:</label>
+                  <p>
+                    <Moment format="hh:mm a, DD MMM, YYYY">
+                      {ticket.milestone.createdAt}
+                    </Moment>
+                  </p>
+                </li>
+                <li>
+                  <label>Verification Method:</label>
+                  <p>{ticket.milestone.verification}</p>
+                </li>
+                <li>
+                  <label>Seller:</label>
+                  <p>
+                    {ticket.milestone.seller.firstName +
+                      " " +
+                      ticket.milestone.seller.lastName}
+                  </p>
+                </li>
+                <li>
+                  <label>Buyer:</label>
+                  <p>
+                    {ticket.milestone.buyer.firstName +
+                      " " +
+                      ticket.milestone.buyer.lastName}
+                  </p>
+                </li>
+                <li>
+                  <label>Description:</label>
+                  <p>{ticket.milestone.dscr}</p>
+                </li>
+              </>
+            ) : (
+              <li className="placeholder">No Detail provided</li>
+            )}
+          </ul>
+          <ul className="transactionDetail">
+            <li className="head">Transaction Detail</li>
+            {ticket.transaction ? (
+              <>
+                <li>
+                  <label>Type:</label>
+                  <p>{ticket.transaction.__t}</p>
+                </li>
+                <li>
+                  <label>Amount:</label>
+                  <p>{ticket.transaction.amount}</p>
+                </li>
+                <li>
+                  <label>Note:</label>
+                  <p>{ticket.transaction.note}</p>
+                </li>
+                <li>
+                  <label>Created at:</label>
+                  <p>
+                    <Moment format="hh:mm a, DD MMM, YYYY">
+                      {ticket.transaction.createdAt}
+                    </Moment>
+                  </p>
+                </li>
+              </>
+            ) : (
+              <li className="placeholder">No Detail provided</li>
+            )}
+          </ul>
+          <div className="pBtm" />
+        </div>
+        <div className="messages">
+          <div className="head">
+            Messages <button onClick={() => setReplyForm(true)}>Reply</button>
+          </div>
+          <ul>
+            {[...ticket.messages].reverse().map((item, i) => (
+              <li key={i}>
+                <div className="user">
+                  <p className="name">
+                    {item.user.name}
+                    <span>•</span>
+                    <span className="role">{item.user.role}</span>
+                    <span className="date">
+                      <Moment format="hh:mm a, DD MMM, YYYY">
+                        {item.createdAt}
+                      </Moment>
+                    </span>
+                  </p>
+                </div>
+                <p className="message">{item.message.body}</p>
+                {item.message.files.length > 0 && (
+                  <div className="files">test</div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Modal open={replyForm} className="ticketReplyFormModal">
+          <div className="head">
+            <p className="modalName">Add reply to Ticket</p>
+            <button onClick={() => setReplyForm(false)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="15.557"
+                height="15.557"
+                viewBox="0 0 15.557 15.557"
+              >
+                <defs>
+                  <clipPath id="clip-path">
+                    <rect width="15.557" height="15.557" fill="none" />
+                  </clipPath>
+                </defs>
+                <g id="Cancel" clipPath="url(#clip-path)">
+                  <path
+                    id="Union_3"
+                    data-name="Union 3"
+                    d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
+                    fill="#2699fb"
+                  />
+                </g>
+              </svg>
+            </button>
+          </div>
+          <TicketReplyForm
+            _id={ticket._id}
+            onSuccess={(newTicket) => {
+              setReplyForm(false);
+              setTicket((prev) => ({ ...prev, messages: newTicket.messages }));
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Succ_svg />
+                    <h4>Reply has been submitted.</h4>
+                  </div>
+                </>
+              );
+            }}
+          />
+        </Modal>
+        <Modal open={msg} className="msg">
+          {msg}
+        </Modal>
+      </div>
+    );
+  }
   return (
     <div className="ticket">
-      <ul>
-        {ticket.messages.map((message) => (
-          <li key={message._id}>{}</li>
-        ))}
-      </ul>
+      loading
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
     </div>
   );
 };
-
 const Support = ({ history, location, match }) => {
   return (
     <>

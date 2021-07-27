@@ -15,7 +15,7 @@ import Hold from "./Hold.js";
 import Transactions from "./Transactions";
 import Wallet from "./Wallet";
 import Products from "./Products";
-import Support from "./Support";
+import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
 import Deals from "./Deals";
 import QRCode from "qrcode.react";
@@ -63,6 +63,8 @@ import {
   WorkplaceIcon,
 } from "react-share";
 import Moment from "react-moment";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 require("./styles/account.scss");
 
 const Home = () => {
@@ -1019,6 +1021,10 @@ function Account({ location }) {
             <Route path="/account/hold" component={Hold} />
             <Route path="/account/transactions" component={Transactions} />
             <Route path="/account/products" component={Products} />
+            <Route
+              path="/account/support/ticket/:_id"
+              component={SingleTicket}
+            />
             <Route path="/account/support" component={Support} />
             <Route path="/account/profile" component={Profile} />
             <Route path="/" component={Home} />
@@ -1462,7 +1468,7 @@ const ProfileAvatar = () => {
         )}
         {noti && (
           <ul className="notiWrapper">
-            {user.notifications.reverse().map((item, i) => {
+            {[...user.notifications].reverse().map((item, i) => {
               return (
                 <li key={i}>
                   <Moment format="hh:mm">{item.createdAt}</Moment>

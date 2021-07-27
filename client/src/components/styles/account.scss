@@ -1085,7 +1085,7 @@ $red: #ff5757;
         min-height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
+        float: right;
         grid-gap: 1px;
         .bubble {
           width: 100%;
@@ -1388,6 +1388,8 @@ $red: #ff5757;
 .modal.paymentMethodsForm,
 .modal.editPaymentMethod,
 .modal.productForm,
+.modal.ticketFormModal,
+.modal.ticketReplyFormModal,
 .modal.milestoneReleaseForm {
   border-radius: 0.7rem;
   width: 100%;
@@ -2603,7 +2605,9 @@ $red: #ff5757;
     border-radius: 0.7rem;
   }
 }
-.disputeForm {
+.disputeForm,
+.ticketReplyFormModal,
+.ticketFormModal {
   max-width: 35rem;
   form {
     padding: 1.5rem;
@@ -2631,6 +2635,9 @@ $red: #ff5757;
           border-color: $blue;
         }
         resize: none;
+      }
+      textarea {
+        min-height: 4rem;
       }
       &.fileInput {
         ul {
@@ -3031,6 +3038,12 @@ $red: #ff5757;
       }
     }
   }
+}
+.modalBackdrop.datePicker {
+  background: none !important;
+}
+.dateRange {
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.15);
 }
 
 @media only screen and (max-width: 480px) {

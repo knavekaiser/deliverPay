@@ -2,9 +2,10 @@ const ticketModel = new Schema(
   {
     issue: { type: String, required: true },
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    department: { type: String, required: true },
+    department: { type: String },
     status: { type: String, default: "open", enum: ["open", "closed"] },
     milestone: { type: Schema.Types.ObjectId, ref: "Milestone" },
+    transaction: { type: Schema.Types.ObjectId, ref: "Transaction" },
     messages: [
       new Schema(
         {
