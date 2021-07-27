@@ -648,6 +648,24 @@ export const Arrow_down_svg = () => {
     </svg>
   );
 };
+export const Arrow_left_svg = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+    >
+      <path
+        id="Path_10"
+        data-name="Path 10"
+        d="M8,0,6.545,1.455l5.506,5.506H0V9.039H12.052L6.545,14.545,8,16l8-8Z"
+        transform="translate(16 16) rotate(180)"
+        fill="#2699fb"
+      />
+    </svg>
+  );
+};
 
 export const Checkbox = ({ defaultValue, required, onChange }) => {
   const [checked, setChecked] = useState(defaultValue);

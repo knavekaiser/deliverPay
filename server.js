@@ -48,7 +48,7 @@ global.notify = (client, body, clientType) => {
 const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
 const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
 webPush.setVapidDetails(
-  "mailto:support@schoolforblinds.com",
+  "mailto:support@deliverypay.in",
   publicVapidKey,
   privateVapidKey
 );
@@ -108,6 +108,7 @@ require("./routes/payments.js");
 require("./routes/disputes.js");
 require("./routes/products.js");
 require("./routes/chats.js");
+require("./routes/support.js");
 
 app.post("/api/contactUsRequest", (req, res) => {
   const { name, email, phone, message } = req.body;

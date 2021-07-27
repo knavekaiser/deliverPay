@@ -1014,7 +1014,7 @@ function Account({ location }) {
         </ul>
         <main>
           <Switch>
-            <Route path="/account/deals/:phone?" component={Deals} />
+            <Route path="/account/deals/:_id?" component={Deals} />
             <Route path="/account/wallet" component={Wallet} />
             <Route path="/account/hold" component={Hold} />
             <Route path="/account/transactions" component={Transactions} />
@@ -1676,25 +1676,6 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
       setShowSelectedProducts(false);
     }
   }, [products]);
-  // <section>
-  // <label>Type of Transaction</label>
-  // <Combobox
-  // defaultValue={0}
-  // options={[
-  //   {
-  //     label: "Product",
-  //     value: "product",
-  //   },
-  //   {
-  //     label: "Service",
-  //     value: "service",
-  //   },
-  // ]}
-  // onChange={(e) => {
-  //   setType(e.value);
-  // }}
-  // />
-  // </section>
   return (
     <>
       <form

@@ -83,7 +83,14 @@ app.post("/api/registerUser", async (req, res) => {
         }
       });
   } else {
-    res.status(400).json({ message: "Incomplete request" });
+    res
+      .status(400)
+      .json({
+        code: 400,
+        message: "Incomplete request",
+        fieldsRequired: "firstName, lastName, phone, email, password",
+        fieldsFound: req.body,
+      });
   }
 });
 app.post(

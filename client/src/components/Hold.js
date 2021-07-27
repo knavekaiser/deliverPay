@@ -9,6 +9,7 @@ import {
   Prog_done,
   Prog_running,
   Prog_runningBack,
+  Succ_svg,
 } from "./Elements";
 import { MilestoneReleaseForm, DisputeForm } from "./Forms";
 
@@ -161,7 +162,7 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
     <li className={`milestone ${milestone.role}`} key={milestone._id}>
       <div className="clientDetail">
         <div className="profile">
-          <img src={milestone.client.profileImg} />
+          <img src={milestone.client.profileImg || "/profile-user.jpg"} />
           <p className="name">
             {milestone.client.firstName + " " + milestone.client.lastName}
           </p>
@@ -399,6 +400,19 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
               })
             );
             setDisputeForm(false);
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Succ_svg />
+                  <h4>
+                    {disputeFiledBy === "client"
+                      ? "Case submit success. Dispute pending for verdict."
+                      : "Dispute filed succefully."}
+                  </h4>
+                </div>
+              </>
+            );
           }}
         />
       </Modal>

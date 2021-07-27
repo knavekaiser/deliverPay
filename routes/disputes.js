@@ -27,61 +27,66 @@ app.post(
     if (defendant && milestone && issue) {
       if (req.user.balance > 500) {
         if (dispute) {
-          Dispute.findOneAndUpdate(
-            { _id: dispute._id },
-            {
-              status: "inProgress",
-              "defendant.case": _case,
-            },
-            { new: true }
-          ).then((dispute) => {
-            if (dispute) {
-              new Transaction({
-                amount: -500,
-                user: req.user,
-                note: "approving dispute",
-              })
-                .save()
-                .then((transaction) => {
-                  User.findOneAndUpdate(
-                    { _id: req.user._id },
-                    {
-                      $inc: { balance: -500 },
-                      $addToSet: { transactions: transaction._id },
-                    },
-                    { new: true }
-                  ).then((user) => {
-                    notify(
-                      dispute.plaintiff._id,
-                      JSON.stringify({
-                        title: "Dispute responese",
-                        body: `${req.user.firstName} responded to your dispute.`,
-                      })
-                    );
-                    res.json({
-                      code: "ok",
-                      message: "case submitted",
-                      milestone: {
-                        ...milestone._doc,
-                        dispute,
+          if (dispute.plaintiff._id === req.user._id) {
+            res
+              .status(403)
+              .json({ code: 403, message: "dispute already created" });
+          } else if (dispute.defendant._id === req.user._id) {
+            Dispute.findOneAndUpdate(
+              { _id: dispute._id },
+              {
+                status: "pendingVerdict",
+                "defendant.case": _case,
+              },
+              { new: true }
+            ).then((dispute) => {
+              if (dispute) {
+                new Transaction({
+                  amount: -500,
+                  user: req.user,
+                  note: "approving dispute",
+                })
+                  .save()
+                  .then((transaction) => {
+                    User.findOneAndUpdate(
+                      { _id: req.user._id },
+                      {
+                        $inc: { balance: -500 },
+                        $addToSet: { transactions: transaction._id },
                       },
+                      { new: true }
+                    ).then((user) => {
+                      notify(
+                        dispute.plaintiff._id,
+                        JSON.stringify({
+                          title: "Dispute responese",
+                          body: `${req.user.firstName} responded to your dispute.`,
+                        })
+                      );
+                      res.json({
+                        code: "ok",
+                        message: "case submitted",
+                        milestone: {
+                          ...milestone._doc,
+                          dispute,
+                        },
+                      });
                     });
                   });
-                });
-            } else {
-              res
-                .status(500)
-                .json({ code: 500, message: "case could not be submitted" });
-            }
-          });
+              } else {
+                res
+                  .status(500)
+                  .json({ code: 500, message: "case could not be submitted" });
+              }
+            });
+          } else {
+            res.status(403).json({ code: 403, message: "forbidden" });
+          }
         } else {
           new Dispute({
             issue,
             defendant,
-            plaintiff: {
-              ...req.user._doc,
-              case: _case,
-            },
+            plaintiff: { ...req.user._doc, case: _case },
             milestoneId: milestone._id,
           })
             .save()
@@ -135,7 +140,7 @@ app.post(
                           defendantId,
                           JSON.stringify({
                             title: "Dispute filed",
-                            body: `${req.user.firstName} filed a dispute for the milestone: ${milestone.product.dscr}`,
+                            body: `${req.user.firstName} filed a dispute for the milestone: ${milestone.dscr}`,
                           }),
                           "User"
                         );
@@ -161,117 +166,15 @@ app.post(
             });
         }
       } else {
-        res.status(403).json({ message: "insufficient fund" });
+        res.status(403).json({ code: 403, message: "insufficient fund" });
       }
     } else {
-      res.status(400).json({ message: "incomplete request" });
-    }
-  }
-);
-app.patch(
-  "/api/approveDispute",
-  passport.authenticate("userPrivate"),
-  async (req, res) => {
-    const dispute = await Dispute.findOne({
-      _id: req.body._id,
-      "defendant._id": req.user._id,
-      status: "pending",
-    });
-    if (!dispute) {
-      res.status(400).json({ message: "bad request" });
-      return;
-    }
-    if (req.user.balance >= 500) {
-      new Transaction({
-        user: req.user._id,
-        amount: 500,
-        note: "approving dispute",
-      })
-        .save()
-        .then((transaction) => {
-          return User.findOneAndUpdate(
-            { _id: req.user._id },
-            {
-              $inc: { balance: -500 },
-              $addToSet: { transactions: transaction._id },
-            },
-            { new: true }
-          );
-        })
-        .then((user) => {
-          if (user) {
-            Dispute.findOneAndUpdate(
-              { _id: dispute._id },
-              { status: "onGoing" },
-              { new: true }
-            )
-              .then((disp) => {
-                res.json({ message: "dispute approved", dispute: disp });
-              })
-              .catch((err) => {
-                console.log(err);
-                res.status(500).json({ message: "something went wrong" });
-              });
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          res.status(400).json({ message: "bad request" });
-        });
-    } else {
-      res.status(403).json({ message: "insufficient fund" });
-    }
-  }
-);
-app.post(
-  "/api/submitCase",
-  passport.authenticate("userPrivate"),
-  (req, res) => {
-    const {
-      _id,
-      clientType,
-      case: { dscr, evidence },
-    } = req.body;
-    if (_id && clientType && dscr && evidence) {
-      Dispute.findOneAndUpdate(
-        { _id, [`${clientType}._id`]: req.user._id, status: "onGoing" },
-        { [`${clientType}.case`]: { dscr, evidence } },
-        { new: true }
-      ).then((dispute) => {
-        if (dispute) {
-          res.json({ message: "case submited" });
-        } else {
-          res.status(400).json({ message: "bad request" });
-        }
+      res.status(400).json({
+        code: 400,
+        message: "missing field or invalid milestoneId/defendantId",
+        fieldsRequired: "issue, milestoneId, defendantId, _case",
+        fieldsFound: req.body,
       });
-    } else {
-      res.status(400).json({ message: "incomplete request" });
     }
-  }
-);
-app.post(
-  "/api/submitDisputeForReview",
-  passport.authenticate("userPrivate"),
-  (req, res) => {
-    Dispute.findOneAndUpdate(
-      {
-        _id: req.body._id,
-        "plaintiff.case.dscr": { $exists: true },
-        "defendant.case.dscr": { $exists: true },
-        status: "onGoing",
-      },
-      { status: "pendingVerdict" }
-    )
-      .then((dispute) => {
-        if (dispute) {
-          res.json({ message: "dispute submitted for review" });
-        } else {
-          res.status(400).json({ message: "bad request" });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({ message: "something went wrong" });
-      });
   }
 );

@@ -1,5 +1,5 @@
 app.get("/api/inviteUser", passport.authenticate("userPrivate"), (req, res) => {
-  const { q, origin } = req.query;
+  const { origin } = req.query;
   const messageBody = `${req.user.firstName} ${req.user.lastName} invites you to join Delivery Pay. Join Delivery Pay to make safe transactions. ${origin}/u/join?referer=${req.user._id}`;
   // send message here
   res.json({ code: "ok", message: "invitation sent" });
@@ -40,32 +40,34 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
     {
       $lookup: {
         from: "users",
-        localField: "client",
-        foreignField: "_id",
-        as: "client",
+        as: "clientProfile",
+        let: {
+          client: "$client",
+        },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$$client", "$_id"] } } },
+          {
+            $project: {
+              firstName: 1,
+              lastName: 1,
+              phone: 1,
+              email: 1,
+              profileImg: 1,
+              address: 1,
+            },
+          },
+        ],
       },
     },
     {
       $set: {
         client: {
-          $first: "$client",
+          $mergeObjects: [{ $first: "$clientProfile" }, { _id: "$client" }],
         },
       },
     },
     {
-      $project: {
-        "client.pass": 0,
-        "client.notifications": 0,
-        "client.balance": 0,
-        "client.transactions": 0,
-        "client.milestones": 0,
-        "client.contacts": 0,
-        "client.paymentMethods": 0,
-        "client.chats": 0,
-      },
-    },
-    {
-      $sort: { "messages.createdAt": -1 },
+      $unset: "clientProfile",
     },
   ])
     .then((dbRes) => {
@@ -76,6 +78,7 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
       res.status(500).json({ message: "something went wrong" });
     });
 });
+
 app.post(
   "/api/sendContactRequest",
   passport.authenticate("userPrivate"),
@@ -184,6 +187,7 @@ app.patch(
     }
   }
 );
+
 app.patch(
   "/api/updateLastSeen",
   passport.authenticate("userPrivate"),
@@ -205,7 +209,7 @@ app.patch(
           res.status(500).json({ message: "something went wrong" });
         });
     } else {
-      res.status(400).json({ message: "bad request" });
+      res.status(400).json({ code: 400, message: "rooms is required." });
     }
   }
 );

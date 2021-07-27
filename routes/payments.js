@@ -312,6 +312,7 @@ app.put(
                   amount: razorRes.amount / 100,
                   paymentMethod: razorRes.method,
                   user: req.user._id,
+                  note: "Add money to wallet",
                 }).save(),
                 RazorOrderId.findOneAndUpdate(
                   { id: serverOrderId.id },
@@ -358,7 +359,12 @@ app.put(
           .json({ code: 400, message: "invalid payment signature" });
       }
     } else {
-      res.status(400).json({ message: "incomplete request" });
+      res.status(400).json({
+        code: "400",
+        message: "incomplete request",
+        fieldsRequired: "transactionId, razorSignature, razorOrderId",
+        fieldsFound: req.body,
+      });
     }
   }
 );
@@ -396,39 +402,48 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
         },
       },
     },
-    {
-      $unset: ["buyer", "seller"],
-    },
+    { $unset: ["buyer", "seller"] },
     {
       $lookup: {
         from: "users",
-        localField: "client._id",
-        foreignField: "_id",
-        as: "client",
+        as: "clientProfile",
+        let: {
+          client: "$client._id",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$$client", "$_id"],
+              },
+            },
+          },
+          {
+            $project: {
+              firstName: 1,
+              lastName: 1,
+              email: 1,
+              phone: 1,
+              address: 1,
+            },
+          },
+        ],
       },
     },
     {
       $set: {
         client: {
-          $first: "$client",
+          $mergeObjects: [
+            "$client",
+            {
+              $first: "$clientProfile",
+            },
+          ],
         },
       },
     },
     {
-      $project: {
-        "client.pass": 0,
-        "client.balance": 0,
-        "client.transactions": 0,
-        "client.milestones": 0,
-        "client.notifications": 0,
-        "client.paymentMethods": 0,
-        "client.contacts": 0,
-        "client.address": 0,
-        "client.active": 0,
-        "client.createdAt": 0,
-        "client.updatedAt": 0,
-        "client.__v": 0,
-      },
+      $unset: "clientProfile",
     },
     {
       $lookup: {
@@ -576,6 +591,7 @@ app.post(
               user: req.user._id,
               amount: amount,
               paymentMethod,
+              note: "Withdraw money from wallet",
             })
               .save()
               .then((transaction) => {
@@ -655,7 +671,12 @@ app.post(
             res.status(400).json({ message: "incomplete request" });
           });
       } else {
-        res.status(400).json({ message: "bad request" });
+        res.status(400).json({
+          code: 400,
+          message: "bad request",
+          fieldsRequired: "brand, nameOnCard, cardNumber, cvv, exp",
+          fieldsFound: req.body,
+        });
       }
     } else if (type === "BankAccount") {
       if (name && bank && ifsc && accountNumber) {
@@ -685,10 +706,15 @@ app.post(
             res.status(400).json({ message: "incomplete request" });
           });
       } else {
-        res.status(400).json({ message: "bad request" });
+        res.status(400).json({
+          code: 400,
+          message: "bad request",
+          fieldsRequired: "name, bank, ifsc, accountNumber",
+          fieldsFound: req.body,
+        });
       }
     } else {
-      res.status(400).json({ message: "bad request" });
+      res.status(400).json({ code: 400, message: "type is required" });
     }
   }
 );
@@ -712,7 +738,7 @@ app.patch(
           res.status(500).json({ message: "server error" });
         });
     } else {
-      res.status(500).json({ message: "type is required" });
+      res.status(400).json({ code: 400, message: "type is required" });
     }
   }
 );
@@ -750,9 +776,9 @@ app.post(
   "/api/requestMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { buyer_id, amount, products } = req.body;
+    const { buyer_id, amount, products, dscr, deliveryDetail } = req.body;
     const buyer = await User.findOne({ _id: buyer_id });
-    if (buyer && products) {
+    if (buyer && products && amount && dscr && deliveryDetail) {
       new Milestone({
         ...req.body,
         status: "pending",
@@ -798,7 +824,10 @@ app.post(
           res.status(500).json({ message: "something went wrong" });
         });
     } else {
-      res.status(400).json({ message: "bad request" });
+      res.status(400).json({
+        code: 400,
+        message: "valid buyer_id, amount and products, dscr is required",
+      });
     }
   }
 );
@@ -841,7 +870,7 @@ app.patch(
               );
             });
         } else {
-          res.status(400).json({ message: "bad request" });
+          res.status(400).json({ code: 400, message: "bad request" });
         }
       })
       .catch((err) => {
@@ -935,7 +964,9 @@ app.patch(
           res.status(400).json({ code: 500, message: "something went wrong" });
         });
     } else {
-      res.status(400).json({ code: 500, message: "incomplete request" });
+      res
+        .status(400)
+        .json({ code: 400, message: "milestone_id and amount is required" });
     }
   }
 );
@@ -943,12 +974,12 @@ app.post(
   "/api/createMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { amount, seller, dscr } = req.body;
+    const { amount, seller, dscr, deliveryDetail } = req.body;
     if (+amount > req.user.balance) {
-      res.status(403).json({ message: "insufficient fund" });
+      res.status(403).json({ code: 403, message: "insufficient fund" });
       return;
     }
-    if (+amount && seller) {
+    if (+amount && seller && dscr && deliveryDetail) {
       new Milestone({
         ...req.body,
         status: "inProgress",
@@ -1029,7 +1060,12 @@ app.post(
           res.status(500).json({ message: "something went wrong" });
         });
     } else {
-      res.status(400).json({ message: "incomplete request" });
+      res.status(400).json({
+        code: 400,
+        message: "incomplete request",
+        fieldsRequired: "amount, seller, dscr",
+        fieldsFound: req.body,
+      });
     }
   }
 );
@@ -1253,7 +1289,7 @@ app.patch(
           });
       }
     } else {
-      res.status(400).json({ message: "bad request" });
+      res.status(400).json({ code: 400, message: "_id is invalid" });
     }
   }
 );
@@ -1261,7 +1297,7 @@ app.delete(
   "/api/cancelMilestone",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    const { _id, note } = req.body;
+    const { _id } = req.body;
     if (_id) {
       Milestone.findOneAndUpdate(
         { _id },
@@ -1274,7 +1310,7 @@ app.delete(
               amount: milestone.amount,
               user: req.user._id,
               client: milestone.seller,
-              note,
+              note: "milestone cancellation",
               dscr: milestone.dscr,
             })
               .save()
@@ -1295,11 +1331,17 @@ app.delete(
                       console.log(err);
                       res.status(500).json({ message: "something went wrong" });
                     });
+                } else {
+                  res
+                    .status(500)
+                    .json({ code: 500, message: "something went wrong" });
                 }
               })
               .catch((err) => {
                 console.log(err);
-                res.status(500).json({ message: "something went wrong" });
+                res
+                  .status(500)
+                  .json({ code: 500, message: "something went wrong" });
               });
           }
         })
@@ -1308,7 +1350,7 @@ app.delete(
           res.status(500).json({ message: "something went wrong" });
         });
     } else {
-      res.status(400).json({ message: "bad request" });
+      res.status(400).json({ code: 400, message: "_id is required" });
     }
   }
 );

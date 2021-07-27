@@ -25,6 +25,7 @@ const Deals = ({ history, location, match }) => {
     fetch("/api/getChat")
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
         setContacts(() =>
           data.map((chat) => {
             const status = "";
@@ -47,9 +48,9 @@ const Deals = ({ history, location, match }) => {
     });
   }, []);
   useEffect(() => {
-    if (match.params.phone) {
+    if (match.params._id) {
       const person = contacts.find(
-        (chat) => chat.client.phone === match.params.phone
+        (chat) => chat.client._id.toString() === match.params._id
       );
       if (person) {
         const { client, messages, status, lastSeen } = person;
@@ -94,10 +95,12 @@ const Deals = ({ history, location, match }) => {
           {userCard ? (
             <>
               <div className="profile">
-                <img src={userCard.profileImg} />
+                <img src={userCard.profileImg || "/profile-user.jpg"} />
                 <div className="details">
                   <p className="name">
-                    {userCard.firstName + " " + userCard.lastName}
+                    {userCard.firstName
+                      ? userCard.firstName + " " + userCard.lastName
+                      : "Deleted user"}
                   </p>
                   <a
                     className="phone"
@@ -110,8 +113,8 @@ const Deals = ({ history, location, match }) => {
                     {userCard.email}
                   </a>
                   <p className="add">
-                    {`${userCard.address.city || ""} ${
-                      userCard.address.country || ""
+                    {`${userCard.address?.city || ""} ${
+                      userCard.address?.country || ""
                     }`}
                   </p>
                 </div>
@@ -176,14 +179,18 @@ const Person = ({ client, messages, lastSeen, userCard }) => {
     <li
       className={client._id === userCard?._id ? "active" : undefined}
       onClick={() => {
-        history.push(`/account/deals/${client.phone}`);
+        history.push(`/account/deals/${client._id}`);
       }}
     >
       {
         <>
-          <img src={client.profileImg} />
+          <img src={client.profileImg || "/profile-user.jpg"} />
           <div>
-            <p className="name">{client.firstName + " " + client.lastName}</p>
+            <p className="name">
+              {client.firstName
+                ? client.firstName + " " + client.lastName
+                : "Deleted User"}
+            </p>
             {messages.length > 0 && (
               <p className="lastMessage">
                 {messages[messages.length - 1].text}
@@ -273,15 +280,17 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
                   />
                 </svg>
               </button>
-              <img src={userCard.profileImg} />
+              <img src={userCard.profileImg || "/profile-user.jpg"} />
               <p className="name">
-                {userCard.firstName + " " + userCard.lastName}
+                {userCard.firstName
+                  ? userCard.firstName + " " + userCard.lastName
+                  : "Deleted user"}
                 <span className="lastSeen">
                   <Moment format="hh:mma, MMM DD">{userCard.lastSeen}</Moment>
                 </span>
               </p>
             </div>
-            <Link className="pay" to={`/account/deals/${userCard.phone}/pay`}>
+            <Link className="pay" to={`/account/deals/${userCard._id}/pay`}>
               Pay
             </Link>
           </div>
@@ -323,35 +332,37 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
               })}
             </ul>
           </div>
-          <form onSubmit={submit}>
-            <section>
-              <input
-                ref={inputRef}
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
-              <div className="fileUpload">
-                <input type="file" />
-              </div>
-            </section>
-            <button type="submit">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="26.55"
-                height="25.219"
-                viewBox="0 0 26.55 25.219"
-              >
-                <path
-                  id="Path_1"
-                  data-name="Path 1"
-                  d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-                  transform="translate(255.198 195.071)"
-                  fill="#fff"
+          {userCard.firstName && (
+            <form onSubmit={submit}>
+              <section>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
                 />
-              </svg>
-            </button>
-          </form>
+                <div className="fileUpload">
+                  <input type="file" />
+                </div>
+              </section>
+              <button type="submit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="26.55"
+                  height="25.219"
+                  viewBox="0 0 26.55 25.219"
+                >
+                  <path
+                    id="Path_1"
+                    data-name="Path 1"
+                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+                    transform="translate(255.198 195.071)"
+                    fill="#fff"
+                  />
+                </svg>
+              </button>
+            </form>
+          )}
         </>
       ) : (
         <div className="startChat">
@@ -380,7 +391,7 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
           <p className="modalName">Create Milestone</p>
           <button
             onClick={() => {
-              history.push(`/account/deals/${userCard.phone}`);
+              history.push(`/account/deals/${userCard._id}`);
             }}
           >
             <X_svg />
@@ -391,7 +402,7 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
           searchClient={userCard}
           onSuccess={(milestone) => {
             if (milestone.milestone) {
-              history.push(`/account/deals/${userCard.phone}`);
+              history.push(`/account/deals/${userCard._id}`);
             }
             setMsg(
               <>
