@@ -2,8 +2,9 @@ $blue: #336cf9;
 $green: #1be6d6;
 
 .landingPage {
-  height: calc(var(--vh) * 100);
+  min-height: calc(var(--vh) * 100);
   display: grid;
+  grid-template-rows: min-content 1fr min-content;
   .innerWrapper {
     padding: 0 2rem;
     width: 100%;
@@ -86,6 +87,8 @@ $green: #1be6d6;
     }
   }
   .content {
+    display: grid;
+    padding: 5rem 0;
     .innerWrapper {
       display: flex;
       align-items: center;
@@ -101,27 +104,29 @@ $green: #1be6d6;
           font-size: 1.4rem;
           width: clamp(45ch, 90%, 75ch);
         }
-        .clas {
-          display: flex;
-          grid-gap: 1rem;
-          align-items: center;
-          a {
-            border-radius: 2rem;
-            padding: 0.7rem 2.5rem;
-            font-size: 1.1rem;
-            background: white;
-            color: $blue;
-            font-weight: 500;
-            border: 2px solid white;
-            &:hover {
-              background: transparent;
-              color: white;
-            }
-          }
-        }
       }
       .illustration {
         max-width: 35vw;
+      }
+    }
+  }
+  footer {
+    background: rgba(255, 255, 255, 0.2);
+    display: grid;
+    padding: 4rem 2rem;
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-gap: 1rem;
+      align-items: center;
+      a {
+        width: max-content;
+        color: white;
+        font-weight: 500;
+        &:hover {
+          background: transparent;
+          color: white;
+        }
       }
     }
   }

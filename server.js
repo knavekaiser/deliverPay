@@ -14,6 +14,7 @@ require("./models/dispute");
 require("./models/chat");
 require("./models/support");
 require("dotenv").config();
+require("./mailService");
 const PORT = process.env.PORT || 3001;
 const URI = process.env.MONGO_URI;
 const Razorpay = require("razorpay");
@@ -117,7 +118,7 @@ app.post("/api/contactUsRequest", (req, res) => {
     new ContactUs({ ...req.body })
       .save()
       .then((dbRes) => {
-        res.json({ message: "request submitted" });
+        res.json({ code: "ok", message: "request submitted" });
       })
       .catch((err) => {
         console.log(err);
@@ -211,6 +212,11 @@ io.on("connection", async (socket) => {
     process.env.JWT_SECRET,
     async (err, decoded) => {
       if (decoded) {
+        socket.on("joinRooms", async ({ rooms }) => {
+          rooms.forEach((room) => {
+            socket.join(room);
+          });
+        });
         socket.on("initiateChat", async ({ client_id }) => {
           InitiateChat({ user: decoded.sub, client: client_id })
             .then(([userChat, clientChat]) => {
@@ -245,11 +251,6 @@ io.on("connection", async (socket) => {
             } else {
               socket.emit("sendFail", { err: "room does not exists" });
             }
-          });
-        });
-        socket.on("joinRooms", async ({ rooms }) => {
-          rooms.forEach((room) => {
-            socket.join(room);
           });
         });
       } else {

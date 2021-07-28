@@ -247,7 +247,7 @@ export const Tickets = ({ history, location, pathname }) => {
               <td>{item.status}</td>
             </tr>
           ))}
-          {setTickets.length === 0 && (
+          {tickets.length === 0 && (
             <tr className="placeholder">
               <td>Nothing yet.</td>
             </tr>
@@ -553,6 +553,16 @@ export const SingleTicket = ({ history, match }) => {
   );
 };
 const Support = ({ history, location, match }) => {
+  const [faqs, setFaqs] = useState([]);
+  useEffect(() => {
+    fetch(`/api/faq`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setFaqs(data.faqs);
+        }
+      });
+  }, []);
   return (
     <>
       <Switch>
@@ -567,11 +577,20 @@ const Support = ({ history, location, match }) => {
               <p>
                 Search for an answer or browse help topics to create a ticket
               </p>
-              <form>
+              <form onSubmit={(e) => e.preventDefault()}>
                 <input
                   type="text"
                   required={true}
                   placeholder="Eg: How does the Delivery pay Hold Works"
+                  onChange={(e) => {
+                    fetch(`/api/faq?q=${e.target.value}`)
+                      .then((res) => res.json())
+                      .then((data) => {
+                        if (data.code === "ok") {
+                          setFaqs(data.faqs);
+                        }
+                      });
+                  }}
                 />
                 <button type="submit">
                   <svg
@@ -591,14 +610,27 @@ const Support = ({ history, location, match }) => {
                 </button>
               </form>
             </div>
-            <div className="feedback">
-              <form>
-                <textarea required={true} />
-                <button>Submit</button>
-              </form>
-              <Link className="feedbackLink" to="/support/myFeedbacks">
-                Submitted Feedbacks
-              </Link>
+            <div className="content">
+              <div className="faq">
+                <p className="label">FAQs</p>
+                <ul>
+                  {faqs.map((item) => (
+                    <li key={item._id}>
+                      <h4>{item.ques}</h4>
+                      <p className="ans">{item.ans}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="feedback">
+                <form>
+                  <textarea required={true} />
+                  <button>Submit</button>
+                </form>
+                <Link className="feedbackLink" to="/support/myFeedbacks">
+                  Submitted Feedbacks
+                </Link>
+              </div>
             </div>
           </div>
         </Route>

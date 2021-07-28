@@ -10,6 +10,7 @@ import {
   X_svg,
   Plus_svg,
   Minus_svg,
+  Footer,
 } from "./Elements";
 import Hold from "./Hold.js";
 import Transactions from "./Transactions";
@@ -353,6 +354,7 @@ const Home = () => {
           </ul>
         </div>
       )}
+      <Footer />
       <Route path="/account/home/pay">
         <Modal open={true} className="milestoneRequest">
           <div className="head">
@@ -1364,7 +1366,7 @@ const ProfileAvatar = () => {
     }
   }, [noti]);
   useEffect(() => {
-    const newNoti = user.notifications.find((item) => {
+    const newNoti = user.notifications?.find((item) => {
       return new Date(item.createdAt) > new Date(user.notificationLastRead);
     });
     if (newNoti) {

@@ -9,9 +9,20 @@ import {
   useHistory,
 } from "react-router-dom";
 import { Modal } from "./components/Modal";
+import { Header, Footer } from "./components/Elements";
 import LandingPage from "./components/LandingPage";
 import UserStart from "./components/UserStart";
 import Account from "./components/Account";
+import AboutUs from "./components/AboutUs";
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import CodeOfConduct from "./components/codeOfConduct";
+import CopyrightPolicy from "./components/copyrightPolicy";
+import FeesCharges from "./components/feesCharges";
+import UserAgreement from "./components/userAgreement";
+import HowItWorks from "./components/howItWorks";
+import ContactUs from "./components/contactUs";
+import RefundPolicy from "./components/refundPolicy";
+import ShippingPolicy from "./components/shippingPolicy";
 import JobApplication from "./components/JobApplication";
 
 function ProtectedRoute({ children, path, component }) {
@@ -66,8 +77,24 @@ function App() {
           <Route path="/u" component={UserStart} />
           <ProtectedRoute path="/account" component={Account} />
           <Route path="/JobApplication" key="job" component={JobApplication} />
+          <Route path="/aboutUs" component={AboutUs} />
+          <Route path="/privacyPolicy" component={PrivacyPolicy} />
+          <Route path="/codeOfConduct" component={CodeOfConduct} />
+          <Route path="/copyrightPolicy" component={CopyrightPolicy} />
+          <Route path="/fees&Charges" component={FeesCharges} />
+          <Route path="/terms" component={UserAgreement} />
+          <Route path="/howItWorks" component={HowItWorks} />
+          <Route path="/contactUs" component={ContactUs} />
+          <Route path="/refundCancellationPolicy" component={RefundPolicy} />
+          <Route path="/shippingDeliveryPolicy" component={ShippingPolicy} />
           <Route path="/">
-            <h1>404</h1>
+            <div className="generic">
+              <Header />
+              <div className="fourFour">
+                <h1>404</h1>
+              </div>
+              <Footer />
+            </div>
           </Route>
         </Switch>
       </BrowserRouter>

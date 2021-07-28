@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { SiteContext } from "../SiteContext";
+import { Header, Footer } from "./Elements";
 import { Route, Switch, useHistory, useLocation, Link } from "react-router-dom";
 import { Checkbox } from "./Elements";
 import { GoogleLogin } from "react-google-login";
@@ -38,7 +39,7 @@ const RegisterForm = () => {
         firstName,
         lastName,
         phone,
-        email,
+        email: email.toLowerCase(),
         password: pass,
         ...(query.get("referer") && { referer: query.get("referer") }),
       }),
@@ -57,14 +58,19 @@ const RegisterForm = () => {
     setErrMsg(null);
   }, [confirm_pass]);
   return (
-    <div className="formWrapper">
+    <div className="formWrapper register">
       <img
         className="logo"
         onClick={() => history.push("")}
-        src="/logo_land.jpg"
+        src="/logo_benner.jpg"
         alt="Delivery pay logo"
       />
       <p className="title">Create your Delivery pay account</p>
+      {
+        //   <p className="links">
+        //   Already have an account? <Link to="/u/login">Login</Link>
+        // </p>
+      }
       <form onSubmit={submit}>
         <input
           type="text"
@@ -82,17 +88,19 @@ const RegisterForm = () => {
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
         />
-        <input
-          type="email"
-          name="email"
-          required={true}
-          placeholder="Email"
-          value={email}
-          onChange={(e) => {
-            setErrMsg(null);
-            setEmail(e.target.value);
-          }}
-        />
+        {
+          //   <input
+          //   type="email"
+          //   name="email"
+          //   required={true}
+          //   placeholder="Email"
+          //   value={email}
+          //   onChange={(e) => {
+          //     setErrMsg(null);
+          //     setEmail(e.target.value);
+          //   }}
+          // />
+        }
         <input
           type="tel"
           name="phone"
@@ -131,16 +139,18 @@ const RegisterForm = () => {
         </section>
         <section className="checkbox">
           <Checkbox required={true} />
-          <label>I accept to the Terms and Conditions and Privacy Policy</label>
+          <label>
+            I accept the{" "}
+            <Link to="/codeOfConduct" target="_blank">
+              Code of Conduct
+            </Link>
+          </label>
         </section>
         <button disabled={errMsg} type="submit">
           Register
         </button>
       </form>
       {errMsg && <p className="errMsg">{errMsg}</p>}
-      <p className="links">
-        Already have an account? <Link to="/u/login">Login</Link>
-      </p>
     </div>
   );
 };
@@ -149,25 +159,41 @@ const LoginForm = () => {
   const history = useHistory();
   const [username, setUsername] = useState("");
   const [pass, setPass] = useState("");
-  const [invalidCred, setInvadilCred] = useState(false);
+  const [errMsg, setErrMsg] = useState(false);
   const submit = (e) => {
     e.preventDefault();
-    if (invalidCred) return;
+    if (errMsg) return;
+    e.preventDefault();
+    const emailReg = new RegExp(
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    );
+    const phoneReg = new RegExp(
+      /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
+    );
+    let user;
+    if (phoneReg.test(username.toLowerCase())) {
+      user = "+91" + username.replace(/^\+?9?1?/, "");
+    } else if (emailReg.test(username.toLowerCase())) {
+      user = username.toLowerCase();
+    } else {
+      setErrMsg("Enter valid Phone number or Email");
+      return;
+    }
     fetch("/api/userLogin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username,
+        username: user,
         password: pass,
       }),
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.user) {
-          setUser(user);
+          setUser(data.user);
           history.push("/account/home");
         } else if (data.code === 401) {
-          setInvadilCred("Invalid credential!");
+          setErrMsg("Invalid credential!");
         }
       });
   };
@@ -184,10 +210,8 @@ const LoginForm = () => {
             setUser(user);
             history.push("/account/home");
           } else if (data.code === 401) {
-            setInvadilCred(
-              "No account is associated with this Google account."
-            );
-            setTimeout(() => setInvadilCred(null), 2000);
+            setErrMsg("No account is associated with this Google account.");
+            setTimeout(() => setErrMsg(null), 2000);
           }
         });
     }
@@ -197,9 +221,14 @@ const LoginForm = () => {
       <img
         className="logo"
         onClick={() => history.push("")}
-        src="/logo_land.jpg"
+        src="/logo_benner.jpg"
         alt="Delivery pay logo"
       />
+      {
+        //   <p className="links">
+        //   Don't have an account? <Link to="/u/join">Register</Link>
+        // </p>
+      }
       <p className="title">Login to your Delivery pay account</p>
       <form onSubmit={submit}>
         <input
@@ -209,7 +238,7 @@ const LoginForm = () => {
           placeholder="Email  or Phone Number"
           value={username}
           onChange={(e) => {
-            setInvadilCred(false);
+            setErrMsg(false);
             setUsername(e.target.value);
           }}
         />
@@ -221,7 +250,7 @@ const LoginForm = () => {
             placeholder="Password"
             value={pass}
             onChange={(e) => {
-              setInvadilCred(false);
+              setErrMsg(false);
               setPass(e.target.value);
             }}
           />
@@ -229,7 +258,7 @@ const LoginForm = () => {
             Forgot password?
           </Link>
         </section>
-        <button disabled={invalidCred} type="submit">
+        <button disabled={errMsg} type="submit">
           Login
         </button>
       </form>
@@ -243,18 +272,16 @@ const LoginForm = () => {
           cookiePolicy={"single_host_origin"}
         />
       </section>
-      <p className="links">
-        Don't have an account? <Link to="/u/join">Register</Link>
-      </p>
-      {invalidCred && <p className="errMsg">{invalidCred}</p>}
+      {errMsg && <p className="errMsg">{errMsg}</p>}
     </div>
   );
 };
 const PasswordReset = () => {
   const { user, setUser } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
   const history = useHistory();
   const [step, setStep] = useState(1);
-  const [phone, setPhone] = useState("");
+  const [id, setId] = useState("");
   const [invalidCred, setInvadilCred] = useState(false);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [pass, setPass] = useState("");
@@ -266,30 +293,48 @@ const PasswordReset = () => {
   const code4 = useRef(null);
   const code5 = useRef(null);
   const code6 = useRef(null);
-  useEffect(() => {
-    console.log(errMsg);
-  }, [errMsg]);
   const submit = (e) => {
     e.preventDefault();
+    let phone = null;
+    let email = null;
+    const emailReg = new RegExp(
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    );
+    const phoneReg = new RegExp(
+      /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
+    );
+    if (emailReg.test(id.toLowerCase())) {
+      email = id.toLowerCase();
+    } else if (phoneReg.test(id.toLowerCase())) {
+      phone = "+91" + id.replace(/^\+?9?1?/, "");
+    }
     if (step === 1) {
       if (errMsg) return;
-      fetch("/api/sendUserForgotPassOTP", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
-      }).then((res) => {
-        if (res.status === 200) {
-          setStep(2);
-        } else {
-          setErrMsg("User does does not exists.");
-        }
-      });
+      if (phone || email) {
+        setLoading(true);
+        fetch("/api/sendUserForgotPassOTP", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, email }),
+        }).then((res) => {
+          setLoading(false);
+          if (res.status === 200) {
+            setStep(2);
+          } else {
+            setErrMsg("User does does not exists.");
+          }
+        });
+      } else {
+        setErrMsg("Enter a valid phone number or email.");
+      }
     } else if (step === 2) {
+      setLoading(true);
       fetch("/api/submitUserForgotPassOTP", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, code: code.join("") }),
       }).then((res) => {
+        setLoading(false);
         if (res.status === 200) {
           setStep(3);
         } else if (res.status === 400) {
@@ -297,12 +342,12 @@ const PasswordReset = () => {
           setErrMsg("Wrong code!");
         } else if (res.status === 429) {
           setStep(1);
-          setPhone("");
+          setId("");
           setCode(["", "", "", "", "", ""]);
-          setErrMsg("Too many tries. Start again.");
+          setErrMsg("Too many attempts. Start again.");
         } else if (res.status === 404) {
           setStep(1);
-          setPhone("");
+          setId("");
           setCode(["", "", "", "", "", ""]);
           setErrMsg("Timeout. Start again");
         }
@@ -312,6 +357,7 @@ const PasswordReset = () => {
         setErrMsg("Password did not match");
         return;
       }
+      setLoading(true);
       fetch("/api/userResetPass", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -319,10 +365,15 @@ const PasswordReset = () => {
       })
         .then((res) => res.json())
         .then((data) => {
+          setLoading(false);
           if (data.user) {
             setUser(user);
             history.push("/account/home");
           }
+        })
+        .catch((err) => {
+          console.log(err);
+          setLoading(false);
         });
     }
   };
@@ -333,22 +384,27 @@ const PasswordReset = () => {
   }, [code]);
   return (
     <div className="formWrapper resetPass">
-      <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
+      <img className="logo" src="/logo_benner.jpg" alt="Delivery pay logo" />
       <p className="title">Password reset</p>
+      {
+        //   <p className="links">
+        //   Already have an account?<Link to="/u/login">Login</Link>
+        // </p>
+      }
       {step === 1 && (
         <form onSubmit={submit}>
           <input
-            type="tel"
+            type="text"
             name="phone"
             required={true}
-            placeholder="Phone Number"
-            value={phone}
+            placeholder="Phone Number or email"
+            value={id}
             onChange={(e) => {
               setErrMsg(null);
-              setPhone(e.target.value);
+              setId(e.target.value);
             }}
           />
-          <button disabled={errMsg} type="submit">
+          <button disabled={errMsg || loading} type="submit">
             Next
           </button>
         </form>
@@ -453,7 +509,7 @@ const PasswordReset = () => {
               }}
             />
           </section>
-          <button disabled={errMsg} type="submit">
+          <button disabled={errMsg || loading} type="submit">
             Next
           </button>
         </form>
@@ -487,15 +543,12 @@ const PasswordReset = () => {
               }}
             />
           </section>
-          <button disabled={errMsg} type="submit">
+          <button disabled={errMsg || loading} type="submit">
             {step === 3 ? "Submit" : "Next"}
           </button>
         </form>
       )}
       {errMsg && <p className="errMsg">{errMsg}</p>}
-      <p className="links">
-        Already have an account?<Link to="/u/login">Login</Link>
-      </p>
     </div>
   );
 };
@@ -514,31 +567,35 @@ function UserStart() {
       });
   }, []);
   return (
-    <div className="userStart">
-      <div className="banner">
-        <header>
-          <h3>Experience the best and secure Transactions</h3>
-          <p>We ensure buyer and seller happiness</p>
-        </header>
-        <img
-          className="illustration"
-          src="/landingPage_illustration.svg"
-          alt="illustration"
-        />
+    <div className="generic">
+      <Header />
+      <div className="userStart">
+        <div className="banner">
+          <div className="header">
+            <h3>Experience the best and secure Transactions</h3>
+            <p>We ensure buyer and seller happiness</p>
+          </div>
+          <img
+            className="illustration"
+            src="/landingPage_illustration.png"
+            alt="illustration"
+          />
+        </div>
+        <div className="forms">
+          <Switch>
+            <Route path="/u/join">
+              <RegisterForm />
+            </Route>
+            <Route path="/u/login">
+              <LoginForm />
+            </Route>
+            <Route path="/u/resetPassword">
+              <PasswordReset />
+            </Route>
+          </Switch>
+        </div>
       </div>
-      <div className="forms">
-        <Switch>
-          <Route path="/u/join">
-            <RegisterForm />
-          </Route>
-          <Route path="/u/login">
-            <LoginForm />
-          </Route>
-          <Route path="/u/resetPassword">
-            <PasswordReset />
-          </Route>
-        </Switch>
-      </div>
+      <Footer />
     </div>
   );
 }

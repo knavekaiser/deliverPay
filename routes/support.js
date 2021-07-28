@@ -197,3 +197,19 @@ app.patch(
     }
   }
 );
+
+app.get("/api/faq", (req, res) => {
+  const { q } = req.query;
+  Faq.find({
+    ...(q && {
+      $or: [{ ques: new RegExp(q, "gi") }, { ans: new RegExp(q, "gi") }],
+    }),
+  })
+    .then((faqs) => {
+      res.json({ code: "ok", faqs });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ code: 500, message: "database erro" });
+    });
+});

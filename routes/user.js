@@ -83,14 +83,12 @@ app.post("/api/registerUser", async (req, res) => {
         }
       });
   } else {
-    res
-      .status(400)
-      .json({
-        code: 400,
-        message: "Incomplete request",
-        fieldsRequired: "firstName, lastName, phone, email, password",
-        fieldsFound: req.body,
-      });
+    res.status(400).json({
+      code: 400,
+      message: "Incomplete request",
+      fieldsRequired: "firstName, lastName, phone, email, password",
+      fieldsFound: req.body,
+    });
   }
 });
 app.post(
@@ -295,10 +293,34 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
       .save()
       .then((dbRes) => {
         if (dbRes) {
-          // send text massage or email here
-          res.json({
-            message: "6 digit code has been sent, enter it within 2 minutes",
-          });
+          if (email) {
+            sendEmail({
+              from: {
+                name: "Delivery Pay Support",
+                address: "support@deliverypay.in",
+              },
+              to: email,
+              subject: "Delivery Pay password recovery",
+              text: `Hello,\nYour password reset code is ${code}. \nDelivery Pay.`,
+            })
+              .then((emailRes) => {
+                res.json({
+                  message:
+                    "6 digit code has been sent, enter it within 2 minutes",
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+                res
+                  .status(500)
+                  .json({ code: 500, message: "Could not send Email" });
+              });
+          } else if (true) {
+            // send text massage or email here
+            res.json({
+              message: "6 digit code has been sent, enter it within 2 minutes",
+            });
+          }
         } else {
           res.status(500).json({ message: "something went wrong" });
         }

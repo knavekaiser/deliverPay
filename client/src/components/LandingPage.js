@@ -1,6 +1,7 @@
 import { useContext, useEffect } from "react";
 import { SiteContext } from "../SiteContext";
 import { Link } from "react-router-dom";
+import { Footer } from "./Elements";
 require("../components/styles/landingPage.scss");
 
 function LandingPage({ history }) {
@@ -26,8 +27,8 @@ function LandingPage({ history }) {
                 alt="Delivery pay logo"
               />
             </Link>
-            <Link to="#">For Business</Link>
-            <Link to="#">About us</Link>
+            <Link to="/account/home">I am a Seller</Link>
+            <Link to="/account/home">I am a Buyer</Link>
           </div>
           <div className="path">
             <svg
@@ -52,7 +53,6 @@ function LandingPage({ history }) {
             ) : (
               <>
                 <Link to="/u/login">Login</Link>
-                <Link to="/u/join">Join Delivery pay</Link>
               </>
             )}
           </div>
@@ -70,18 +70,15 @@ function LandingPage({ history }) {
               protects you from being scammed when you want to buy or sell with
               someone you don't know.
             </p>
-            <div className="clas">
-              <Link to="/account/home">I am a Seller</Link>
-              <Link to="/account/home">I am a Buyer</Link>
-            </div>
           </div>
           <img
             className="illustration"
-            src="/landingPage_illustration.svg"
+            src="/landingPage_illustration.png"
             alt="illustration"
           />
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

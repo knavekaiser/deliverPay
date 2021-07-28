@@ -1,7 +1,15 @@
-import { useState, useRef, useLayoutEffect, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useLayoutEffect,
+  useEffect,
+  useContext,
+} from "react";
 import tick from "../tick.svg";
+import { SiteContext } from "../SiteContext";
 import tick_border from "../tick_border.svg";
 import { Modal } from "./Modal";
+import { Link, useHistory } from "react-router-dom";
 require("./styles/elements.scss");
 
 export const Err_svg = () => {
@@ -963,5 +971,57 @@ export const Paginaiton = ({
         {">"}
       </button>
     </div>
+  );
+};
+
+export const Header = () => {
+  const { user, setUser } = useContext(SiteContext);
+  const history = useHistory();
+  useEffect(() => {
+    fetch("/api/authUser")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user);
+        }
+      });
+  }, []);
+  return (
+    <header>
+      <Link className="logoLink" to="/">
+        <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
+      </Link>
+      <div className="clas">
+        {user ? (
+          <Link to="/account/home">Dashboard</Link>
+        ) : (
+          <>
+            {history.location.pathname === "/u/login" ? (
+              <Link to="/u/join">Register</Link>
+            ) : (
+              <Link to="/u/login">Login</Link>
+            )}
+          </>
+        )}
+      </div>
+    </header>
+  );
+};
+export const Footer = () => {
+  return (
+    <footer>
+      <div className="links">
+        <Link to="/aboutUs">About us</Link>
+        <Link to="/privacyPolicy">Privacy Policy</Link>
+        <Link to="/codeOfConduct">Code of Conduct</Link>
+        <Link to="/copyrightPolicy">Copyright Policy</Link>
+        <Link to="/fees&Charges">Fees & Charges</Link>
+        <Link to="/terms">User Agreement</Link>
+        <Link to="/howItWorks">How it works</Link>
+        <Link to="/contactUs">Contact us</Link>
+        <Link to="/refundCancellationPolicy">Refund & Cancellation Policy</Link>
+        <Link to="/shippingDeliveryPolicy">Shipping & Delivery Policy</Link>
+      </div>
+    </footer>
   );
 };
