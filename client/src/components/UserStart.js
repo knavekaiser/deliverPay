@@ -140,10 +140,19 @@ const RegisterForm = () => {
         <section className="checkbox">
           <Checkbox required={true} />
           <label>
-            I accept the{" "}
+            I Accept{" "}
+            <Link to="/terms" target="_blank">
+              Terms & Conditions
+            </Link>
+            , User Agreement,{" "}
             <Link to="/codeOfConduct" target="_blank">
               Code of Conduct
             </Link>
+            ,{" "}
+            <Link to="/fees&Charges" target="_blank">
+              Charges & Fee
+            </Link>{" "}
+            & Consent to receiving Communications via Text, Email or Phone.
           </label>
         </section>
         <button disabled={errMsg} type="submit">

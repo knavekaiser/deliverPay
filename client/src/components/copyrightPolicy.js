@@ -1,6 +1,5 @@
 import { Header, Footer } from "./Elements";
 import { Link } from "react-router-dom";
-require("./styles/generic.scss");
 
 const CopyrightPolicy = () => {
   return (

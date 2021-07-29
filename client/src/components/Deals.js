@@ -7,6 +7,8 @@ import moment from "moment";
 import { Succ_svg, Err_svg, X_svg } from "./Elements";
 import { io } from "socket.io-client";
 import { MilestoneForm } from "./Account";
+import TextareaAutosize from "react-textarea-autosize";
+require("./styles/deals.scss");
 
 const socket = io();
 
@@ -206,24 +208,8 @@ const Person = ({ client, messages, lastSeen, userCard }) => {
 const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
   const chatWrapper = useRef(null);
   const history = useHistory();
-  const [value, setValue] = useState("");
   const [rooms, setRooms] = useState([]);
   const [msg, setMsg] = useState(null);
-  const inputRef = useRef(null);
-  const submit = (e) => {
-    e.preventDefault();
-    if (value && rooms.length) {
-      socket.emit("messageToServer", {
-        rooms,
-        message: {
-          to: userCard._id,
-          text: value,
-        },
-      });
-      inputRef.current.focus();
-      setValue("");
-    }
-  };
   useEffect(() => {
     socket.on("connectedToRoom", ({ rooms }) => {
       setRooms(rooms);
@@ -320,7 +306,8 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
                         {msg.createdAt}
                       </Moment>
                     )}
-                    {<p className="text">{msg.text}</p>}
+                    {msg.text && <p className="text">{msg.text}</p>}
+                    {msg.media && <MediaBubble link={msg.media} />}
                     {(timestamp || i === chat.length - 1) && (
                       <Moment className="timestamp" format="hh:mm a">
                         {msg.createdAt}
@@ -331,37 +318,7 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
               })}
             </ul>
           </div>
-          {userCard.firstName && (
-            <form onSubmit={submit}>
-              <section>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                />
-                <div className="fileUpload">
-                  <input type="file" />
-                </div>
-              </section>
-              <button type="submit">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="26.55"
-                  height="25.219"
-                  viewBox="0 0 26.55 25.219"
-                >
-                  <path
-                    id="Path_1"
-                    data-name="Path 1"
-                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-                    transform="translate(255.198 195.071)"
-                    fill="#fff"
-                  />
-                </svg>
-              </button>
-            </form>
-          )}
+          {userCard.firstName && <ChatForm rooms={rooms} user={userCard._id} />}
         </>
       ) : (
         <div className="startChat">
@@ -426,6 +383,191 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>
+    </div>
+  );
+};
+
+const MediaBubble = ({ link }) => {
+  let view = null;
+  if (link.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/)) {
+    view = <img src={link} />;
+  } else if (link.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/)) {
+    view = <audio src={link} controls="on" />;
+  } else if (link.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/)) {
+    view = <video src={link} controls="on" />;
+  } else {
+    view = (
+      <a href={link} target="_blank" className="link">
+        <img src="/file_icon.png" />
+        {link}
+      </a>
+    );
+  }
+  return <div className="file">{view}</div>;
+};
+
+const ChatForm = ({ rooms, user }) => {
+  const inputRef = useRef(null);
+  const formRef = useRef(null);
+  const [msg, setMsg] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [value, setValue] = useState("");
+  const [files, setFiles] = useState([]);
+  const submit = async (e) => {
+    e.preventDefault();
+    const cdn = process.env.REACT_APP_CDN_HOST;
+    if (files.length) {
+      setLoading(true);
+      const formData = new FormData();
+      for (var _file of files) {
+        formData.append("file", _file);
+      }
+      await fetch(`${cdn}/upload`, {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setLoading(false);
+          if (data.code === "ok") {
+            data.files.forEach((link, i) => {
+              setFiles([]);
+              const fileLink = cdn + "/" + link;
+              socket.emit("messageToServer", {
+                rooms,
+                message: {
+                  to: user,
+                  media: fileLink,
+                },
+              });
+            });
+          } else {
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Err_svg />
+                  <h4>File upload failed</h4>
+                </div>
+              </>
+            );
+          }
+        })
+        .catch((err) => {
+          setLoading(false);
+          console.log(err);
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>File upload failed. Make sure you're online.</h4>
+              </div>
+            </>
+          );
+        });
+    }
+    if (value && rooms.length) {
+      socket.emit("messageToServer", {
+        rooms,
+        message: {
+          to: user,
+          text: value,
+        },
+      });
+      inputRef.current.focus();
+      setValue("");
+    }
+  };
+  return (
+    <form onSubmit={submit} ref={formRef} className={loading ? "loading" : ""}>
+      <Preview files={files} setFiles={setFiles} />
+      <section>
+        <TextareaAutosize
+          ref={inputRef}
+          type="text"
+          value={value}
+          style={{ height: "100px" }}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.keyCode === 13 && !e.altKey) {
+              console.log("ran");
+              submit(e);
+            } else if (e.keyCode === 13 && e.altKey) {
+              setValue(value + "\n");
+            }
+          }}
+        />
+        <div className="fileUpload">
+          <input
+            type="file"
+            multiple={true}
+            onChange={(e) => {
+              setFiles((prev) => [
+                ...prev,
+                ...[...e.target.files].filter(
+                  (item) => !files.some((file) => file.name === item.name)
+                ),
+              ]);
+            }}
+          />
+          <img src="/paperclip.svg" />
+        </div>
+      </section>
+      <button type="submit" disabled={loading}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="26.55"
+          height="25.219"
+          viewBox="0 0 26.55 25.219"
+        >
+          <path
+            id="Path_1"
+            data-name="Path 1"
+            d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+            transform="translate(255.198 195.071)"
+            fill="#fff"
+          />
+        </svg>
+      </button>
+    </form>
+  );
+};
+
+const Preview = ({ files, setFiles }) => {
+  if (files.length === 0) {
+    return null;
+  }
+  return (
+    <div className="preview">
+      {files.map((item) => {
+        const file = {
+          type: item.type,
+          name: item.name,
+          url: URL.createObjectURL(item),
+        };
+        const img = file.type.startsWith("image");
+        return (
+          <div key={item.name} className={`file ${img ? "thumb" : "any"}`}>
+            <button
+              className="close"
+              type="button"
+              onClick={() =>
+                setFiles((prev) =>
+                  prev.filter((item) => file.name !== item.name)
+                )
+              }
+            >
+              <X_svg />
+            </button>
+            <img
+              className={img ? "thumb" : ""}
+              src={img ? file.url : "/file_icon.png"}
+            />
+            {!img && <p className="filename">{item.name}</p>}
+          </div>
+        );
+      })}
     </div>
   );
 };

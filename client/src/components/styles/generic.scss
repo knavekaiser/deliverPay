@@ -1,4 +1,4 @@
-$blue: #336cf9;
+@import "variables";
 
 .generic {
   min-height: calc(var(--vh) * 100);
@@ -32,11 +32,7 @@ $blue: #336cf9;
         color: white;
         font-weight: 500;
         padding: 0.7rem 2rem;
-        background-image: linear-gradient(
-          165deg,
-          rgba(51, 108, 249, 1) 20%,
-          rgba(27, 230, 214, 1) 150%
-        );
+        background-image: linear-gradient(165deg, $blue 20%, $green 150%);
         &:hover {
           color: $blue;
           background: white;
@@ -53,7 +49,9 @@ $blue: #336cf9;
     display: grid;
     grid-auto-rows: min-content;
     grid-gap: 2rem;
-    line-height: 1.5em;
+    * {
+      line-height: 2em;
+    }
     a {
       color: $blue;
     }
@@ -121,6 +119,18 @@ $blue: #336cf9;
           color: $blue;
         }
       }
+    }
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .generic {
+    header {
+      padding: 0.75rem 1rem;
+    }
+    .content {
+      padding: 1rem;
+      grid-gap: 1rem;
     }
   }
 }

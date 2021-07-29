@@ -89,7 +89,7 @@ const Profile = ({ history, match, location }) => {
     <div className="profileContainer">
       <div className="benner">
         <div className="profileImg">
-          <img src={user.profileImg} />
+          <img src={user.profileImg || "/profile-user.jpg"} />
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="91.832"
@@ -118,15 +118,54 @@ const Profile = ({ history, match, location }) => {
             accept=".jpg, .png, .jpeg"
             onChange={(e) => {
               const file = e.target.files[0];
+              const cdn = process.env.REACT_APP_CDN_HOST;
               if (file) {
-                const tempUrl = URL.createObjectURL(e.target.files[0]);
-                setUser((prev) => ({ ...prev, profileImg: tempUrl }));
-                // const imgLink = ""; upload image here
-                // updateProfileInfo({ profileImg: imgLink }).then((img) => {
-                //   if (user) {
-                //     setUser(user);
-                //   }
-                // });
+                let imgLink = "";
+                const formData = new FormData();
+                for (var _file of e.target.files) {
+                  formData.append("file", _file);
+                }
+                fetch(`${cdn}/upload`, {
+                  method: "POST",
+                  body: formData,
+                })
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.code === "ok") {
+                      imgLink = cdn + "/" + data.files[0];
+                      updateProfileInfo({ profileImg: imgLink }).then(
+                        (data) => {
+                          if (data.user) {
+                            setUser((prev) => ({
+                              ...prev,
+                              profileImg: data.user.profileImg,
+                            }));
+                          }
+                        }
+                      );
+                    } else {
+                      setMsg(
+                        <>
+                          <button onClick={() => setMsg(null)}>Okay</button>
+                          <div>
+                            <Err_svg />
+                            <h4>Image upload failed</h4>
+                          </div>
+                        </>
+                      );
+                    }
+                  })
+                  .catch((err) => {
+                    setMsg(
+                      <>
+                        <button onClick={() => setMsg(null)}>Okay</button>
+                        <div>
+                          <Err_svg />
+                          <h4>Image upload failed. Make sure you're online.</h4>
+                        </div>
+                      </>
+                    );
+                  });
               }
             }}
           />

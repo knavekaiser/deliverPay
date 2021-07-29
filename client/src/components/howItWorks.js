@@ -1,5 +1,4 @@
 import { Header, Footer } from "./Elements";
-require("./styles/generic.scss");
 
 const HowItWorks = () => {
   return (

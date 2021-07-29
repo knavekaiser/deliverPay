@@ -67,6 +67,7 @@ import Moment from "react-moment";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 require("./styles/account.scss");
+require("./styles/generic.scss");
 
 const Home = () => {
   const history = useHistory();
@@ -76,6 +77,7 @@ const Home = () => {
   const [recentPayments, setRecentPayments] = useState([]);
   const [client, setClient] = useState(null);
   const [msg, setMsg] = useState(null);
+  const [showUsers, setShowUsers] = useState(false);
   const fetchUsers = useCallback(
     (e) => {
       setValue(e.target.value);
@@ -93,8 +95,15 @@ const Home = () => {
     [value]
   );
   const inviteUser = useCallback(() => {
-    if (value.match(/^\+?[789]\d{9}$/)) {
-      fetch(`/api/inviteUser?q=${value}origin=${window.location.origin}`)
+    const phoneReg = new RegExp(
+      /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
+    );
+    if (phoneReg.test(value.toLowerCase())) {
+      fetch(
+        `/api/inviteUser?q=+91${value.replace(/^\+?9?1?/, "")}origin=${
+          window.location.origin
+        }`
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.code === "ok") {
@@ -207,13 +216,14 @@ const Home = () => {
                 label="search"
                 required={true}
                 placeholder="Search with Delivery pay ID or Phone Number"
+                onFocus={() => setShowUsers(true)}
                 onBlur={() => {
-                  setTimeout(() => setUsers([]), 500);
+                  setTimeout(() => setShowUsers(false), 500);
                 }}
                 onChange={fetchUsers}
               />
             </section>
-            {users.length ? (
+            {users.length && showUsers ? (
               <ul className="searchResult">
                 {users.map((user, i) => (
                   <li key={i}>
@@ -247,7 +257,7 @@ const Home = () => {
                 )}
               </ul>
             ) : null}
-            {value && users.length === 0 && (
+            {value && users.length === 0 && showUsers && (
               <ul className="searchResult">
                 <li>
                   <div className="profile">
@@ -286,13 +296,14 @@ const Home = () => {
                 label="search"
                 required={true}
                 placeholder="Search with Delivery pay ID or Phone Number"
+                onFocus={() => setShowUsers(true)}
                 onBlur={() => {
-                  setTimeout(() => setUsers([]), 500);
+                  setTimeout(() => setShowUsers(false), 500);
                 }}
                 onChange={fetchUsers}
               />
             </section>
-            {users.length ? (
+            {users.length && showUsers ? (
               <ul className="searchResult">
                 {users.map((user, i) => (
                   <li key={i}>
@@ -318,7 +329,7 @@ const Home = () => {
                 ))}
               </ul>
             ) : null}
-            {value && users.length === 0 && (
+            {value && users.length === 0 && showUsers && (
               <ul className="searchResult">
                 <li>
                   <div className="profile">
@@ -796,8 +807,8 @@ function Account({ location }) {
                     id="Rectangle_4"
                     data-name="Rectangle 4"
                     transform="translate(0 11.86) rotate(-22)"
-                    fill="#336cf9"
-                    stroke="#336cf9"
+                    fill="#3b2ab4"
+                    stroke="#3b2ab4"
                     strokeWidth="1"
                   >
                     <rect width="6.929" height="4.619" stroke="none" />
@@ -1010,7 +1021,7 @@ function Account({ location }) {
           >
             <Link to="/account/profile">
               <div className="icon acc">
-                <img src={user?.profileImg} />
+                <img src={user?.profileImg || "/profile-user.jpg"} />
               </div>
               Account
             </Link>
@@ -1405,7 +1416,7 @@ const ProfileAvatar = () => {
           {user?.firstName + " " + user?.lastName || user.phone}
         </p>
         <img
-          src={user?.profileImg}
+          src={user?.profileImg || "/profile-user.jpg"}
           className="avatar"
           onClick={() => setMenu(!menu)}
         />

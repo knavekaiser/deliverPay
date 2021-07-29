@@ -2,7 +2,7 @@ import { useContext, useEffect } from "react";
 import { SiteContext } from "../SiteContext";
 import { Link } from "react-router-dom";
 import { Footer } from "./Elements";
-require("../components/styles/landingPage.scss");
+require("./styles/landingPage.scss");
 
 function LandingPage({ history }) {
   const { user, setUser } = useContext(SiteContext);

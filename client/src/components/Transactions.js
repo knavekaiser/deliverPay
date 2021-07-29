@@ -57,7 +57,9 @@ const SingleTransaction = ({ transaction }) => {
         <div className="profile">
           {transaction.client ? (
             <>
-              <img src={transaction.client._id?.profileImg} />
+              <img
+                src={transaction.client._id?.profileImg || "/profile-user.jpg"}
+              />
               <p className="name">
                 {transaction.client.firstName +
                   " " +
@@ -66,7 +68,7 @@ const SingleTransaction = ({ transaction }) => {
             </>
           ) : (
             <>
-              <img src={user.profileImg} />
+              <img src={user.profileImg || "/profile-user.jpg"} />
               <p className="name">{user.firstName + " " + user.lastName}</p>
             </>
           )}
