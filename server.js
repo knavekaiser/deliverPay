@@ -132,9 +132,8 @@ app.post("/api/contactUsRequest", (req, res) => {
   }
 });
 app.post("/api/workRequest", (req, res) => {
-  const { firstName, lastName, email, phone, dscr } = req.body;
-  if (firstName && lastName && (email || phone) && dscr) {
-    console.log(req.body);
+  const { firstName, lastName, email, phone, resume } = req.body;
+  if (firstName && lastName && email && phone && resume) {
     new WorkRequest({ ...req.body })
       .save()
       .then((dbRes) => {

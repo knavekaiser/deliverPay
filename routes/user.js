@@ -221,57 +221,61 @@ app.patch(
 app.post("/api/sendUserOTP", async (req, res) => {
   const { phone } = req.body;
   const code = genCode(6);
-  const [user, hash] = await Promise.all([
-    User.findOne({ phone }),
-    bcrypt.hash(code, 10),
-    OTP.findOneAndDelete({ id: phone }),
-  ]);
-  if (user) {
-    new OTP({
-      id: req.body.phone,
-      code: hash,
-    })
+  console.log(code);
+  if (phone) {
+    const [hash, deleted] = await Promise.all([
+      bcrypt.hash(code, 10),
+      OTP.findOneAndDelete({ id: phone }),
+    ]);
+    new OTP({ id: phone, code: hash })
       .save()
       .then((dbRes) => {
         if (dbRes) {
           // send text massage here
           res.json({
+            code: "ok",
             message: "6 digit code has been sent, enter it within 2 minutes",
+            testCode: code,
+            success: true,
           });
         } else {
-          res.status(500).json({ message: "something went wrong" });
+          res.status(500).json({ code: 500, message: "database error" });
         }
       })
       .catch((err) => {
         console.log(err);
-        res.status(500).json({ message: "someting went wrong" });
+        res.status(500).json({ code: 500, message: "database error" });
       });
   } else {
-    res.status(400).json({ message: "invalid request" });
+    res.status(400).json({ code: 400, message: "phone is required" });
   }
 });
 app.put("/api/submitUserOTP", async (req, res) => {
   const { phone, code } = req.body;
   const dbOtp = await OTP.findOne({ id: phone });
   if (!dbOtp) {
-    res.status(404).json({ message: "code does not exists" });
+    res.status(404).json({ code: 404, message: "code does not exists" });
     return;
   }
   if (bcrypt.compareSync(code, dbOtp.code)) {
-    User.findOne({ phone }).then((dbUser) => {
-      const user = JSON.parse(JSON.stringify(dbUser));
-      signingIn(user, res);
-    });
+    const user =
+      (await User.findOne({ phone })) || (await new User({ phone }).save());
+    signingIn(user._doc, res);
+    OTP.findOneAndDelete({ id: phone }).then((value) => {});
   } else {
     if (dbOtp.attempt > 2) {
       OTP.findOneAndDelete({ id: phone }).then(() => {
-        res.status(429).json({ message: "start again" });
+        res
+          .status(403)
+          .json({ code: 403, message: "too many attempts, start again" });
       });
     } else {
       dbOtp.updateOne({ attempt: dbOtp.attempt + 1 }).then(() => {
-        res
-          .status(400)
-          .json({ message: "wrong code", attempt: dbOtp.attempt + 1 });
+        res.status(400).json({
+          code: 400,
+          message: "wrong code",
+          attempt: dbOtp.attempt + 1,
+        });
       });
     }
   }
@@ -318,6 +322,7 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
           } else if (true) {
             // send text massage or email here
             res.json({
+              testCode: code,
               message: "6 digit code has been sent, enter it within 2 minutes",
             });
           }
