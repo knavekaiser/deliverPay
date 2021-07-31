@@ -1,6 +1,13 @@
 import { useEffect, useState, useContext } from "react";
 import { SiteContext } from "../SiteContext";
-import { Err_svg, Plus_svg, X_svg, Succ_svg } from "./Elements";
+import {
+  Err_svg,
+  Plus_svg,
+  X_svg,
+  Succ_svg,
+  FileInput,
+  UploadFiles,
+} from "./Elements";
 import { Modal, Confirm } from "./Modal";
 import Moment from "react-moment";
 
@@ -195,14 +202,20 @@ const SingleProduct = ({ product, setProducts }) => {
   );
 };
 const ProductForm = ({ prefill, onSuccess }) => {
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState(prefill?.name || "");
   const [dscr, setDscr] = useState(prefill?.dscr || "");
   const [price, setPrice] = useState(prefill?.price || "");
   const [files, setFiles] = useState(prefill?.images || []);
   const [msg, setMsg] = useState(null);
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const images = []; // upload images here
+    const images = files.length
+      ? await UploadFiles({
+          files,
+          setMsg,
+        })
+      : [];
     fetch(`/api/${prefill ? "edit" : "add"}Product`, {
       method: prefill ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -258,7 +271,7 @@ const ProductForm = ({ prefill, onSuccess }) => {
   };
   return (
     <>
-      <form onSubmit={submit}>
+      <form onSubmit={submit} className={loading ? "loading" : ""}>
         <section>
           <label>Name of the product/service</label>
           <input
@@ -286,18 +299,11 @@ const ProductForm = ({ prefill, onSuccess }) => {
         </section>
         <section className="images">
           <label>Images of the product</label>
-          <ul>
-            {files.map((file, i) => {
-              return <li key={i}>{file.name}</li>;
-            })}
-          </ul>
-          <input
-            type="file"
-            accept="image/*"
+          <FileInput
             multiple={true}
-            onChange={(e) => {
-              setFiles(Object.values(e.target.files));
-            }}
+            prefill={prefill?.images}
+            accept="image/*"
+            onChange={(e) => setFiles(e)}
           />
         </section>
         <button type="submit">Submit</button>

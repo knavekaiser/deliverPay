@@ -909,6 +909,74 @@ export const NumberInput = ({ defaultValue, min, max, required, onChange }) => {
     </section>
   );
 };
+export const FileInput = ({
+  required,
+  onChange,
+  prefill,
+  label,
+  multiple,
+  accept,
+}) => {
+  const [files, setFiles] = useState(prefill || []);
+  useEffect(() => {
+    onChange(files);
+  }, [files]);
+  return (
+    <section className="fileInput">
+      {files.map((item, fileIndex) => {
+        const file =
+          typeof item === "string"
+            ? {
+                type: "url",
+                url: item,
+              }
+            : {
+                type: item.type,
+                name: item.name,
+                url: URL.createObjectURL(item),
+              };
+        const img =
+          file.type.startsWith("image") ||
+          file.url.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/);
+        return (
+          <div key={fileIndex} className={`file ${img ? "thumb" : "any"}`}>
+            <button
+              className="close"
+              type="button"
+              onClick={() =>
+                setFiles((prev) => prev.filter((item, i) => i !== fileIndex))
+              }
+            >
+              <X_svg />
+            </button>
+            <img
+              className={img ? "thumb" : ""}
+              src={img ? file.url : "/file_icon.png"}
+            />
+            {!img && <p className="filename">{item.name}</p>}
+          </div>
+        );
+      })}
+      <div className="uploadBtn">
+        <Plus_svg />
+        <input
+          type="file"
+          multiple={multiple}
+          required={required}
+          accept={accept}
+          onChange={(e) => {
+            setFiles((prev) => [
+              ...prev,
+              ...[...e.target.files].filter(
+                (item) => !files.some((file) => file.name === item.name)
+              ),
+            ]);
+          }}
+        />
+      </div>
+    </section>
+  );
+};
 
 export const Paginaiton = ({
   total,
@@ -1019,9 +1087,55 @@ export const Footer = () => {
         <Link to="/terms">User Agreement</Link>
         <Link to="/howItWorks">How it works</Link>
         <Link to="/contactUs">Contact us</Link>
+        <Link to="/employment-opportunities">Work with us</Link>
         <Link to="/refundCancellationPolicy">Refund & Cancellation Policy</Link>
         <Link to="/shippingDeliveryPolicy">Shipping & Delivery Policy</Link>
       </div>
     </footer>
   );
+};
+
+export const UploadFiles = ({ files, setMsg }) => {
+  const cdn = process.env.REACT_APP_CDN_HOST;
+  const formData = new FormData();
+  const uploaded = [];
+  for (var _file of files) {
+    if (typeof _file === "string") {
+      uploaded.push(_file);
+    } else {
+      formData.append("file", _file);
+    }
+  }
+  return fetch(`${cdn}/upload`, {
+    method: "POST",
+    body: formData,
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.code === "ok") {
+        return [...uploaded, ...data.files.map((link) => cdn + "/" + link)];
+      } else {
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>File upload failed</h4>
+            </div>
+          </>
+        );
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>File upload failed. Make sure you're online.</h4>
+          </div>
+        </>
+      );
+    });
 };

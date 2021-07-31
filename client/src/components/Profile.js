@@ -213,6 +213,7 @@ const Profile = ({ history, match, location }) => {
                     defaultValue={user.phone}
                     name="phone"
                     required={true}
+                    pattern="((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}"
                   />
                 </section>
               </>
@@ -225,6 +226,7 @@ const Profile = ({ history, match, location }) => {
               <>
                 <section>
                   <input
+                    type="email"
                     placeholder="Phone Number"
                     defaultValue={user.email}
                     name="email"

@@ -23,7 +23,8 @@ import HowItWorks from "./components/howItWorks";
 import ContactUs from "./components/contactUs";
 import RefundPolicy from "./components/refundPolicy";
 import ShippingPolicy from "./components/shippingPolicy";
-import JobApplication from "./components/JobApplication";
+import WorkWithUs from "./components/WorkWithUs";
+import Apply from "./components/Apply";
 
 function ProtectedRoute({ children, path, component }) {
   const { user } = useContext(SiteContext);
@@ -76,7 +77,6 @@ function App() {
           <Route path="/" exact component={LandingPage} />
           <Route path="/u" component={UserStart} />
           <ProtectedRoute path="/account" component={Account} />
-          <Route path="/JobApplication" key="job" component={JobApplication} />
           <Route path="/aboutUs" component={AboutUs} />
           <Route path="/privacyPolicy" component={PrivacyPolicy} />
           <Route path="/codeOfConduct" component={CodeOfConduct} />
@@ -87,6 +87,8 @@ function App() {
           <Route path="/contactUs" component={ContactUs} />
           <Route path="/refundCancellationPolicy" component={RefundPolicy} />
           <Route path="/shippingDeliveryPolicy" component={ShippingPolicy} />
+          <Route path="/employment-opportunities" component={WorkWithUs} />
+          <Route path="/apply" component={Apply} />
           <Route path="/">
             <div className="generic">
               <Header />

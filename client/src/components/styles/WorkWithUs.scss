@@ -1,0 +1,167 @@
+@import "variables";
+
+.workWithUs {
+  main {
+    display: grid;
+    grid-gap: 2rem;
+    .header {
+      padding: 1rem;
+      text-align: center;
+      h1 {
+        font-size: 3rem;
+        font-weight: 300;
+      }
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      img {
+        width: 100%;
+      }
+      .detail {
+        text-align: center;
+        display: grid;
+        place-items: center;
+        background: $blue;
+        color: white;
+        h2 {
+          letter-spacing: 0.12em;
+          font-size: 3.5rem;
+          line-height: 1em;
+          margin-bottom: 2rem;
+          span {
+            color: $green;
+          }
+        }
+      }
+    }
+    margin-bottom: 2rem;
+    .faq {
+      margin: auto;
+      max-width: 900px;
+      h3 {
+        padding: 0 2rem;
+        font-size: 3rem;
+        font-weight: 400;
+        text-align: center;
+        margin: 2rem 0;
+      }
+      ul {
+        display: grid;
+        grid-gap: 0.5rem;
+        li {
+          .head {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            grid-gap: 2rem;
+            background: rgba(0, 0, 0, 0.03);
+            .n {
+              font-size: 3.5rem;
+              padding: 1.5rem 2rem;
+              background: rgba(0, 0, 0, 0.03);
+            }
+            .ques {
+              font-size: 1.2rem;
+            }
+          }
+          .body {
+            height: 0;
+            overflow: hidden;
+            .ans {
+              padding: 2rem;
+              display: grid;
+              grid-gap: 0.5rem;
+            }
+          }
+          .head:hover,
+          &.open .head {
+            .n {
+              background: rgba(0, 0, 0, 0.2);
+            }
+          }
+          &.open {
+            .body {
+              height: 100%;
+            }
+          }
+        }
+      }
+    }
+    .cla {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4rem;
+      display: grid;
+      color: white;
+      .wrapper {
+        text-align: center;
+        margin: auto;
+        max-width: 30rem;
+        h3 {
+          font-weight: 400;
+          font-size: 2.2rem;
+          &::after {
+            position: relative;
+            content: "";
+            display: block;
+            width: 2rem;
+            height: 5px;
+            background: white;
+            left: 50%;
+            transform: translateX(-50%);
+            margin: 1.5rem 0;
+          }
+        }
+        p {
+          font-size: 1.25rem;
+          font-weight: 300;
+        }
+      }
+    }
+    .jobs {
+      margin: auto;
+      color: white;
+      max-width: 900px;
+      display: grid;
+      grid-gap: 1rem;
+      & > li {
+        background: $blue;
+        padding: 2rem;
+        .jobTitle {
+          font-size: 2rem;
+          text-align: center;
+          font-weight: 400;
+          margin-bottom: 1rem;
+        }
+        .body {
+          display: flex;
+          grid-gap: 1rem;
+          .link {
+            background: rgba(135, 135, 135, 1);
+            height: min-content;
+            font-size: 1.2rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            &:hover {
+              background: none;
+              box-shadow: inset 0 0 0 2px;
+            }
+          }
+          .dscr {
+            padding-left: 1rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.27);
+            display: grid;
+            grid-gap: 1.4rem;
+            ul {
+              margin-top: -0.8rem;
+              margin-left: 2.5rem;
+              list-style: initial;
+              display: grid;
+              grid-gap: 0.3rem;
+            }
+          }
+        }
+      }
+    }
+  }
+}

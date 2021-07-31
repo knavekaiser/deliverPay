@@ -140,7 +140,7 @@ app.post(
                           defendantId,
                           JSON.stringify({
                             title: "Dispute filed",
-                            body: `${req.user.firstName} filed a dispute for the milestone: ${milestone.dscr}`,
+                            body: `${req.user.firstName} filed a dispute.`,
                           }),
                           "User"
                         );

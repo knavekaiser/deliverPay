@@ -4,7 +4,7 @@ import { SiteContext } from "../SiteContext";
 import Moment from "react-moment";
 import { Modal } from "./Modal";
 import moment from "moment";
-import { Succ_svg, Err_svg, X_svg } from "./Elements";
+import { Succ_svg, Err_svg, X_svg, UploadFiles } from "./Elements";
 import { io } from "socket.io-client";
 import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
@@ -234,7 +234,7 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
     };
   }, [rooms]);
   useEffect(() => {
-    chatWrapper.current?.scrollBy(0, 9999999999999);
+    chatWrapper.current?.scrollBy(0, chatWrapper.current.scrollHeight);
   }, [chat]);
   return (
     <div className="chat">
@@ -279,45 +279,43 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
               Pay
             </Link>
           </div>
-          <div className="chatWrapper" ref={chatWrapper}>
-            <ul className="chats">
-              {chat.map((msg, i) => {
-                if (!msg) {
-                  return null;
-                }
-                const timestamp =
-                  Math.abs(
-                    new Date(msg.createdAt).getTime() -
-                      new Date(chat[i + 1]?.createdAt).getTime()
-                  ) > 120000;
-                const dateStamp =
-                  moment(msg.createdAt).format("YYYY-MM-DD") !==
-                    moment(chat[i - 1]?.createdAt).format("YYYY-MM-DD") ||
-                  i === 0;
-                return (
-                  <li
-                    key={i}
-                    className={`bubble ${
-                      msg.from === user._id ? "user" : "client"
-                    }`}
-                  >
-                    {dateStamp && (
-                      <Moment className="dateStamp" format="MMM DD, YYYY">
-                        {msg.createdAt}
-                      </Moment>
-                    )}
-                    {msg.text && <p className="text">{msg.text}</p>}
-                    {msg.media && <MediaBubble link={msg.media} />}
-                    {(timestamp || i === chat.length - 1) && (
-                      <Moment className="timestamp" format="hh:mm a">
-                        {msg.createdAt}
-                      </Moment>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <ul className="chats" ref={chatWrapper}>
+            {chat.map((msg, i) => {
+              if (!msg) {
+                return null;
+              }
+              const timestamp =
+                Math.abs(
+                  new Date(msg.createdAt).getTime() -
+                    new Date(chat[i + 1]?.createdAt).getTime()
+                ) > 120000;
+              const dateStamp =
+                moment(msg.createdAt).format("YYYY-MM-DD") !==
+                  moment(chat[i - 1]?.createdAt).format("YYYY-MM-DD") ||
+                i === 0;
+              return (
+                <li
+                  key={i}
+                  className={`bubble ${
+                    msg.from === user._id ? "user" : "client"
+                  }`}
+                >
+                  {dateStamp && (
+                    <Moment className="dateStamp" format="MMM DD, YYYY">
+                      {msg.createdAt}
+                    </Moment>
+                  )}
+                  {msg.text && <p className="text">{msg.text}</p>}
+                  {msg.media && <MediaBubble link={msg.media} />}
+                  {(timestamp || i === chat.length - 1) && (
+                    <Moment className="timestamp" format="hh:mm a">
+                      {msg.createdAt}
+                    </Moment>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
           {userCard.firstName && <ChatForm rooms={rooms} user={userCard._id} />}
         </>
       ) : (
@@ -389,12 +387,20 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
 
 const MediaBubble = ({ link }) => {
   let view = null;
+  let fullView = null;
+  const [open, setOpen] = useState(false);
   if (link.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/)) {
-    view = <img src={link} />;
+    view = <img src={link} onClick={() => setOpen(true)} />;
   } else if (link.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/)) {
     view = <audio src={link} controls="on" />;
   } else if (link.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/)) {
-    view = <video src={link} controls="on" />;
+    view = (
+      <div className={`videoThumb`}>
+        <video src={link} onClick={() => setOpen(true)} />
+        <img src="/play_btn.png" />
+      </div>
+    );
+    fullView = <video src={link} controls="on" autoPlay="on" />;
   } else {
     view = (
       <a href={link} target="_blank" className="link">
@@ -403,7 +409,17 @@ const MediaBubble = ({ link }) => {
       </a>
     );
   }
-  return <div className="file">{view}</div>;
+  return (
+    <div className="file">
+      {view}
+      <Modal open={open} className="chatMediaView">
+        <button className="close" onClick={() => setOpen(false)}>
+          <X_svg />
+        </button>
+        {fullView || view}
+      </Modal>
+    </div>
+  );
 };
 
 const ChatForm = ({ rooms, user }) => {
@@ -415,57 +431,36 @@ const ChatForm = ({ rooms, user }) => {
   const [files, setFiles] = useState([]);
   const submit = async (e) => {
     e.preventDefault();
+    if (!socket.connected) {
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>Could not connect to server. Make sure you're online.</h4>
+          </div>
+        </>
+      );
+      return;
+    }
     const cdn = process.env.REACT_APP_CDN_HOST;
-    if (files.length) {
-      setLoading(true);
-      const formData = new FormData();
-      for (var _file of files) {
-        formData.append("file", _file);
-      }
-      await fetch(`${cdn}/upload`, {
-        method: "POST",
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setLoading(false);
-          if (data.code === "ok") {
-            data.files.forEach((link, i) => {
-              setFiles([]);
-              const fileLink = cdn + "/" + link;
-              socket.emit("messageToServer", {
-                rooms,
-                message: {
-                  to: user,
-                  media: fileLink,
-                },
-              });
-            });
-          } else {
-            setMsg(
-              <>
-                <button onClick={() => setMsg(null)}>Okay</button>
-                <div>
-                  <Err_svg />
-                  <h4>File upload failed</h4>
-                </div>
-              </>
-            );
-          }
+    const media = files.length
+      ? await UploadFiles({
+          files,
+          setMsg,
         })
-        .catch((err) => {
-          setLoading(false);
-          console.log(err);
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>File upload failed. Make sure you're online.</h4>
-              </div>
-            </>
-          );
+      : [];
+    if (media.length) {
+      media.forEach((link, i) => {
+        socket.emit("messageToServer", {
+          rooms,
+          message: {
+            to: user,
+            media: link,
+          },
         });
+      });
+      setFiles([]);
     }
     if (value && rooms.length) {
       socket.emit("messageToServer", {
@@ -480,57 +475,65 @@ const ChatForm = ({ rooms, user }) => {
     }
   };
   return (
-    <form onSubmit={submit} ref={formRef} className={loading ? "loading" : ""}>
-      <Preview files={files} setFiles={setFiles} />
-      <section>
-        <TextareaAutosize
-          ref={inputRef}
-          type="text"
-          value={value}
-          style={{ height: "100px" }}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.keyCode === 13 && !e.altKey) {
-              console.log("ran");
-              submit(e);
-            } else if (e.keyCode === 13 && e.altKey) {
-              setValue(value + "\n");
-            }
-          }}
-        />
-        <div className="fileUpload">
-          <input
-            type="file"
-            multiple={true}
-            onChange={(e) => {
-              setFiles((prev) => [
-                ...prev,
-                ...[...e.target.files].filter(
-                  (item) => !files.some((file) => file.name === item.name)
-                ),
-              ]);
+    <>
+      <form
+        onSubmit={submit}
+        ref={formRef}
+        className={loading ? "loading" : ""}
+      >
+        <Preview files={files} setFiles={setFiles} />
+        <section>
+          <TextareaAutosize
+            ref={inputRef}
+            type="text"
+            value={value}
+            style={{ height: "100px" }}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.keyCode === 13 && !e.altKey) {
+                submit(e);
+              } else if (e.keyCode === 13 && e.altKey) {
+                setValue(value + "\n");
+              }
             }}
           />
-          <img src="/paperclip.svg" />
-        </div>
-      </section>
-      <button type="submit" disabled={loading}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="26.55"
-          height="25.219"
-          viewBox="0 0 26.55 25.219"
-        >
-          <path
-            id="Path_1"
-            data-name="Path 1"
-            d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-            transform="translate(255.198 195.071)"
-            fill="#fff"
-          />
-        </svg>
-      </button>
-    </form>
+          <div className="fileUpload">
+            <input
+              type="file"
+              multiple={true}
+              onChange={(e) => {
+                setFiles((prev) => [
+                  ...prev,
+                  ...[...e.target.files].filter(
+                    (item) => !files.some((file) => file.name === item.name)
+                  ),
+                ]);
+              }}
+            />
+            <img src="/paperclip.svg" />
+          </div>
+        </section>
+        <button type="submit" disabled={loading}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="26.55"
+            height="25.219"
+            viewBox="0 0 26.55 25.219"
+          >
+            <path
+              id="Path_1"
+              data-name="Path 1"
+              d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+              transform="translate(255.198 195.071)"
+              fill="#fff"
+            />
+          </svg>
+        </button>
+      </form>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
+    </>
   );
 };
 

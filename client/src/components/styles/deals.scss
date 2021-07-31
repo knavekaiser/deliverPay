@@ -157,6 +157,7 @@
     background: $lightGreen2;
     border-radius: 1rem;
     display: grid;
+    width: 100%;
     grid-template-rows: min-content 1fr min-content;
     .chatHead {
       display: flex;
@@ -200,104 +201,125 @@
         }
       }
     }
-    .chatWrapper {
-      height: 100%;
-      overflow-y: scroll;
-      padding: 1rem 0;
-      .chats {
+    .chats {
+      overflow-y: flex;
+      padding: 0 1rem;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+      grid-gap: 1px;
+      .bubble {
+        max-width: 100%;
         width: 100%;
-        padding: 0 1rem;
-        min-height: 100%;
-        display: flex;
-        flex-direction: column;
-        float: right;
-        grid-gap: 1px;
-        .bubble {
-          width: 100%;
-          margin: 0 auto;
-          display: grid;
-          .dateStamp {
-            padding: 0.25rem 0.6rem;
-            background: rgba(0, 0, 0, 0.05);
-            font-size: 0.85rem;
-            margin: 1rem auto;
-            border-radius: 4px;
-            color: rgba(0, 0, 0, 0.6);
-            font-weight: 500;
+        margin: 0 auto;
+        display: grid;
+        .dateStamp {
+          padding: 0.25rem 0.6rem;
+          background: rgba(0, 0, 0, 0.05);
+          font-size: 0.85rem;
+          margin: 1rem auto;
+          border-radius: 4px;
+          color: rgba(0, 0, 0, 0.6);
+          font-weight: 500;
+        }
+        .text {
+          margin: auto;
+          max-width: 80%;
+          padding: 0.7rem 1rem;
+          color: white;
+          word-wrap: break-word;
+          overflow: hidden;
+        }
+        .file {
+          padding: 0.4rem;
+          margin: auto;
+          img,
+          video {
+            display: grid;
+            border-radius: 0.5rem;
+            max-width: 15rem;
           }
-          .text {
-            max-width: 80%;
-            width: max-content;
-            padding: 0.7rem 1rem;
-            color: white;
-          }
-          .file {
-            padding: 0.4rem;
-            margin: auto;
+          .videoThumb {
+            display: grid;
+            position: relative;
+            place-items: center;
+            min-height: 6rem;
             img,
             video {
-              display: grid;
-              border-radius: 0.5rem;
-              max-width: 15rem;
+              grid-column: 1/2;
+              grid-row: 1/2;
             }
-            .link {
-              display: block;
-              color: white;
-              padding: 0.7rem;
-              img {
-                margin-bottom: 0.5rem;
-                width: 2.5rem;
-                filter: invert(1);
-              }
-              font-size: 0.9rem;
+            img {
+              height: 5rem;
+              pointer-events: none;
+              z-index: 10;
             }
+          }
+          .link {
+            display: block;
+            color: white;
+            padding: 0.7rem;
+            img {
+              margin-bottom: 0.5rem;
+              width: 2.5rem;
+              filter: invert(1);
+            }
+            font-size: 0.9rem;
+            a {
+              display: inline-block;
+              word-wrap: break-word;
+              overflow: hidden;
+            }
+          }
+        }
+        .timestamp {
+          font-size: 0.8rem;
+          color: rgba(0, 0, 0, 0.6);
+          margin-bottom: 0.5rem;
+        }
+        &.user {
+          display: grid;
+          .text {
+            margin: auto;
+            margin-right: 0;
+            border-radius: 1rem 1rem 0 1rem;
+            background: #054677;
+          }
+          .file {
+            background: #054677;
+            margin-right: 0;
+            border-radius: 0.85rem 0.85rem 0 0.85rem;
           }
           .timestamp {
-            font-size: 0.8rem;
-            color: rgba(0, 0, 0, 0.6);
-            margin-bottom: 0.5rem;
+            text-align: right;
           }
-          &.user {
-            display: grid;
-            .text {
-              margin: auto;
-              margin-right: 0;
-              border-radius: 1rem 1rem 0 1rem;
-              background: #054677;
-            }
-            .file {
-              background: #054677;
-              margin-right: 0;
-              border-radius: 0.85rem 0.85rem 0 0.85rem;
-            }
-            .timestamp {
-              text-align: right;
-            }
+        }
+        &.client {
+          margin-left: 0;
+          & ~ &.user {
+            border: 1px dashed red;
           }
-          &.client {
+          .text {
+            border-radius: 1rem 1rem 1rem 0;
+            background: $blue;
             margin-left: 0;
-            & ~ &.user {
-              border: 1px dashed red;
-            }
-            .text {
-              border-radius: 1rem 1rem 1rem 0;
-              background: $blue;
-            }
-            .file {
-              background: $blue;
-              margin-left: 0;
-              border-radius: 0.85rem 0.85rem 0.85rem 0;
-            }
+          }
+          .file {
+            background: $blue;
+            margin-left: 0;
+            border-radius: 0.85rem 0.85rem 0.85rem 0;
           }
         }
       }
     }
     form {
+      border-top: 1px solid rgba(0, 0, 0, 0.2);
       margin-bottom: 1rem;
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       padding: 0 1rem;
+      padding-top: 0.5rem;
       grid-gap: 0.5rem;
       .preview {
         margin-top: 0.5rem;
@@ -442,6 +464,34 @@
         margin: auto;
       }
     }
+  }
+}
+.chatMediaView {
+  background: none !important;
+  height: 100%;
+  width: 100%;
+  display: grid;
+  .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    background: none;
+    border: none;
+    outline: none;
+    svg {
+      height: 1.7rem;
+      width: 1.7rem;
+      path {
+        fill: white;
+      }
+    }
+  }
+  max-height: calc(var(--vh) * 100) !important;
+  img,
+  video {
+    margin: auto;
+    max-width: 95vw;
+    max-height: calc(var(--vh) * 95) !important;
   }
 }
 

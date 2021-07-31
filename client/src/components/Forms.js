@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { NumberInput, Combobox, Err_svg } from "./Elements";
+import {
+  NumberInput,
+  Combobox,
+  Err_svg,
+  FileInput,
+  UploadFiles,
+} from "./Elements";
 import { Modal } from "./Modal";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -74,9 +80,14 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
   const [dscr, setDscr] = useState("");
   const [caseFiles, setCaseFiles] = useState([]);
   const [msg, setMsg] = useState(null);
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const fileLinks = []; // upload files here
+    const fileLinks = caseFiles.length
+      ? await UploadFiles({
+          files: caseFiles,
+          setMsg,
+        })
+      : [];
     fetch("/api/fileDispute", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -84,7 +95,7 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
         issue,
         milestoneId: milestone._id,
         defendantId: milestone.client._id,
-        _case: { dscr, caseFiles: fileLinks },
+        _case: { dscr, files: fileLinks },
       }),
     })
       .then((res) => {
@@ -176,34 +187,22 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
         </section>
         <section>
           <label htmlFor="description">Description</label>
-          <textarea
+          <TextareaAutosize
             name="description"
             value={dscr}
             required={true}
             onChange={(e) => setDscr(e.target.value)}
           />
         </section>
-        <section className="fileInput">
+        <section>
           <label htmlFor="for">
             Upload images to prove your case. ie: Product of image, proof of
             delivery.
           </label>
-          {caseFiles.length > 0 && (
-            <ul>
-              {caseFiles.map((file, i) => (
-                <li key={i}>{file.name}</li>
-              ))}
-            </ul>
-          )}
-          <input
-            type="file"
-            name="files"
-            required={true}
-            accept="audio/*,video/*,image/*"
+          <FileInput
             multiple={true}
-            onChange={(e) => {
-              setCaseFiles(Object.values(e.target.files));
-            }}
+            accept="audio/*,video/*,image/*"
+            onChange={(e) => setCaseFiles(e)}
           />
         </section>
         <section className="btns">
