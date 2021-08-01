@@ -27,11 +27,13 @@ app.post(
     if (defendant && milestone && issue) {
       if (req.user.balance > 500) {
         if (dispute) {
-          if (dispute.plaintiff._id === req.user._id) {
+          if (dispute.plaintiff._id.toString() === req.user._id.toString()) {
             res
-              .status(403)
-              .json({ code: 403, message: "dispute already created" });
-          } else if (dispute.defendant._id === req.user._id) {
+              .status(400)
+              .json({ code: 400, message: "dispute already created" });
+          } else if (
+            dispute.defendant._id.toString() === req.user._id.toString()
+          ) {
             Dispute.findOneAndUpdate(
               { _id: dispute._id },
               {
@@ -56,6 +58,20 @@ app.post(
                       },
                       { new: true }
                     ).then((user) => {
+                      InitiateChat({
+                        user: req.user._id,
+                        client: plaintiff._id,
+                      }).then(([userChat, clientChat]) =>
+                        SendMessage({
+                          rooms: [userChat._id, clientChat._id],
+                          message: {
+                            from: req.user._id,
+                            to: defendantId._id,
+                            type: "dispute",
+                            text: `${req.user.firstName} responded to your dispute`,
+                          },
+                        })
+                      );
                       notify(
                         dispute.plaintiff._id,
                         JSON.stringify({
