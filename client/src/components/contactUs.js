@@ -8,12 +8,14 @@ require("./styles/contactUs.scss");
 
 const ContactUs = () => {
   const history = useHistory();
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [message, setMessage] = useState("");
   const [msg, setMsg] = useState(null);
   const submit = (e) => {
     e.preventDefault();
+
     let phone = null;
     let email = null;
     const emailReg = new RegExp(
@@ -38,6 +40,7 @@ const ContactUs = () => {
       );
       return;
     }
+    setLoading(true);
     fetch("/api/contactUsRequest", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -50,6 +53,7 @@ const ContactUs = () => {
     })
       .then((res) => res.json())
       .then((data) => {
+        setLoading(false);
         if (data.code === "ok") {
           setMsg(
             <>
@@ -73,6 +77,7 @@ const ContactUs = () => {
         }
       })
       .catch((err) => {
+        setLoading(false);
         console.log(err);
         setMsg(
           <>

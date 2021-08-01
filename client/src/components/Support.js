@@ -11,6 +11,7 @@ import {
   Succ_svg,
   Paginaiton,
   Chev_down_svg,
+  Media,
 } from "./Elements";
 import { DateRange } from "react-date-range";
 import { TicketForm, TicketReplyForm } from "./Forms";
@@ -286,16 +287,15 @@ export const Tickets = ({ history, location, pathname }) => {
           }}
         />
       </Modal>
-      <Modal open={ticketForm} className="formModal ticketFormModal">
-        <div className="head">
-          <p className="modalName">Open Ticket</p>
-          <button onClick={() => setTicketForm(false)}>
-            <X_svg />
-          </button>
-        </div>
+      <Modal
+        open={ticketForm}
+        head={true}
+        label="Open Ticket"
+        setOpen={setTicketForm}
+        className="formModal ticketFormModal"
+      >
         <TicketForm
           onSuccess={(newTicket) => {
-            console.log(newTicket);
             setTicketForm(false);
             setMsg(
               <>
@@ -488,38 +488,21 @@ export const SingleTicket = ({ history, match }) => {
                 </div>
                 <p className="message">{item.message.body}</p>
                 {item.message.files.length > 0 && (
-                  <div className="files">test</div>
+                  <div className="thumbs">
+                    <Media links={item.message.files} />
+                  </div>
                 )}
               </li>
             ))}
           </ul>
         </div>
-        <Modal open={replyForm} className="ticketReplyFormModal">
-          <div className="head">
-            <p className="modalName">Add reply to Ticket</p>
-            <button onClick={() => setReplyForm(false)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="15.557"
-                height="15.557"
-                viewBox="0 0 15.557 15.557"
-              >
-                <defs>
-                  <clipPath id="clip-path">
-                    <rect width="15.557" height="15.557" fill="none" />
-                  </clipPath>
-                </defs>
-                <g id="Cancel" clipPath="url(#clip-path)">
-                  <path
-                    id="Union_3"
-                    data-name="Union 3"
-                    d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                    fill="#2699fb"
-                  />
-                </g>
-              </svg>
-            </button>
-          </div>
+        <Modal
+          open={replyForm}
+          head={true}
+          label="Add reply to Ticket"
+          setOpen={setReplyForm}
+          className="ticketReplyFormModal"
+        >
           <TicketReplyForm
             _id={ticket._id}
             onSuccess={(newTicket) => {
@@ -544,8 +527,90 @@ export const SingleTicket = ({ history, match }) => {
     );
   }
   return (
-    <div className="ticket">
-      loading
+    <div className="ticket loading">
+      <div className="detail">
+        <Link to="/account/support/ticket" className="back">
+          <Arrow_left_svg />
+          Go Back
+        </Link>
+        <ul className="summery">
+          <li className="head">Ticket Summery</li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+        </ul>
+        <ul className="milestoneDetail">
+          <li className="head">Milestone Detail</li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+        </ul>
+        <ul className="transactionDetail">
+          <li className="head">Transaction Detail</li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+          <li>
+            <label></label>
+            <p></p>
+          </li>
+        </ul>
+      </div>
+      <div className="messages">
+        <div className="head">Messages</div>
+        <ul>
+          <li>
+            <div className="user">
+              <div className="img" />
+              <p className="name" />
+            </div>
+            <p className="message">
+              <span />
+            </p>
+            <div className="thumbs">
+              <div className="img" />
+              <div className="img" />
+            </div>
+          </li>
+          <li>
+            <div className="user">
+              <div className="img" />
+              <p className="name" />
+            </div>
+            <p className="message">
+              <span />
+            </p>
+            <div className="thumbs">
+              <div className="img" />
+              <div className="img" />
+              <div className="img" />
+            </div>
+          </li>
+        </ul>
+      </div>
       <Modal open={msg} className="msg">
         {msg}
       </Modal>

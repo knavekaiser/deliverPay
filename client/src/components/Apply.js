@@ -9,6 +9,7 @@ require("./styles/apply.scss");
 const WorkRequestForm = () => {
   const { user } = useContext(SiteContext);
   const history = useHistory();
+  const [loading, setLoading] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ const WorkRequestForm = () => {
   const [modal, setModal] = useState(null);
   const submit = (e) => {
     e.preventDefault();
+    setLoading(true);
     if (!phone.match(/^\+91\d{10}$/)) {
       setErrMsg("Enter valid phone number");
       return;
@@ -36,6 +38,7 @@ const WorkRequestForm = () => {
     })
       .then((res) => res.json())
       .then((data) => {
+        setLoading(false);
         if (data.code === "ok") {
           setModal(
             <>
@@ -61,6 +64,7 @@ const WorkRequestForm = () => {
         }
       })
       .catch((err) => {
+        setLoading(false);
         console.log(err);
         setModal(
           <>

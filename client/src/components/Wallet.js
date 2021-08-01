@@ -493,6 +493,11 @@ const Wallet = ({ history, location, match }) => {
       </div>
       <Modal
         className="addMoney"
+        head={true}
+        label="Add Money"
+        setOpen={() => {
+          history.push("/account/wallet");
+        }}
         open={location.pathname.startsWith("/account/wallet/addMoney")}
         style={
           loading
@@ -503,35 +508,6 @@ const Wallet = ({ history, location, match }) => {
             : {}
         }
       >
-        <div className="head">
-          <p className="modalName">Add Money</p>
-          <button
-            onClick={() => {
-              history.push("/account/wallet");
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15.557"
-              height="15.557"
-              viewBox="0 0 15.557 15.557"
-            >
-              <defs>
-                <clipPath id="clip-path">
-                  <rect width="15.557" height="15.557" fill="none" />
-                </clipPath>
-              </defs>
-              <g id="Cancel" clipPath="url(#clip-path)">
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                  fill="#2699fb"
-                />
-              </g>
-            </svg>
-          </button>
-        </div>
         <PaymentOption
           label="Choose a payment method."
           action={displayCheckoutForm}
@@ -539,45 +515,26 @@ const Wallet = ({ history, location, match }) => {
       </Modal>
       <Modal
         className="paymentMethodsForm"
+        head={true}
+        label="Add Payment Method"
+        setOpen={() => {
+          history.push("/account/wallet/addMoney");
+        }}
         open={location.pathname.startsWith(
           "/account/wallet/addMoney/addPaymentMethod"
         )}
       >
-        <div className="head">
-          <p className="modalName">Add Payment Method</p>
-          <button
-            onClick={() => {
-              history.push("/account/wallet/addMoney");
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15.557"
-              height="15.557"
-              viewBox="0 0 15.557 15.557"
-            >
-              <defs>
-                <clipPath id="clip-path">
-                  <rect width="15.557" height="15.557" fill="none" />
-                </clipPath>
-              </defs>
-              <g id="Cancel" clipPath="url(#clip-path)">
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                  fill="#2699fb"
-                />
-              </g>
-            </svg>
-          </button>
-        </div>
         <PaymentMethodForm
           onSuccess={() => history.push("/account/wallet/addMoney")}
         />
       </Modal>
       <Modal
         className="addMoney"
+        head={true}
+        label="Withdraw Money"
+        setOpen={() => {
+          history.push("/account/wallet");
+        }}
         open={location.pathname.startsWith("/account/wallet/withdrawMoney")}
         style={
           loading
@@ -588,35 +545,6 @@ const Wallet = ({ history, location, match }) => {
             : {}
         }
       >
-        <div className="head">
-          <p className="modalName">Withdraw Money</p>
-          <button
-            onClick={() => {
-              history.push("/account/wallet");
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15.557"
-              height="15.557"
-              viewBox="0 0 15.557 15.557"
-            >
-              <defs>
-                <clipPath id="clip-path">
-                  <rect width="15.557" height="15.557" fill="none" />
-                </clipPath>
-              </defs>
-              <g id="Cancel" clipPath="url(#clip-path)">
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                  fill="#2699fb"
-                />
-              </g>
-            </svg>
-          </button>
-        </div>
         <PaymentOption
           label="Where do you want to recieve your money?"
           action={withdrawMoney}
@@ -1377,32 +1305,13 @@ export const Cards = ({ paymentMethods }) => {
           </svg>
         </button>
       )}
-      <Modal className="paymentMethodsForm" open={paymentForm}>
-        <div className="head">
-          <p className="modalName">Add Payment Method</p>
-          <button onClick={() => setPaymentForm(false)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15.557"
-              height="15.557"
-              viewBox="0 0 15.557 15.557"
-            >
-              <defs>
-                <clipPath id="clip-path">
-                  <rect width="15.557" height="15.557" fill="none" />
-                </clipPath>
-              </defs>
-              <g id="Cancel" clipPath="url(#clip-path)">
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                  fill="#2699fb"
-                />
-              </g>
-            </svg>
-          </button>
-        </div>
+      <Modal
+        head={true}
+        label="Add Payment Method"
+        setOpen={setPaymentForm}
+        className="paymentMethodsForm"
+        open={paymentForm}
+      >
         <PaymentMethodForm
           onSuccess={(method) => {
             setPaymentForm(false);

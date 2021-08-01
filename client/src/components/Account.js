@@ -367,20 +367,18 @@ const Home = () => {
       )}
       <Footer />
       <Route path="/account/home/pay">
-        <Modal open={true} className="milestoneRequest">
-          <div className="head">
-            <p className="modalName">
-              {userType === "seller" ? "Request Milestone" : "Create Milestone"}
-            </p>
-            <button
-              onClick={() => {
-                history.push("/account/home");
-                setClient(null);
-              }}
-            >
-              <X_svg />
-            </button>
-          </div>
+        <Modal
+          open={true}
+          head={true}
+          label={
+            userType === "seller" ? "Request Milestone" : "Create Milestone"
+          }
+          setOpen={() => {
+            history.push("/account/home");
+            setClient(null);
+          }}
+          className="milestoneRequest"
+        >
           <MilestoneForm
             userType={userType}
             searchClient={client}
@@ -1576,6 +1574,7 @@ const ProfileAvatar = () => {
 
 export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
   const { user, setUser } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [type, setType] = useState("product");
   const [addressForm, setAddressForm] = useState(false);
@@ -1595,6 +1594,7 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
   const sellerSubmit = useCallback(
     (e) => {
       e.preventDefault();
+      setLoading(true);
       fetch("/api/requestMilestone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1613,6 +1613,7 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
       })
         .then((res) => res.json())
         .then(({ message, milestone }) => {
+          setLoading(false);
           if (milestone) {
             onSuccess?.({ message, milestone });
           } else {
@@ -1628,6 +1629,7 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
           }
         })
         .catch((err) => {
+          setLoading(false);
           console.log(err);
           setMsg(
             <>
@@ -1645,6 +1647,7 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
   const buyerSubmit = useCallback(
     (e) => {
       e.preventDefault();
+      setLoading(true);
       fetch("/api/createMilestone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1662,9 +1665,11 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
       })
         .then((res) => res.json())
         .then((data) => {
+          setLoading(false);
           onSuccess?.(data);
         })
         .catch((err) => {
+          setLoading(false);
           console.log(err);
           setMsg(
             <>
@@ -1865,17 +1870,18 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
           </div>
         </section>
       </form>
-      <Modal open={addressForm} className="addAddress">
-        <div className="head">
-          <p className="modalName">Add/Edit Address</p>
-          <button
-            onClick={() => {
-              setAddressForm(false);
-            }}
-          >
-            <X_svg />
-          </button>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
         </div>
+      )}
+      <Modal
+        open={addressForm}
+        head={true}
+        label="Add/Edit Address"
+        setOpen={setAddressForm}
+        className="addAddress"
+      >
         <AddressForm
           client={client}
           setClient={setClient}

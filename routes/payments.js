@@ -500,7 +500,9 @@ app.post(
       case "BankCard":
         fundAccountDetail = {
           account_type: "card",
-          card: { ...accountDetail },
+          "card.name": accountDetail.name,
+          "card.number": accountDetail.number,
+          // card: { ...accountDetail },
         };
         break;
       case "VpaAccount":
@@ -543,15 +545,17 @@ app.post(
           console.log(err);
           return null;
         }));
+    const razorBody = {
+      contact_id: razorPayContactId,
+      ...fundAccountDetail,
+    };
+    console.log(razorBody);
     const razorPayFundAccount = await fetch(
       "https://api.razorpay.com/v1/fund_accounts",
       {
         method: "POST",
         headers: razorHeaders,
-        body: JSON.stringify({
-          contact_id: razorPayContactId,
-          ...fundAccountDetail,
-        }),
+        body: JSON.stringify(razorBody),
       }
     )
       .then((res) => res.json())

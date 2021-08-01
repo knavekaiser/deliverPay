@@ -1,3 +1,5 @@
+@import "variables";
+
 .checkbox {
   display: inline-block;
   cursor: pointer;
@@ -194,5 +196,34 @@
       grid-column: 1/2;
       grid-row: 1/2;
     }
+  }
+}
+
+div {
+  form + .spinnerContainer {
+    z-index: 15;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.19);
+    display: grid;
+    place-items: center;
+    .spinner {
+      border: 3px solid white;
+      border-top: 3px solid $blue;
+      border-radius: 50%;
+      width: 4rem;
+      height: 4rem;
+      animation: spin 1.5s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }

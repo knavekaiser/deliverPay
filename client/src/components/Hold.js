@@ -309,32 +309,13 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
           </div>
         )}
       </div>
-      <Modal open={releaseForm} className="milestoneReleaseForm">
-        <div className="head">
-          <p className="modalName">Release Money</p>
-          <button onClick={() => setReleaseForm(false)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15.557"
-              height="15.557"
-              viewBox="0 0 15.557 15.557"
-            >
-              <defs>
-                <clipPath id="clip-path">
-                  <rect width="15.557" height="15.557" fill="none" />
-                </clipPath>
-              </defs>
-              <g id="Cancel" clipPath="url(#clip-path)">
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                  fill="#2699fb"
-                />
-              </g>
-            </svg>
-          </button>
-        </div>
+      <Modal
+        open={releaseForm}
+        head={true}
+        label="Release Money"
+        setOpen={setReleaseForm}
+        className="milestoneReleaseForm"
+      >
         <MilestoneReleaseForm
           milestone={milestone}
           setReleaseForm={setReleaseForm}
@@ -356,32 +337,13 @@ const SingleMilestone = ({ milestone, setMilestones }) => {
           }}
         />
       </Modal>
-      <Modal open={disputeForm} className="disputeForm">
-        <div className="head">
-          <p className="modalName">Manual Verification</p>
-          <button onClick={() => setDisputeForm(false)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15.557"
-              height="15.557"
-              viewBox="0 0 15.557 15.557"
-            >
-              <defs>
-                <clipPath id="clip-path">
-                  <rect width="15.557" height="15.557" fill="none" />
-                </clipPath>
-              </defs>
-              <g id="Cancel" clipPath="url(#clip-path)">
-                <path
-                  id="Union_3"
-                  data-name="Union 3"
-                  d="M7.778,9.192,1.414,15.557,0,14.142,6.364,7.778,0,1.414,1.414,0,7.778,6.364,14.142,0l1.415,1.414L9.192,7.778l6.364,6.364-1.415,1.415Z"
-                  fill="#2699fb"
-                />
-              </g>
-            </svg>
-          </button>
-        </div>
+      <Modal
+        open={disputeForm}
+        head={true}
+        label="Manual Verification"
+        setOpen={setDisputeForm}
+        className="disputeForm"
+      >
         <DisputeForm
           milestone={milestone}
           setDisputeForm={setDisputeForm}

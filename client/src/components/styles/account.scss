@@ -1067,49 +1067,6 @@
   }
 }
 
-.modal.milestoneRequest,
-.modal.disputeForm,
-.addAddress,
-.modal.addMoney,
-.modal.paymentMethodsForm,
-.modal.editPaymentMethod,
-.modal.productForm,
-.modal.ticketFormModal,
-.modal.ticketReplyFormModal,
-.modal.milestoneReleaseForm {
-  border-radius: 0.7rem;
-  width: 100%;
-  display: grid;
-  overflow: auto;
-  .head {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: white;
-    display: flex;
-    justify-content: space-between;
-    padding: 1.3rem;
-    box-shadow: 0 0 0.7rem rgba(0, 0, 0, 0.25);
-    border-radius: 0.7rem 0.7rem 0 0;
-    .modalName {
-      color: $blue;
-      font-weight: 500;
-    }
-    button {
-      border: none;
-      outline: none;
-      background: none;
-      cursor: pointer;
-    }
-  }
-  form {
-    flex-wrap: wrap;
-    .pBtm {
-      height: 1px;
-      flex-basis: 1;
-    }
-  }
-}
 .modal.milestoneRequest {
   max-width: 40rem;
 }
@@ -1449,6 +1406,35 @@
     margin: 1.5rem;
     min-width: 25rem;
     box-shadow: none;
+  }
+}
+
+.modal {
+  position: relative;
+  border-radius: 0.7rem;
+  width: 100%;
+  display: grid;
+  overflow: auto;
+  .head {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 1.3rem;
+    box-shadow: 0 0 0.7rem rgba(0, 0, 0, 0.25);
+    border-radius: 0.7rem 0.7rem 0 0;
+    .modalName {
+      color: $blue;
+      font-weight: 500;
+    }
+    button {
+      border: none;
+      outline: none;
+      background: none;
+      cursor: pointer;
+    }
   }
 }
 
@@ -2756,6 +2742,91 @@
 }
 .dateRange {
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.15);
+}
+
+.thumbs {
+  margin: auto;
+  display: flex;
+  grid-gap: 0.5rem;
+  overflow-x: auto;
+  .videoThumb,
+  .audioThumb {
+    cursor: pointer;
+    height: 4rem;
+    position: relative;
+    img {
+      height: 70%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      pointer-events: none;
+    }
+  }
+  .audioThumb {
+    width: 5rem;
+    background: rgba(0, 0, 0, 0.15);
+  }
+  & > img {
+    cursor: pointer;
+  }
+  img,
+  audio,
+  video {
+    max-height: 4rem;
+  }
+}
+
+.mediaModal {
+  background: none !important;
+  width: 100%;
+  height: 100%;
+  max-height: calc(var(--vh) * 100) !important;
+  padding: 2rem;
+  display: grid;
+  grid-gap: 1.5rem;
+  grid-template-rows: 1fr 4rem;
+  .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    z-index: 10;
+    display: grid;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      path {
+        fill: white;
+      }
+    }
+  }
+  .view {
+    margin: auto;
+    max-height: calc((var(--vh) * 100) - 5.5rem - 4rem);
+    img,
+    video {
+      height: calc((var(--vh) * 100) - 5.5rem - 4rem);
+      max-width: calc(100vw - 4rem);
+    }
+    audio {
+      max-height: calc((var(--vh) * 100) - 5.5rem - 4rem);
+      min-width: 50vw;
+      max-width: 95vw;
+    }
+  }
+  .thumbs {
+    grid-gap: 0;
+    & > * {
+      transform: scale(0.8);
+      &.active {
+        transform: scale(1);
+      }
+    }
+  }
 }
 
 @media only screen and (max-width: 480px) {

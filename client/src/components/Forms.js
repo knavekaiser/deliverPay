@@ -77,11 +77,13 @@ export const MilestoneReleaseForm = ({
 
 export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
   const [issue, setIssue] = useState("");
+  const [loading, setLoading] = useState(false);
   const [dscr, setDscr] = useState("");
   const [caseFiles, setCaseFiles] = useState([]);
   const [msg, setMsg] = useState(null);
   const submit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     const fileLinks = caseFiles.length
       ? await UploadFiles({
           files: caseFiles,
@@ -98,12 +100,12 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
         _case: { dscr, files: fileLinks },
       }),
     })
-      .then((res) => {
-        if (res.status === 200) {
-          res.json().then(({ milestone }) => {
-            onSuccess?.(milestone);
-          });
-        } else if (res.status === 403) {
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          onSuccess?.(data.milestone);
+        } else if (data.code === 403) {
           setMsg(
             <>
               <button onClick={() => setMsg(null)}>Okay</button>
@@ -129,6 +131,7 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
         }
       })
       .catch((err) => {
+        setLoading(true);
         console.log(err);
         setMsg(
           <>
@@ -215,6 +218,11 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
         </section>
         <div className="pBtm" />
       </form>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
       <Modal open={msg} className="msg">
         {msg}
       </Modal>
@@ -223,16 +231,17 @@ export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
 };
 
 export const TicketForm = ({ onSuccess }) => {
+  const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(false);
   const [issue, setIssue] = useState("");
   const [milestone, setMilestone] = useState("");
   const [transaction, setTransaction] = useState("");
-  const [caseFiles, setCaseFiles] = useState("");
+  const [files, setFiles] = useState("");
   const [message, setMessage] = useState("");
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    // upload files here.
-    const files = [];
+    setLoading(true);
+    const fileLinks = files.length ? await UploadFiles({ files, setMsg }) : [];
     fetch("/api/openTicket", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -242,13 +251,13 @@ export const TicketForm = ({ onSuccess }) => {
         transaction,
         message: {
           body: message,
-          files,
+          files: fileLinks,
         },
       }),
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        setLoading(false);
         if (data.code === "ok") {
           onSuccess?.(data.ticket);
         } else if (data.message === "milestone ID is invalid") {
@@ -274,6 +283,7 @@ export const TicketForm = ({ onSuccess }) => {
         }
       })
       .catch((err) => {
+        setLoading(false);
         console.log(err);
         setMsg(
           <>
@@ -319,24 +329,9 @@ export const TicketForm = ({ onSuccess }) => {
             onChange={(e) => setMessage(e.target.value)}
           />
         </section>
-        <section className="fileInput">
+        <section>
           <label htmlFor="for">Upload relevant files (optional)</label>
-          {caseFiles.length > 0 && (
-            <ul>
-              {caseFiles.map((file, i) => (
-                <li key={i}>{file.name}</li>
-              ))}
-            </ul>
-          )}
-          <input
-            type="file"
-            name="files"
-            accept="audio/*,video/*,image/*"
-            multiple={true}
-            onChange={(e) => {
-              setCaseFiles(Object.values(e.target.files));
-            }}
-          />
+          <FileInput onChange={(files) => setFiles(files)} />
         </section>
         <section className="btns">
           <button className="submit" type="submit">
@@ -348,6 +343,11 @@ export const TicketForm = ({ onSuccess }) => {
         </section>
         <div className="pBtm" />
       </form>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
       <Modal open={msg} className="msg">
         {msg}
       </Modal>
@@ -355,23 +355,25 @@ export const TicketForm = ({ onSuccess }) => {
   );
 };
 export const TicketReplyForm = ({ _id, onSuccess }) => {
+  const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(false);
-  const [caseFiles, setCaseFiles] = useState("");
+  const [files, setFiles] = useState([]);
   const [message, setMessage] = useState("");
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    // upload files here.
-    const files = [];
+    setLoading(true);
+    const fileLinks = files.length ? await UploadFiles({ files, setMsg }) : [];
     fetch("/api/addTicketReply", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         _id,
-        message: { body: message, files },
+        message: { body: message, files: fileLinks },
       }),
     })
       .then((res) => res.json())
       .then((data) => {
+        setLoading(false);
         if (data.code === "ok") {
           onSuccess?.(data.ticket);
         } else {
@@ -387,6 +389,7 @@ export const TicketReplyForm = ({ _id, onSuccess }) => {
         }
       })
       .catch((err) => {
+        setLoading(false);
         console.log(err);
         setMsg(
           <>
@@ -410,23 +413,12 @@ export const TicketReplyForm = ({ _id, onSuccess }) => {
             onChange={(e) => setMessage(e.target.value)}
           />
         </section>
-        <section className="fileInput">
+        <section>
           <label htmlFor="for">Upload relevant files (optional)</label>
-          {caseFiles.length > 0 && (
-            <ul>
-              {caseFiles.map((file, i) => (
-                <li key={i}>{file.name}</li>
-              ))}
-            </ul>
-          )}
-          <input
-            type="file"
-            name="files"
+          <FileInput
             accept="audio/*,video/*,image/*"
             multiple={true}
-            onChange={(e) => {
-              setCaseFiles(Object.values(e.target.files));
-            }}
+            onChange={(files) => setFiles(files)}
           />
         </section>
         <section className="btns">
@@ -439,6 +431,11 @@ export const TicketReplyForm = ({ _id, onSuccess }) => {
         </section>
         <div className="pBtm" />
       </form>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
       <Modal open={msg} className="msg">
         {msg}
       </Modal>

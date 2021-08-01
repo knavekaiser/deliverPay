@@ -60,17 +60,13 @@ const Products = ({ history, location, match }) => {
           <p className="placeholder">No product yet.</p>
         )}
       </ul>
-      <Modal open={productForm} className="productForm">
-        <div className="head">
-          <p className="modalName">Add Product/Service</p>
-          <button
-            onClick={() => {
-              setProductForm(null);
-            }}
-          >
-            <X_svg />
-          </button>
-        </div>
+      <Modal
+        head={true}
+        label="Edit Product/Service"
+        setOpen={setProductForm}
+        open={productForm}
+        className="productForm"
+      >
         <ProductForm
           onSuccess={(product) => {
             setProducts((prev) => [...prev, product]);
@@ -159,17 +155,13 @@ const SingleProduct = ({ product, setProducts }) => {
           Delete
         </button>
       </div>
-      <Modal open={edit} className="productForm">
-        <div className="head">
-          <p className="modalName">Edit Product/Service</p>
-          <button
-            onClick={() => {
-              setEdit(false);
-            }}
-          >
-            <X_svg />
-          </button>
-        </div>
+      <Modal
+        head={true}
+        label="Edit Product/Service"
+        open={edit}
+        setOpen={setEdit}
+        className="productForm"
+      >
         <ProductForm
           onSuccess={(product) => {
             setProducts((prev) =>

@@ -1139,3 +1139,70 @@ export const UploadFiles = ({ files, setMsg }) => {
       );
     });
 };
+export const Media = ({ links }) => {
+  const [mediaPreview, setMediaPreview] = useState(false);
+  const [media, setMedia] = useState(null);
+  const [index, setIndex] = useState(0);
+  const medias = links.map((item, i) => {
+    let thumb = null;
+    let view = null;
+    const handleClick = (e) => {
+      setMediaPreview(true);
+      setMedia(view);
+      setIndex(i);
+    };
+    if (item.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/)) {
+      thumb = (
+        <img
+          className={index === i ? "active" : ""}
+          key={i}
+          src={item}
+          onClick={handleClick}
+        />
+      );
+      view = <img key={i} src={item} />;
+    } else if (item.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/)) {
+      thumb = (
+        <div
+          key={i}
+          className={`audioThumb ${index === i ? "active" : ""}`}
+          onClick={handleClick}
+        >
+          <img src="/play_btn.png" />
+        </div>
+      );
+      view = <audio key={i} src={item} controls="on" autoPlay="on" />;
+    } else if (item.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/)) {
+      thumb = (
+        <div key={i} className={`videoThumb ${index === i ? "active" : ""}`}>
+          <video src={item} onClick={handleClick} />
+          <img src="/play_btn.png" />
+        </div>
+      );
+      view = <video key={i} src={item} controls="on" autoPlay="on" />;
+    } else {
+      thumb = (
+        <a key={i} href={i}>
+          {item}
+        </a>
+      );
+    }
+    return thumb;
+  });
+  return (
+    <>
+      {medias}
+      <Modal
+        className="mediaModal"
+        open={mediaPreview}
+        backdropClass="disputeMediaViewBack"
+      >
+        <button className="close" onClick={() => setMediaPreview(false)}>
+          <X_svg />
+        </button>
+        <div className="view">{media}</div>
+        <div className="thumbs">{medias}</div>
+      </Modal>
+    </>
+  );
+};

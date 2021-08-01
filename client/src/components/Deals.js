@@ -339,18 +339,11 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
       )}
       <Modal
         className="milestoneRequest"
+        head={true}
+        label="Create Milestone"
         open={history.location.pathname.match(/^\/account\/deals\/.+\/pay$/)}
+        setOpen={() => history.push(`/account/deals/${userCard._id}`)}
       >
-        <div className="head">
-          <p className="modalName">Create Milestone</p>
-          <button
-            onClick={() => {
-              history.push(`/account/deals/${userCard._id}`);
-            }}
-          >
-            <X_svg />
-          </button>
-        </div>
         <MilestoneForm
           userType="buyer"
           searchClient={userCard}
