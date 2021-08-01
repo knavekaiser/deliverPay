@@ -66,7 +66,7 @@ app.post(
                           rooms: [userChat._id, clientChat._id],
                           message: {
                             from: req.user._id,
-                            to: defendantId._id,
+                            to: plaintiff._id,
                             type: "dispute",
                             text: `${req.user.firstName} responded to your dispute`,
                           },
