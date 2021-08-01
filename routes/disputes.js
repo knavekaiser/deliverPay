@@ -60,7 +60,7 @@ app.post(
                     ).then((user) => {
                       InitiateChat({
                         user: req.user._id,
-                        client: plaintiff._id,
+                        client: dispute.plaintiff._id,
                       }).then(([userChat, clientChat]) =>
                         SendMessage({
                           rooms: [userChat._id, clientChat._id],
