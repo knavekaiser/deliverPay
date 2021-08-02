@@ -2,8 +2,9 @@ import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { SiteContext } from "../SiteContext";
 import { BankCard, BankAccount, BankCardForm, NetBankingForm } from "./Wallet";
 import { Modal, Confirm } from "./Modal";
-import { Err_svg, Succ_svg } from "./Elements";
+import { Err_svg, Succ_svg, FileInput, Media, UploadFiles } from "./Elements";
 import GoogleLogin from "react-google-login";
+require("./styles/profile.scss");
 
 async function updateProfileInfo(newData) {
   return fetch("/api/editUserProfile", {
@@ -17,6 +18,8 @@ const Profile = ({ history, match, location }) => {
   const { user, setUser } = useContext(SiteContext);
   const [mismatchPass, setMismatchPass] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [kycFiles, setKycFiles] = useState([]);
+  const [gstFiles, setGstFiles] = useState([]);
   const addGoogleId = (e) => {
     if (e.googleId) {
       updateProfileInfo({ googleId: e.googleId })
@@ -346,6 +349,74 @@ const Profile = ({ history, match, location }) => {
               user.address?.state || ""
             } ${user.address?.zip || ""}`}
           />
+          <DataEdit
+            label="KYC"
+            setMsg={setMsg}
+            formData={kycFiles}
+            fields={
+              <>
+                <section>
+                  <label>Upload files for verification.</label>
+                  <FileInput
+                    multiple={true}
+                    prefill={user.kyc?.files}
+                    name="kyc.files"
+                    onChange={(files) => setKycFiles(files)}
+                  />
+                </section>
+              </>
+            }
+            value={
+              <>
+                <label>Files for verification:</label>
+                <ul className="thumbs">
+                  <Media links={user.kyc?.files} />
+                </ul>
+                <p>Verified: {user.kyc?.verified?.toString() || "False"}</p>
+              </>
+            }
+          />
+          <DataEdit
+            label="GST Information"
+            setMsg={setMsg}
+            formData={gstFiles}
+            fields={
+              <>
+                <section>
+                  <input
+                    required={true}
+                    type="text"
+                    defaultValue={user.gst?.detail.reg}
+                    placeholder="GST Registration number"
+                    name="gst.detail.reg"
+                  />
+                </section>
+                <section>
+                  <label>Upload files for verification</label>
+                  <FileInput
+                    multiple={true}
+                    prefill={user.gst?.detail?.files}
+                    name="gst.detail.files"
+                    onChange={(files) => setGstFiles(files)}
+                  />
+                </section>
+              </>
+            }
+            value={
+              <>
+                <label>
+                  GST Registration number: {user.gst?.detail?.reg || "N/A"}
+                </label>
+                <label>Files for verification:</label>
+                <ul className="thumbs">
+                  <Media links={user.gst?.detail?.files} />
+                </ul>
+                <p>
+                  Verified: {user.gst?.detail?.verified?.toString() || "False"}
+                </p>
+              </>
+            }
+          />
         </ul>
       </div>
       <div className="paymentMethods">
@@ -504,13 +575,13 @@ const SinglePaymentMethod = ({ method, setMsg }) => {
   );
 };
 
-const DataEdit = ({ label, fields, value, onError }) => {
+const DataEdit = ({ label, fields, value, onError, setMsg, formData }) => {
   const { setUser } = useContext(SiteContext);
   const [edit, setEdit] = useState(false);
   const form = useRef(null);
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const allData = {};
+    let allData = {};
     for (var [field, value] of new FormData(e.target).entries()) {
       allData[field] = value;
     }
@@ -527,6 +598,14 @@ const DataEdit = ({ label, fields, value, onError }) => {
           coordinates: [long, lat],
         };
       });
+    }
+    if (allData["kyc.files"]) {
+      allData["kyc.files"] =
+        (await UploadFiles({ files: formData, setMsg })) || [];
+    }
+    if (allData["gst.detail.files"]) {
+      allData["gst.detail.files"] =
+        (await UploadFiles({ files: formData, setMsg })) || [];
     }
     fetch("/api/editUserProfile", {
       method: "PATCH",
@@ -554,7 +633,7 @@ const DataEdit = ({ label, fields, value, onError }) => {
         {edit ? (
           <div className="inputs">{fields}</div>
         ) : (
-          <p className="currentValue">{value}</p>
+          <div className="currentValue">{value}</div>
         )}
         <div className="btns">
           {edit ? (

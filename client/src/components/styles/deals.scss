@@ -188,18 +188,6 @@
           }
         }
       }
-      .pay {
-        padding: 0.5rem 1.5rem;
-        background: linear-gradient(90deg, $blue 0%, $green 100%);
-        color: white;
-        font-weight: 500;
-        border-radius: 2rem;
-        &:hover {
-          color: $blue;
-          background: none;
-          box-shadow: inset 0 0 0 2px $blue;
-        }
-      }
     }
     .chats {
       overflow-y: flex;

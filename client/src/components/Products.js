@@ -295,7 +295,7 @@ const ProductForm = ({ prefill, onSuccess }) => {
             multiple={true}
             prefill={prefill?.images}
             accept="image/*"
-            onChange={(e) => setFiles(e)}
+            onChange={(files) => setFiles(files)}
           />
         </section>
         <button type="submit">Submit</button>

@@ -7,8 +7,7 @@ const HowItWorks = () => {
       <div className="content">
         <h1>How it Works</h1>
         <section>
-          <h3>title</h3>
-          <p>paragraph</p>
+          <img src="/how_it_works.png" />
         </section>
       </div>
       <Footer />

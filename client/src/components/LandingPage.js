@@ -27,8 +27,8 @@ function LandingPage({ history }) {
                 alt="Delivery pay logo"
               />
             </Link>
-            <Link to="/account/home">I am a Seller</Link>
-            <Link to="/account/home">I am a Buyer</Link>
+            <Link to="/u/join">I am a Seller</Link>
+            <Link to="/u/join">I am a Buyer</Link>
           </div>
           <div className="path">
             <svg

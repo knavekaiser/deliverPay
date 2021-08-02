@@ -62,6 +62,17 @@ const userModel = new Schema(
     notificationLastRead: { type: Date },
     paymentMethods: [{ type: Schema.Types.ObjectId, ref: "PaymentMethod" }],
     profileImg: { type: String, default: "/profile-user.jpg" },
+    kyc: {
+      verified: { type: Boolean, default: false },
+      files: [{ type: String }],
+    },
+    gst: {
+      verified: { type: Boolean, default: false },
+      detail: {
+        reg: { type: String },
+        files: [{ type: String }],
+      },
+    },
   },
   { timestamps: true }
 );

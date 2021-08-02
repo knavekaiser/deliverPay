@@ -1,10 +1,10 @@
 import { useState, useEffect, useContext, useRef } from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useHistory, Route } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
 import Moment from "react-moment";
 import { Modal } from "./Modal";
 import moment from "moment";
-import { Succ_svg, Err_svg, X_svg, UploadFiles } from "./Elements";
+import { Succ_svg, Err_svg, X_svg, UploadFiles, Actions } from "./Elements";
 import { io } from "socket.io-client";
 import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
@@ -275,9 +275,13 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
                 </span>
               </p>
             </div>
-            <Link className="pay" to={`/account/deals/${userCard._id}/pay`}>
-              Pay
-            </Link>
+            <Actions>
+              <Link className="pay" to={`/account/deals/${userCard._id}/pay`}>
+                Pay
+              </Link>
+              <Link to={`/account/deals/${userCard._id}/report`}>Report</Link>
+              <button>Block</button>
+            </Actions>
           </div>
           <ul className="chats" ref={chatWrapper}>
             {chat.map((msg, i) => {
@@ -371,6 +375,40 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
           }}
         />
       </Modal>
+      <Route
+        path="/account/deals/:_id/report"
+        component={({ location }) => (
+          <Modal
+            open={true}
+            head={true}
+            label="Report User"
+            className="userReport"
+            setOpen={() =>
+              history.push(location.pathname.replace(/\/report/, ""))
+            }
+          >
+            <div className="content">
+              <ReportForm
+                user={userCard}
+                onSuccess={() => {
+                  history.push(
+                    history.location.pathname.replace(/\/report/, "")
+                  );
+                  setMsg(
+                    <>
+                      <button onClick={() => setMsg(null)}>Okay</button>
+                      <div>
+                        <Succ_svg />
+                        <h4>User has been reported.</h4>
+                      </div>
+                    </>
+                  );
+                }}
+              />
+            </div>
+          </Modal>
+        )}
+      />
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>
@@ -524,6 +562,75 @@ const ChatForm = ({ rooms, user }) => {
         </button>
       </form>
       <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
+    </>
+  );
+};
+const ReportForm = ({ user, onSuccess }) => {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [msg, setMsg] = useState(null);
+  const submit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    fetch("/api/reportUser", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user: user._id,
+        message,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          onSuccess?.(data);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Report could not be submitted. try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Report could not be submitted. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <>
+      <form onSubmit={submit}>
+        <section>
+          <label>Messag</label>
+          <TextareaAutosize
+            required={true}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        </section>
+        <section className="btns">
+          <button className="submit">Submit</button>
+        </section>
+      </form>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
+      <Modal className="msg" open={msg}>
         {msg}
       </Modal>
     </>

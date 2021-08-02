@@ -916,6 +916,7 @@ export const FileInput = ({
   label,
   multiple,
   accept,
+  name,
 }) => {
   const [files, setFiles] = useState(prefill || []);
   useEffect(() => {
@@ -960,6 +961,7 @@ export const FileInput = ({
       <div className="uploadBtn">
         <Plus_svg />
         <input
+          name={name}
           type="file"
           multiple={multiple}
           required={required}
@@ -1143,52 +1145,53 @@ export const Media = ({ links }) => {
   const [mediaPreview, setMediaPreview] = useState(false);
   const [media, setMedia] = useState(null);
   const [index, setIndex] = useState(0);
-  const medias = links.map((item, i) => {
-    let thumb = null;
-    let view = null;
-    const handleClick = (e) => {
-      setMediaPreview(true);
-      setMedia(view);
-      setIndex(i);
-    };
-    if (item.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/)) {
-      thumb = (
-        <img
-          className={index === i ? "active" : ""}
-          key={i}
-          src={item}
-          onClick={handleClick}
-        />
-      );
-      view = <img key={i} src={item} />;
-    } else if (item.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/)) {
-      thumb = (
-        <div
-          key={i}
-          className={`audioThumb ${index === i ? "active" : ""}`}
-          onClick={handleClick}
-        >
-          <img src="/play_btn.png" />
-        </div>
-      );
-      view = <audio key={i} src={item} controls="on" autoPlay="on" />;
-    } else if (item.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/)) {
-      thumb = (
-        <div key={i} className={`videoThumb ${index === i ? "active" : ""}`}>
-          <video src={item} onClick={handleClick} />
-          <img src="/play_btn.png" />
-        </div>
-      );
-      view = <video key={i} src={item} controls="on" autoPlay="on" />;
-    } else {
-      thumb = (
-        <a key={i} href={i}>
-          {item}
-        </a>
-      );
-    }
-    return thumb;
-  });
+  const medias =
+    links?.map((item, i) => {
+      let thumb = null;
+      let view = null;
+      const handleClick = (e) => {
+        setMediaPreview(true);
+        setMedia(view);
+        setIndex(i);
+      };
+      if (item.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/)) {
+        thumb = (
+          <img
+            className={index === i ? "active" : ""}
+            key={i}
+            src={item}
+            onClick={handleClick}
+          />
+        );
+        view = <img key={i} src={item} />;
+      } else if (item.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/)) {
+        thumb = (
+          <div
+            key={i}
+            className={`audioThumb ${index === i ? "active" : ""}`}
+            onClick={handleClick}
+          >
+            <img src="/play_btn.png" />
+          </div>
+        );
+        view = <audio key={i} src={item} controls="on" autoPlay="on" />;
+      } else if (item.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/)) {
+        thumb = (
+          <div key={i} className={`videoThumb ${index === i ? "active" : ""}`}>
+            <video src={item} onClick={handleClick} />
+            <img src="/play_btn.png" />
+          </div>
+        );
+        view = <video key={i} src={item} controls="on" autoPlay="on" />;
+      } else {
+        thumb = (
+          <a key={i} href={i}>
+            {item}
+          </a>
+        );
+      }
+      return thumb;
+    }) || "N/A";
   return (
     <>
       {medias}
@@ -1204,5 +1207,35 @@ export const Media = ({ links }) => {
         <div className="thumbs">{medias}</div>
       </Modal>
     </>
+  );
+};
+
+export const Actions = ({ children }) => {
+  const [open, setOpen] = useState(false);
+  const [style, setStyle] = useState({});
+  const buttonRef = useRef();
+  useLayoutEffect(() => {
+    const { height, y, width, x } = buttonRef.current.getBoundingClientRect();
+    setStyle({
+      position: "fixed",
+      top: height + y + 4,
+      right: window.innerWidth - x - width,
+    });
+  }, []);
+  return (
+    <div className="actions">
+      <button className="btn" ref={buttonRef} onClick={() => setOpen(true)}>
+        <img src="/menu_dot.png" />
+      </button>
+      <Modal
+        className="actions"
+        backdropClass="actionsBackdrop"
+        open={open}
+        style={style}
+        onBackdropClick={() => setOpen(false)}
+      >
+        <ul onClick={() => setOpen(false)}>{children}</ul>
+      </Modal>
+    </div>
   );
 };

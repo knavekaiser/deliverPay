@@ -68,3 +68,14 @@ const faqModel = new Schema(
   { timestamps: true }
 );
 global.Faq = mongoose.model("Faq", faqModel);
+
+const reportModel = new Schema(
+  {
+    from: { type: Schema.Types.ObjectId, ref: "user", required: true },
+    against: { type: Schema.Types.ObjectId, ref: "user", required: true },
+    message: { type: String, required: true },
+    status: { type: "String", default: "active" },
+  },
+  { timestamps: true }
+);
+global.Report = mongoose.model("Report", reportModel);

@@ -199,6 +199,50 @@
   }
 }
 
+.actions {
+  .btn {
+    display: grid;
+    height: 2rem;
+    width: 2rem;
+    border: none;
+    outline: none;
+    background: none;
+    padding: 0.3rem;
+    cursor: pointer;
+    border-radius: 0.3rem;
+    &:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+    img {
+      height: 100%;
+    }
+  }
+}
+.modal.actions {
+  width: max-content;
+  border-radius: 4px;
+  box-shadow: 0 0 0.2rem rgba(0, 0, 0, 0.16);
+  ul {
+    display: grid;
+    button,
+    a {
+      padding: 0.5rem 1rem;
+      border: none;
+      outline: none;
+      background: none;
+      text-align: left;
+      font-size: 1rem;
+      cursor: default;
+      &:hover {
+        background: rgba(0, 0, 0, 0.03);
+      }
+    }
+  }
+}
+.actionsBackdrop {
+  background: none !important;
+}
+
 div {
   form + .spinnerContainer {
     z-index: 15;

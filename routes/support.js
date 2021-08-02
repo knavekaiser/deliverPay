@@ -213,3 +213,32 @@ app.get("/api/faq", (req, res) => {
       res.status(500).json({ code: 500, message: "database erro" });
     });
 });
+
+app.post(
+  "/api/reportUser",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { user, message } = req.body;
+    if (user && message) {
+      new Report({
+        from: req.user._id,
+        against: user,
+        message,
+      })
+        .save()
+        .then((dbRes) => {
+          res.json({ code: "ok", report: dbRes });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ code: 500, message: "database error" });
+        });
+    } else {
+      res.status(400).json({
+        code: 400,
+        message: "user & message is required.",
+        fieldsFound: req.body,
+      });
+    }
+  }
+);

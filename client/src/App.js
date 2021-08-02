@@ -25,6 +25,7 @@ import RefundPolicy from "./components/refundPolicy";
 import ShippingPolicy from "./components/shippingPolicy";
 import WorkWithUs from "./components/WorkWithUs";
 import Apply from "./components/Apply";
+import { ToastContainer } from "react-toastify";
 
 function ProtectedRoute({ children, path, component }) {
   const { user } = useContext(SiteContext);
@@ -99,6 +100,17 @@ function App() {
             </div>
           </Route>
         </Switch>
+        <ToastContainer
+          position="bottom-center"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </BrowserRouter>
     </div>
   );

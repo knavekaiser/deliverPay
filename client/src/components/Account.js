@@ -66,6 +66,8 @@ import {
 import Moment from "react-moment";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 require("./styles/account.scss");
 require("./styles/generic.scss");
 
@@ -152,6 +154,7 @@ const Home = () => {
       );
     }
   }, [value]);
+  const milestoneTimeout = useRef();
   useEffect(() => {
     fetch("/api/recentPayments")
       .then((res) => res.json())
@@ -382,25 +385,138 @@ const Home = () => {
           <MilestoneForm
             userType={userType}
             searchClient={client}
-            onSuccess={(milestone) => {
+            onSubmit={({ e, type, body }) => {
               history.push("/account/home");
-              setMsg(
-                <>
-                  <button onClick={() => setMsg(null)}>Okay</button>
-                  <div>
-                    {milestone.milestone ? <Succ_svg /> : <Err_svg />}
-                    {milestone.milestone && (
-                      <h4 className="amount">₹{milestone.milestone?.amount}</h4>
-                    )}
-                    <h4>{milestone.message}</h4>
-                  </div>
-                  {milestone.milestone && (
-                    <Link to="/account/hold" onClick={() => setMsg(null)}>
-                      Check your Delivery pay Hold
-                    </Link>
-                  )}
-                </>
+              toast(
+                <div className="toast">
+                  Milestone {type === "seller" ? "requested." : "created."}{" "}
+                  <button
+                    className="undo"
+                    onClick={() => {
+                      milestoneTimeout.current = null;
+                    }}
+                  >
+                    Undo
+                  </button>
+                </div>,
+                {
+                  position: "bottom-center",
+                  autoClose: 30000,
+                  hideProgressBar: false,
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  onClose: () => {
+                    milestoneTimeout.current?.();
+                  },
+                  draggable: true,
+                  progress: undefined,
+                }
               );
+              milestoneTimeout.current = () => {
+                if (type === "seller") {
+                  fetch("/api/requestMilestone", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                  })
+                    .then((res) => res.json())
+                    .then(({ message, milestone }) => {
+                      if (milestone) {
+                        setMsg(
+                          <>
+                            <button onClick={() => setMsg(null)}>Okay</button>
+                            <div>
+                              {milestone ? <Succ_svg /> : <Err_svg />}
+                              {milestone && (
+                                <h4 className="amount">₹{milestone?.amount}</h4>
+                              )}
+                              <h4>{message}</h4>
+                            </div>
+                            {milestone && (
+                              <Link
+                                to="/account/hold"
+                                onClick={() => setMsg(null)}
+                              >
+                                Check your Delivery pay Hold
+                              </Link>
+                            )}
+                          </>
+                        );
+                      } else {
+                        setMsg(
+                          <>
+                            <button onClick={() => setMsg(null)}>Okay</button>
+                            <div>
+                              <Err_svg />
+                              <h4>Could not create milestone.</h4>
+                            </div>
+                          </>
+                        );
+                      }
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                      setMsg(
+                        <>
+                          <button onClick={() => setMsg(null)}>Okay</button>
+                          <div>
+                            <Err_svg />
+                            <h4>
+                              Could not create milestone. Make sure you're
+                              online.
+                            </h4>
+                          </div>
+                        </>
+                      );
+                    });
+                } else {
+                  fetch("/api/createMilestone", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                  })
+                    .then((res) => res.json())
+                    .then((milestone) => {
+                      setMsg(
+                        <>
+                          <button onClick={() => setMsg(null)}>Okay</button>
+                          <div>
+                            {milestone.milestone ? <Succ_svg /> : <Err_svg />}
+                            {milestone.milestone && (
+                              <h4 className="amount">
+                                ₹{milestone.milestone?.amount}
+                              </h4>
+                            )}
+                            <h4>{milestone.message}</h4>
+                          </div>
+                          {milestone.milestone && (
+                            <Link
+                              to="/account/hold"
+                              onClick={() => setMsg(null)}
+                            >
+                              Check your Delivery pay Hold
+                            </Link>
+                          )}
+                        </>
+                      );
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                      setMsg(
+                        <>
+                          <button onClick={() => setMsg(null)}>Okay</button>
+                          <div>
+                            <Err_svg />
+                            <h4>
+                              Could not create milestone. Make sure you're
+                              online.
+                            </h4>
+                          </div>
+                        </>
+                      );
+                    });
+                }
+              };
             }}
           />
         </Modal>
@@ -1572,7 +1688,12 @@ const ProfileAvatar = () => {
   );
 };
 
-export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
+export const MilestoneForm = ({
+  userType,
+  searchClient,
+  onSuccess,
+  onSubmit,
+}) => {
   const { user, setUser } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -1594,11 +1715,10 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
   const sellerSubmit = useCallback(
     (e) => {
       e.preventDefault();
-      setLoading(true);
-      fetch("/api/requestMilestone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      onSubmit?.({
+        e,
+        type: "seller",
+        body: {
           buyer_id: client._id,
           amount,
           products,
@@ -1609,49 +1729,18 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
             ...client.address,
             timeOfDelivery: deliveryTime,
           },
-        }),
-      })
-        .then((res) => res.json())
-        .then(({ message, milestone }) => {
-          setLoading(false);
-          if (milestone) {
-            onSuccess?.({ message, milestone });
-          } else {
-            setMsg(
-              <>
-                <button onClick={() => setMsg(null)}>Okay</button>
-                <div>
-                  <Err_svg />
-                  <h4>Could not create milestone.</h4>
-                </div>
-              </>
-            );
-          }
-        })
-        .catch((err) => {
-          setLoading(false);
-          console.log(err);
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not create milestone. Make sure you're online.</h4>
-              </div>
-            </>
-          );
-        });
+        },
+      });
     },
     [client, searchClient, amount, dscr, type, deliveryTime]
   );
   const buyerSubmit = useCallback(
     (e) => {
       e.preventDefault();
-      setLoading(true);
-      fetch("/api/createMilestone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      onSubmit?.({
+        e,
+        type: "buyer",
+        body: {
           seller: { ...searchClient },
           amount,
           dscr,
@@ -1661,26 +1750,8 @@ export const MilestoneForm = ({ userType, searchClient, onSuccess }) => {
             ...client.address,
             timeOfDelivery: deliveryTime,
           },
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setLoading(false);
-          onSuccess?.(data);
-        })
-        .catch((err) => {
-          setLoading(false);
-          console.log(err);
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not create milestone. Make sure you're online.</h4>
-              </div>
-            </>
-          );
-        });
+        },
+      });
     },
     [client, searchClient, amount, dscr, type, deliveryTime]
   );

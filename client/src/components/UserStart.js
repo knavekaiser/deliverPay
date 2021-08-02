@@ -185,7 +185,7 @@ const LoginForm = () => {
     } else if (emailReg.test(username.toLowerCase())) {
       user = username.toLowerCase();
     } else {
-      setErrMsg("Enter valid Phone number or Email");
+      setErrMsg("Enter valid Phone number");
       return;
     }
     fetch("/api/userLogin", {
@@ -238,13 +238,13 @@ const LoginForm = () => {
         //   Don't have an account? <Link to="/u/join">Register</Link>
         // </p>
       }
-      <p className="title">Login to your Delivery pay account</p>
+      <p className="title">Login to your Delivery Pay account</p>
       <form onSubmit={submit}>
         <input
           type="text"
           name="username"
           required={true}
-          placeholder="Email  or Phone Number"
+          placeholder="Phone Number"
           value={username}
           onChange={(e) => {
             setErrMsg(false);
@@ -290,7 +290,7 @@ const PasswordReset = () => {
   const [loading, setLoading] = useState(false);
   const history = useHistory();
   const [step, setStep] = useState(1);
-  const [id, setId] = useState("");
+  const [id, setId] = useState("+91");
   const [invalidCred, setInvadilCred] = useState(false);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [pass, setPass] = useState("");
@@ -319,12 +319,12 @@ const PasswordReset = () => {
     }
     if (step === 1) {
       if (errMsg) return;
-      if (phone || email) {
+      if (phone) {
         setLoading(true);
         fetch("/api/sendUserForgotPassOTP", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, email }),
+          body: JSON.stringify({ phone }),
         }).then((res) => {
           setLoading(false);
           if (res.status === 200) {
@@ -334,7 +334,7 @@ const PasswordReset = () => {
           }
         });
       } else {
-        setErrMsg("Enter a valid phone number or email.");
+        setErrMsg("Enter a valid phone number.");
       }
     } else if (step === 2) {
       setLoading(true);
@@ -403,14 +403,16 @@ const PasswordReset = () => {
       {step === 1 && (
         <form onSubmit={submit}>
           <input
-            type="text"
+            type="tel"
             name="phone"
             required={true}
-            placeholder="Phone Number or email"
+            placeholder="Phone number"
             value={id}
             onChange={(e) => {
               setErrMsg(null);
-              setId(e.target.value);
+              if (e.target.value.match(/^\+91\d{0,10}$/)) {
+                setId(e.target.value);
+              }
             }}
           />
           <button disabled={errMsg || loading} type="submit">

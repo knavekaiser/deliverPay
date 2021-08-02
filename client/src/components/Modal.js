@@ -83,13 +83,3 @@ export const Confirm = ({ label, question, callback }) => {
     document.querySelector("#confirm")
   );
 };
-
-export const Toast = ({ open, children }) => {
-  if (!open) return null;
-  return createPortal(
-    <>
-      <div className="toast">{children}</div>
-    </>,
-    document.querySelector("#portal")
-  );
-};

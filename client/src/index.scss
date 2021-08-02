@@ -38,7 +38,8 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 #portal,
-#confirm {
+#confirm,
+#toast {
   position: fixed;
   height: calc(var(--vh) * 100);
   width: 100vw;
@@ -70,6 +71,17 @@ input::-webkit-inner-spin-button {
         z-index: 10;
       }
     }
+  }
+  .toast {
+    border: 1px dashed red;
+    pointer-events: all;
+    margin: auto;
+    margin-bottom: 2rem;
+    margin-left: 2rem;
+    place-items: center;
+    background: white;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 0 0.3rem rgba(0, 0, 0, 0.2);
   }
 }
 
