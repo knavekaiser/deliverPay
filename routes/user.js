@@ -13,8 +13,8 @@ async function verify(token) {
 }
 
 app.post("/api/registerUser", async (req, res) => {
-  const { firstName, lastName, phone, email, password } = req.body;
-  if (firstName && lastName && phone && email && password) {
+  const { firstName, lastName, phone, password } = req.body;
+  if (firstName && lastName && phone && password) {
     const referer = await User.findOne({ _id: req.body.referer });
     bcrypt
       .hash(password, 10)
@@ -404,3 +404,15 @@ app.patch("/api/userResetPass", async (req, res) => {
     }
   }
 });
+
+// sendEmail({
+//   to: "naeem.ahmad.9m@gmail.com",
+//   subject: "Delivery Pay email test",
+//   text: "This email was sent using nodemailer and cPanel email account.",
+// })
+//   .then((res) => {
+//     console.log(res);
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
