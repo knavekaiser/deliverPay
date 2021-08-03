@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useRef } from "react";
 import { Link, useHistory, Route } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
 import Moment from "react-moment";
-import { Modal } from "./Modal";
+import { Modal, Confirm } from "./Modal";
 import moment from "moment";
 import { Succ_svg, Err_svg, X_svg, UploadFiles, Actions } from "./Elements";
 import { io } from "socket.io-client";
@@ -29,10 +29,14 @@ const Deals = ({ history, location, match }) => {
       .then((data) => {
         setContacts(() =>
           data.map((chat) => {
-            const status = "";
+            const status = user.blockList?.some(
+              (item) => item === chat.client._id
+            )
+              ? "blocked"
+              : "";
             return {
               ...chat,
-              ...(status && { status: status.status }),
+              ...(status && { status: status }),
             };
           })
         );
@@ -150,6 +154,7 @@ const Deals = ({ history, location, match }) => {
       </div>
       <Chat
         chat={chat}
+        setContacts={setContacts}
         userCard={userCard}
         setUserCard={setUserCard}
         user={user}
@@ -205,7 +210,16 @@ const Person = ({ client, messages, lastSeen, userCard }) => {
   );
 };
 
-const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
+const Chat = ({
+  chat,
+  setChat,
+  userCard,
+  setUserCard,
+  user,
+  socket,
+  setContacts,
+}) => {
+  const { setUser } = useContext(SiteContext);
   const chatWrapper = useRef(null);
   const history = useHistory();
   const [rooms, setRooms] = useState([]);
@@ -280,7 +294,94 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
                 Pay
               </Link>
               <Link to={`/account/deals/${userCard._id}/report`}>Report</Link>
-              <button>Block</button>
+              <button
+                onClick={() => {
+                  Confirm({
+                    label: ` ${
+                      userCard.status === "blocked" ? "Unblock" : "Block"
+                    } User`,
+                    question: `You sure want to ${
+                      userCard.status === "blocked" ? "un" : ""
+                    }block this user?`,
+                    callback: () => {
+                      const blocked = userCard.status === "blocked";
+                      fetch(`/api/${blocked ? "unblockUser" : "blockUser"}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          _id: userCard._id,
+                        }),
+                      })
+                        .then((res) => res.json())
+                        .then((data) => {
+                          if (data.code === "ok") {
+                            setUser((prev) => ({
+                              ...prev,
+                              blockList: data.blockList,
+                            }));
+                            setContacts((prev) =>
+                              prev.map((item) => {
+                                if (item.client._id === userCard._id) {
+                                  return {
+                                    ...item,
+                                    status: blocked ? "" : "blocked",
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              })
+                            );
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <Succ_svg />
+                                  <h4>
+                                    User successfully {blocked && "un"}blocked.
+                                  </h4>
+                                </div>
+                              </>
+                            );
+                          } else {
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <Err_svg />
+                                  <h4>
+                                    Could not {blocked && "un"}block user. try
+                                    again.
+                                  </h4>
+                                </div>
+                              </>
+                            );
+                          }
+                        })
+                        .catch((err) => {
+                          console.log(err);
+                          setMsg(
+                            <>
+                              <button onClick={() => setMsg(null)}>Okay</button>
+                              <div>
+                                <Err_svg />
+                                <h4>
+                                  Could not {blocked && "un"}block user. Make
+                                  sure you're online.
+                                </h4>
+                              </div>
+                            </>
+                          );
+                        });
+                    },
+                  });
+                }}
+              >
+                {userCard.status === "blocked" ? "Unblock" : "Block"}
+              </button>
             </Actions>
           </div>
           <ul className="chats" ref={chatWrapper}>
@@ -320,7 +421,9 @@ const Chat = ({ chat, setChat, userCard, setUserCard, user, socket }) => {
               );
             })}
           </ul>
-          {userCard.firstName && <ChatForm rooms={rooms} user={userCard._id} />}
+          {userCard.firstName && userCard.status !== "blocked" && (
+            <ChatForm rooms={rooms} user={userCard._id} />
+          )}
         </>
       ) : (
         <div className="startChat">

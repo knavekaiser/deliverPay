@@ -214,6 +214,59 @@ app.patch(
   }
 );
 
+app.patch(
+  "/api/blockUser",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    if (req.body._id) {
+      User.findOneAndUpdate(
+        { _id: req.user._id },
+        { $addToSet: { blockList: req.body._id } },
+        { new: true }
+      )
+        .then((dbRes) => {
+          if (dbRes) {
+            res.json({ code: "ok", blockList: dbRes.blockList });
+          } else {
+            res.status(400).json({ code: 400, message: "Could not find user" });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ code: 500, message: "server error" });
+        });
+    } else {
+      res.status(400).json({ code: 400, message: "_id is required" });
+    }
+  }
+);
+app.patch(
+  "/api/unblockUser",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    if (req.body._id) {
+      User.findOneAndUpdate(
+        { _id: req.user._id },
+        { $pull: { blockList: req.body._id } },
+        { new: true }
+      )
+        .then((dbRes) => {
+          if (dbRes) {
+            res.json({ code: "ok", blockList: dbRes.blockList });
+          } else {
+            res.status(400).json({ code: 400, message: "Could not find user" });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ code: 500, message: "server error" });
+        });
+    } else {
+      res.status(400).json({ code: 400, message: "_id is required" });
+    }
+  }
+);
+
 global.InitiateChat = async ({ user, client }) => {
   return Promise.all([
     new Chat({ user, client }).save().catch((err) => {

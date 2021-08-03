@@ -71,6 +71,7 @@ app.post("/api/registerUser", async (req, res) => {
         }
       })
       .catch((err) => {
+        console.log(err);
         if (err.code === 11000) {
           res.status(400).json({
             message: "user exists",
@@ -83,6 +84,7 @@ app.post("/api/registerUser", async (req, res) => {
         }
       });
   } else {
+    console.log("res");
     res.status(400).json({
       code: 400,
       message: "Incomplete request",

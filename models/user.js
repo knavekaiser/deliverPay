@@ -42,11 +42,12 @@ const userModel = new Schema(
         _id: { type: Schema.Types.ObjectId, ref: "User" },
         status: {
           type: String,
-          enum: ["pending", "connected", "silent", "blocked"],
+          enum: ["pending", "connected", "silent"],
           default: "connected",
         },
       },
     ],
+    blockList: [{ type: Schema.Types.ObjectId, ref: "User" }],
     chats: [{ type: Schema.Types.ObjectId, ref: "Chat" }],
     rewards: [{ type: Schema.Types.ObjectId, ref: "Reward" }],
     notifications: [

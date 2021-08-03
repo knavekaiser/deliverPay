@@ -39,7 +39,6 @@ const RegisterForm = () => {
         firstName,
         lastName,
         phone,
-        email: email.toLowerCase(),
         password: pass,
         ...(query.get("referer") && { referer: query.get("referer") }),
       }),
