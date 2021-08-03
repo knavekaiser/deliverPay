@@ -287,9 +287,9 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
   const { phone, email } = req.body;
   const code = genCode(6);
   const [user, hash] = await Promise.all([
-    User.findOne({ $or: [{ phone }, { email }] }),
+    User.findOne({ phone }),
     bcrypt.hash(code, 10),
-    OTP.findOneAndDelete({ id: phone || email }),
+    OTP.findOneAndDelete({ id: phone }),
   ]);
   if (user) {
     new OTP({
@@ -411,6 +411,17 @@ app.patch("/api/userResetPass", async (req, res) => {
 //   to: "naeem.ahmad.9m@gmail.com",
 //   subject: "Delivery Pay email test",
 //   text: "This email was sent using nodemailer and cPanel email account.",
+// })
+//   .then((res) => {
+//     console.log(res);
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
+
+// sendSms({
+//   to: ["9625259527"],
+//   body: "this is a test message sent to 9625259527",
 // })
 //   .then((res) => {
 //     console.log(res);

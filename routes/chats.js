@@ -10,6 +10,13 @@ app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
   User.find(
     {
       _id: { $ne: req.user._id },
+      $and: [
+        ...req.user.blockList?.map((_id) => ({
+          _id: { $not: { $eq: _id } },
+        })),
+        { _id: { $not: { $eq: req.user._id } } },
+      ],
+      blockList: { $not: { $in: [ObjectId(req.user._id)] } },
       ...(q && {
         $or: [
           { firstName: new RegExp(q, "gi") },
@@ -33,9 +40,7 @@ app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
 app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
   Chat.aggregate([
     {
-      $match: {
-        user: req.user._id,
-      },
+      $match: { user: req.user._id },
     },
     {
       $lookup: {
@@ -54,6 +59,7 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
               email: 1,
               profileImg: 1,
               address: 1,
+              blockList: 1,
             },
           },
         ],
@@ -71,7 +77,16 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
     },
   ])
     .then((dbRes) => {
-      res.json(dbRes);
+      const chats = dbRes.map((item) => ({
+        ...item,
+        userBlock: req.user.blockList?.some(
+          (_id) => _id.toString() === item.client._id.toString()
+        ),
+        clientBlock: item.client.blockList?.some(
+          (_id) => _id.toString() === req.user._id.toString()
+        ),
+      }));
+      res.json(chats);
     })
     .catch((err) => {
       console.log(err);

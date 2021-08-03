@@ -101,7 +101,7 @@ app.get(
     Transaction.aggregate([
       {
         $match: {
-          user: new ObjectId(req.user._id),
+          user: req.user._id,
           __t: "P2PTransaction",
         },
       },
@@ -114,41 +114,20 @@ app.get(
         },
       },
       {
-        $set: {
-          client: {
-            $first: "$client",
-          },
-        },
+        $set: { client: { $first: "$client" } },
       },
-      {
-        $sort: {
-          createdAt: -1,
-        },
-      },
+      { $sort: { createdAt: -1 } },
       {
         $group: {
           _id: "$client._id",
-          firstName: {
-            $first: "$client.firstName",
-          },
-          lastName: {
-            $first: "$client.lastName",
-          },
-          phone: {
-            $first: "$client.phone",
-          },
-          email: {
-            $first: "$client.email",
-          },
-          profileImg: {
-            $first: "$client.profileImg",
-          },
-          address: {
-            $first: "$client.address",
-          },
-          createdAt: {
-            $first: "$createdAt",
-          },
+          firstName: { $first: "$client.firstName" },
+          lastName: { $first: "$client.lastName" },
+          phone: { $first: "$client.phone" },
+          email: { $first: "$client.email" },
+          profileImg: { $first: "$client.profileImg" },
+          address: { $first: "$client.address" },
+          createdAt: { $first: "$createdAt" },
+          blockList: { $first: "$client.blockList" },
         },
       },
       {
@@ -156,12 +135,14 @@ app.get(
       },
       {
         $match: {
-          firstName: {
-            $not: {
-              $eq: null,
-            },
-          },
-          _id: { $not: { $eq: ObjectId(req.user._id) } },
+          firstName: { $not: { $eq: null } },
+          $and: [
+            ...req.user.blockList?.map((_id) => ({
+              _id: { $not: { $eq: _id } },
+            })),
+            { _id: { $not: { $eq: req.user._id } } },
+          ],
+          blockList: { $not: { $in: [ObjectId(req.user._id)] } },
         },
       },
       {
@@ -369,18 +350,42 @@ app.put(
   }
 );
 app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
+  const { q, page, perPage, sort, order, status, dateFrom, dateTo } = req.query;
+  const sortOrder = {
+    [sort || "createdAt"]: order === "asc" ? 1 : -1,
+  };
+  const query = {
+    $or: [
+      {
+        "buyer._id": new ObjectId(req.user._id),
+      },
+      {
+        "seller._id": new ObjectId(req.user._id),
+      },
+    ],
+
+    ...(dateFrom &&
+      dateTo && {
+        createdAt: {
+          $gte: new Date(dateFrom),
+          $lt: new Date(dateTo),
+        },
+      }),
+    ...(status && { status }),
+  };
+  const search = {
+    ...(q && {
+      $or: [
+        { "client.firstName": new RegExp(q, "gi") },
+        { "client.phone": new RegExp(q, "gi") },
+        // { note: new RegExp(q, "gi") },
+        // ...(ObjectId.isValid(q) ? [{ _id: ObjectId(q) }] : []),
+      ],
+    }),
+  };
   Milestone.aggregate([
     {
-      $match: {
-        $or: [
-          {
-            "buyer._id": new ObjectId(req.user._id),
-          },
-          {
-            "seller._id": new ObjectId(req.user._id),
-          },
-        ],
-      },
+      $match: query,
     },
     {
       $set: {
@@ -461,17 +466,25 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
         ],
       },
     },
+    { $set: { dispute: { $first: "$dispute" } } },
+    { $match: search },
+    { $sort: sortOrder },
     {
-      $set: {
-        dispute: { $first: "$dispute" },
+      $facet: {
+        milestones: [
+          { $skip: +perPage * (+(page || 1) - 1) },
+          { $limit: +(perPage || 20) },
+        ],
+        pageInfo: [{ $group: { _id: null, count: { $sum: 1 } } }],
       },
-    },
-    {
-      $sort: { createdAt: -1 },
     },
   ])
     .then((dbRes) => {
-      res.json(dbRes);
+      res.json({
+        code: "ok",
+        milestones: dbRes[0].milestones,
+        pageInfo: dbRes[0].pageInfo,
+      });
     })
     .catch((err) => {
       console.log(err);
@@ -847,7 +860,7 @@ app.patch(
     )
       .then((milestone) => {
         if (milestone) {
-          res.json({ message: "release requested" });
+          res.json({ message: "release requested", milestone });
           InitiateChat({
             user: milestone.seller._id,
             client: milestone.buyer._id,
@@ -881,6 +894,119 @@ app.patch(
         console.log(err);
         res.status(500).json({ message: "something went wrong" });
       });
+  }
+);
+app.patch(
+  "/api/declineMilestone",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    if (req.body._id) {
+      Milestone.findOneAndUpdate(
+        {
+          _id: req.body._id,
+          "seller._id": req.user._id,
+          status: "inProgress",
+        },
+        { status: "declined" },
+        { new: true }
+      ).then((milestone) => {
+        if (milestone) {
+          new P2PTransaction({
+            milestoneId: milestone._id,
+            amount: milestone.amount,
+            user: milestone.buyer._id,
+            client: milestone.seller,
+            dscr: milestone.dscr,
+            note: "milestone declined",
+          })
+            .save()
+            .then((transaction) => {
+              if (transaction) {
+                User.findOneAndUpdate(
+                  { _id: milestone.buyer._id },
+                  {
+                    $addToSet: { transactions: transaction._id },
+                    $inc: { balance: transaction.amount },
+                  },
+                  { new: true }
+                ).then((value) => {
+                  InitiateChat({
+                    user: milestone.seller._id,
+                    client: milestone.buyer._id,
+                  })
+                    .then(([userChat, clientChat]) => {
+                      return SendMessage({
+                        rooms: [userChat._id, clientChat._id],
+                        message: {
+                          type: "milestone",
+                          from: req.user._id,
+                          to: milestone.buyer._id,
+                          text: `${req.user.firstName} declined a milestones`,
+                        },
+                      });
+                    })
+                    .then((chatRes) => {
+                      res.json({
+                        code: "ok",
+                        message: "milestone declined",
+                        milestone,
+                      });
+                      notify(
+                        milestone.seller._id,
+                        JSON.stringify({
+                          title: "Milestone declined",
+                          body: `${req.user.firstName} declined a milestone`,
+                        }),
+                        "User"
+                      );
+                    });
+                });
+              } else {
+                Milestone.findOneAndUpdate(
+                  { _id: milestone._id },
+                  { status: "inProgress" },
+                  { new: true }
+                ).then((milestone) => {
+                  res
+                    .status(500)
+                    .json({ code: 500, message: "someting went wrong" });
+                });
+              }
+            });
+        } else {
+          res
+            .status(400)
+            .json({ code: 400, message: "milestone could not be found" });
+        }
+      });
+    } else {
+      res.status(400).json({ code: 400, message: "_id is required" });
+    }
+  }
+);
+app.delete(
+  "/api/cancelMilestoneRequest",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    console.log(req.body._id);
+    if (req.body._id) {
+      Milestone.findOneAndDelete({
+        _id: req.body._id,
+        status: "pending",
+        "seller._id": req.user._id,
+      }).then((milestone) => {
+        console.log(milestone);
+        if (milestone) {
+          res.json({ code: "ok", message: "milestone request cancelled" });
+        } else {
+          res
+            .status(400)
+            .json({ code: 400, message: "milestone does not exist." });
+        }
+      });
+    } else {
+      res.status(400).json({ code: 400, message: "_id is required" });
+    }
   }
 );
 
@@ -1086,7 +1212,7 @@ app.patch(
     if (milestone) {
       if (+amount > milestone.amount) {
         if (+amount - milestone.amount > req.user.balance) {
-          res.status(403).json({ message: "insufficient balance" });
+          res.status(403).json({ code: 403, message: "insufficient balance" });
           return;
         }
         Promise.all([

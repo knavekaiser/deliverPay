@@ -18,6 +18,7 @@ import Wallet from "./Wallet";
 import Products from "./Products";
 import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
+import Marketplace from "./Marketplace";
 import Deals from "./Deals";
 import QRCode from "qrcode.react";
 import { GoogleLogout } from "react-google-login";
@@ -98,13 +99,15 @@ const Home = () => {
   );
   const inviteUser = useCallback(() => {
     const phoneReg = new RegExp(
-      /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
+      /^(\+91|91|1|)(?=\d{10}$)/gi
+      // /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
     );
     if (phoneReg.test(value.toLowerCase())) {
       fetch(
-        `/api/inviteUser?q=+91${value.replace(/^\+?9?1?/, "")}origin=${
-          window.location.origin
-        }`
+        `/api/inviteUser?q=+91${value.replace(
+          /^(\+91|91|1|)(?=\d{10}$)/g,
+          ""
+        )}origin=${window.location.origin}`
       )
         .then((res) => res.json())
         .then((data) => {
@@ -114,7 +117,14 @@ const Home = () => {
                 <button onClick={() => setMsg(null)}>Okay</button>
                 <div>
                   <Succ_svg />
-                  <h4>Invitation sent.</h4>
+                  {
+                    // <h4>Invitation sent.</h4>
+                  }
+                  <h4>
+                    An sms will be sent to{" "}
+                    {"+91" + value.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")},
+                    when the sms API is ready.
+                  </h4>
                 </div>
               </>
             );
@@ -225,6 +235,15 @@ const Home = () => {
                 }}
                 onChange={fetchUsers}
               />
+              <Link
+                className={`sendReq ${
+                  users.length > 0 || !value ? "disabled" : ""
+                }`}
+                onClick={inviteUser}
+                to="#"
+              >
+                Invite
+              </Link>
             </section>
             {users.length && showUsers ? (
               <ul className="searchResult">
@@ -248,31 +267,8 @@ const Home = () => {
                     </Link>
                   </li>
                 ))}
-                {users.length === 0 && (
-                  <li>
-                    <div className="profile">
-                      <p className="name">{value}</p>
-                    </div>
-                    <Link className="sendReq" onClick={inviteUser} to="#">
-                      Invite
-                    </Link>
-                  </li>
-                )}
               </ul>
             ) : null}
-            {value && users.length === 0 && showUsers && (
-              <ul className="searchResult">
-                <li>
-                  <div className="profile">
-                    <img src="/profile-user.jpg" />
-                    <p className="name">{value}</p>
-                  </div>
-                  <Link className="sendReq" onClick={inviteUser} to="#">
-                    Invite
-                  </Link>
-                </li>
-              </ul>
-            )}
           </form>
         </div>
       )}
@@ -305,6 +301,15 @@ const Home = () => {
                 }}
                 onChange={fetchUsers}
               />
+              <Link
+                className={`sendReq ${
+                  users.length > 0 || !value ? "disabled" : ""
+                }`}
+                onClick={inviteUser}
+                to="#"
+              >
+                Invite
+              </Link>
             </section>
             {users.length && showUsers ? (
               <ul className="searchResult">
@@ -332,19 +337,6 @@ const Home = () => {
                 ))}
               </ul>
             ) : null}
-            {value && users.length === 0 && showUsers && (
-              <ul className="searchResult">
-                <li>
-                  <div className="profile">
-                    <img src="/profile-user.jpg" />
-                    <p className="name">{value}</p>
-                  </div>
-                  <Link className="sendReq" onClick={inviteUser} to="#">
-                    Invite
-                  </Link>
-                </li>
-              </ul>
-            )}
           </form>
         </div>
       )}
@@ -730,6 +722,33 @@ function Account({ location }) {
                 </svg>
               </div>
               Deals
+            </Link>
+          </li>
+          <li
+            className={`deals ${
+              location.pathname.startsWith("/account/marketplace")
+                ? "active"
+                : undefined
+            }`}
+          >
+            <Link to="/account/marketplace">
+              <div className="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="26.55"
+                  height="25.219"
+                  viewBox="0 0 26.55 25.219"
+                >
+                  <path
+                    id="Path_1"
+                    data-name="Path 1"
+                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+                    transform="translate(255.198 195.071)"
+                    fill="#fff"
+                  />
+                </svg>
+              </div>
+              Browse
             </Link>
           </li>
           <li
@@ -1146,6 +1165,7 @@ function Account({ location }) {
             <Route path="/account/deals/:_id?" component={Deals} />
             <Route path="/account/wallet" component={Wallet} />
             <Route path="/account/hold" component={Hold} />
+            <Route path="/account/marketplace" component={Marketplace} />
             <Route path="/account/transactions" component={Transactions} />
             <Route path="/account/products" component={Products} />
             <Route

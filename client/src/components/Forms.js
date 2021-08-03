@@ -26,9 +26,19 @@ export const MilestoneReleaseForm = ({
           body: JSON.stringify({ _id: milestone._id, amount }),
         })
           .then((res) => res.json())
-          .then(({ milestone }) => {
+          .then(({ code, milestone }) => {
             if (milestone) {
               onSuccess?.(milestone);
+            } else if (code === 403) {
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Err_svg />
+                    <h4>Could not release Milestone due to low balance.</h4>
+                  </div>
+                </>
+              );
             } else {
               setMsg(
                 <>

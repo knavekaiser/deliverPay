@@ -33,10 +33,12 @@ const Deals = ({ history, location, match }) => {
               (item) => item === chat.client._id
             )
               ? "blocked"
+              : chat.clientBlock
+              ? "blockedByClient"
               : "";
             return {
               ...chat,
-              ...(status && { status: status }),
+              ...(chat.client.phone && { status }),
             };
           })
         );
@@ -289,62 +291,87 @@ const Chat = ({
                 </span>
               </p>
             </div>
-            <Actions>
-              <Link className="pay" to={`/account/deals/${userCard._id}/pay`}>
-                Pay
-              </Link>
-              <Link to={`/account/deals/${userCard._id}/report`}>Report</Link>
-              <button
-                onClick={() => {
-                  Confirm({
-                    label: ` ${
-                      userCard.status === "blocked" ? "Unblock" : "Block"
-                    } User`,
-                    question: `You sure want to ${
-                      userCard.status === "blocked" ? "un" : ""
-                    }block this user?`,
-                    callback: () => {
-                      const blocked = userCard.status === "blocked";
-                      fetch(`/api/${blocked ? "unblockUser" : "blockUser"}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          _id: userCard._id,
-                        }),
-                      })
-                        .then((res) => res.json())
-                        .then((data) => {
-                          if (data.code === "ok") {
-                            setUser((prev) => ({
-                              ...prev,
-                              blockList: data.blockList,
-                            }));
-                            setContacts((prev) =>
-                              prev.map((item) => {
-                                if (item.client._id === userCard._id) {
-                                  return {
-                                    ...item,
-                                    status: blocked ? "" : "blocked",
-                                  };
-                                } else {
-                                  return item;
-                                }
-                              })
-                            );
-                            setMsg(
-                              <>
-                                <button onClick={() => setMsg(null)}>
-                                  Okay
-                                </button>
-                                <div>
-                                  <Succ_svg />
-                                  <h4>
-                                    User successfully {blocked && "un"}blocked.
-                                  </h4>
-                                </div>
-                              </>
-                            );
-                          } else {
+            {(userCard.status === "" || userCard.status === "blocked") && (
+              <Actions>
+                {userCard.status === "" && (
+                  <Link
+                    className="pay"
+                    to={`/account/deals/${userCard._id}/pay`}
+                  >
+                    Pay
+                  </Link>
+                )}
+                <Link to={`/account/deals/${userCard._id}/report`}>Report</Link>
+                <button
+                  onClick={() => {
+                    Confirm({
+                      label: ` ${
+                        userCard.status === "blocked" ? "Unblock" : "Block"
+                      } User`,
+                      question: `You sure want to ${
+                        userCard.status === "blocked" ? "un" : ""
+                      }block this user?`,
+                      callback: () => {
+                        const blocked = userCard.status === "blocked";
+                        fetch(`/api/${blocked ? "unblockUser" : "blockUser"}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            _id: userCard._id,
+                          }),
+                        })
+                          .then((res) => res.json())
+                          .then((data) => {
+                            if (data.code === "ok") {
+                              setUser((prev) => ({
+                                ...prev,
+                                blockList: data.blockList,
+                              }));
+                              setContacts((prev) =>
+                                prev.map((item) => {
+                                  if (item.client._id === userCard._id) {
+                                    return {
+                                      ...item,
+                                      status: blocked ? "" : "blocked",
+                                    };
+                                  } else {
+                                    return item;
+                                  }
+                                })
+                              );
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Succ_svg />
+                                    <h4>
+                                      User successfully {blocked && "un"}
+                                      blocked.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            } else {
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Err_svg />
+                                    <h4>
+                                      Could not {blocked && "un"}block user. try
+                                      again.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            }
+                          })
+                          .catch((err) => {
+                            console.log(err);
                             setMsg(
                               <>
                                 <button onClick={() => setMsg(null)}>
@@ -353,36 +380,21 @@ const Chat = ({
                                 <div>
                                   <Err_svg />
                                   <h4>
-                                    Could not {blocked && "un"}block user. try
-                                    again.
+                                    Could not {blocked && "un"}block user. Make
+                                    sure you're online.
                                   </h4>
                                 </div>
                               </>
                             );
-                          }
-                        })
-                        .catch((err) => {
-                          console.log(err);
-                          setMsg(
-                            <>
-                              <button onClick={() => setMsg(null)}>Okay</button>
-                              <div>
-                                <Err_svg />
-                                <h4>
-                                  Could not {blocked && "un"}block user. Make
-                                  sure you're online.
-                                </h4>
-                              </div>
-                            </>
-                          );
-                        });
-                    },
-                  });
-                }}
-              >
-                {userCard.status === "blocked" ? "Unblock" : "Block"}
-              </button>
-            </Actions>
+                          });
+                      },
+                    });
+                  }}
+                >
+                  {userCard.status === "blocked" ? "Unblock" : "Block"}
+                </button>
+              </Actions>
+            )}
           </div>
           <ul className="chats" ref={chatWrapper}>
             {chat.map((msg, i) => {
@@ -421,7 +433,7 @@ const Chat = ({
               );
             })}
           </ul>
-          {userCard.firstName && userCard.status !== "blocked" && (
+          {userCard.status === "" && (
             <ChatForm rooms={rooms} user={userCard._id} />
           )}
         </>
@@ -608,6 +620,19 @@ const ChatForm = ({ rooms, user }) => {
       setValue("");
     }
   };
+  useEffect(() => {
+    socket.on("sendFail", ({ err }) => {
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>{err}</h4>
+          </div>
+        </>
+      );
+    });
+  }, []);
   return (
     <>
       <form

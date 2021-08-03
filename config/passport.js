@@ -17,7 +17,7 @@ const signToken = (_id) => {
 const signingIn = (user, res) => {
   const token = signToken(user._id);
   ["pass", "__v"].forEach((key) => delete user[key]);
-  res.cookie("access_token", token, { httpOnly: true, sameSite: true });
+  res.cookie("access_token", token, { httpOnly: true, sameSite: "strict" });
   res.status(200).json({ code: "ok", isAuthenticated: true, user: user });
 };
 const handleSignIn = async (req, res) => {

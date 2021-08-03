@@ -15,6 +15,7 @@ require("./models/chat");
 require("./models/support");
 require("dotenv").config();
 require("./mailService");
+require("./smsService");
 const PORT = process.env.PORT || 3001;
 const URI = process.env.MONGO_URI;
 const Razorpay = require("razorpay");
@@ -231,26 +232,47 @@ io.on("connection", async (socket) => {
             });
         });
         socket.on("messageToServer", async ({ rooms, message }) => {
-          SendMessage({
-            rooms,
-            message: {
-              ...message,
-              from: decoded.sub,
-            },
-          }).then((chatRes) => {
-            if (chatRes) {
-              notify(
-                message.to,
-                JSON.stringify({
-                  title: "New message!",
-                  body: message.text,
-                }),
-                "User"
-              );
-            } else {
-              socket.emit("sendFail", { err: "room does not exists" });
-            }
-          });
+          const [userBlockList, clientBlockList] = await Promise.all([
+            User.findOne({ _id: decoded.sub }, "blockList").then(
+              (dbRes) => dbRes?.blockList
+            ),
+            User.findOne({ _id: message.to }, "blockList").then(
+              (dbRes) => dbRes?.blockList
+            ),
+          ]);
+          const blocked =
+            clientBlockList.some(
+              (_id) => _id.toString() === decoded.sub.toString()
+            ) ||
+            userBlockList.some(
+              (_id) => _id.toString() === message.to.toString()
+            );
+          if (!blocked) {
+            SendMessage({
+              rooms,
+              message: {
+                ...message,
+                from: decoded.sub,
+              },
+            }).then((chatRes) => {
+              if (chatRes) {
+                notify(
+                  message.to,
+                  JSON.stringify({
+                    title: "New message!",
+                    body: message.text,
+                  }),
+                  "User"
+                );
+              } else {
+                socket.emit("sendFail", { err: "Room does not exists" });
+              }
+            });
+          } else {
+            socket.emit("sendFail", {
+              err: "Blocked by user or client",
+            });
+          }
         });
       } else {
         console.log("could not verify for socket");
