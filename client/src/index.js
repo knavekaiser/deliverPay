@@ -15,6 +15,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
   componentDidCatch(error, errorInfo) {
+    console.log(error, errorInfo);
     const options = {
       method: "POST",
       headers: { "Content-type": "application/json" },

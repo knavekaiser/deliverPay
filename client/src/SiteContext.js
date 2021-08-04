@@ -5,7 +5,9 @@ export const SiteContext = createContext();
 export const Provider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [cart, setCart] = useState(JSON.parse(SS.get("localCart")) || []);
+  const [cart, setCart] = useState(
+    (SS.get("localCart") && JSON.parse(SS.get("localCart"))) || []
+  );
   useEffect(() => {
     SS.set("localCart", JSON.stringify(cart));
   }, [cart]);
