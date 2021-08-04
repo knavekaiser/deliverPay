@@ -166,11 +166,21 @@ global.BankCard = PaymentMethod.discriminator(
 
 const productModel = new Schema(
   {
+    category: { type: String },
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true },
     dscr: { type: String, required: true },
     images: [{ type: String }],
     price: { type: Number, required: true },
+    discount: {
+      type: { type: String, enum: ["flat", "percent"] },
+      amount: { type: Number },
+      dscr: { type: String },
+    },
+    available: { type: Number, default: 0 },
+    gst: { type: Number },
+    tags: [{ type: String }],
+    popularity: { type: Number },
   },
   { timestamps: true }
 );

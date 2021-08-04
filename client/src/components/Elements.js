@@ -1210,7 +1210,14 @@ export const Media = ({ links }) => {
   );
 };
 
-export const Actions = ({ children }) => {
+export const Actions = ({
+  icon,
+  children,
+  className,
+  wrapperClassName,
+  clickable,
+  onClick,
+}) => {
   const [open, setOpen] = useState(false);
   const [style, setStyle] = useState({});
   const buttonRef = useRef();
@@ -1223,9 +1230,16 @@ export const Actions = ({ children }) => {
     });
   }, []);
   return (
-    <div className="actions">
-      <button className="btn" ref={buttonRef} onClick={() => setOpen(true)}>
-        <img src="/menu_dot.png" />
+    <div className={`actions ${className || ""}`}>
+      <button
+        className="btn"
+        ref={buttonRef}
+        onClick={() => {
+          setOpen(true);
+          onClick?.();
+        }}
+      >
+        {icon || <img src="/menu_dot.png" />}
       </button>
       <Modal
         className="actions"
@@ -1234,8 +1248,33 @@ export const Actions = ({ children }) => {
         style={style}
         onBackdropClick={() => setOpen(false)}
       >
-        <ul onClick={() => setOpen(false)}>{children}</ul>
+        <ul
+          className={wrapperClassName}
+          onClick={() => {
+            !clickable && setOpen(false);
+          }}
+        >
+          {children}
+        </ul>
       </Modal>
     </div>
   );
+};
+
+export const calculatePrice = (product) => {
+  const discountPrice = product.price;
+  if (product.discount?.amount) {
+    const { type, amount } = product.discount;
+    if (type === "flat") {
+      discountPrice = product.price - amount;
+    } else if (type === "percent") {
+      discountPrice = product.price - (product.price / 100) * amount;
+    }
+  }
+  return discountPrice;
+};
+export const SS = {
+  set: (key, value) => sessionStorage.setItem(key, value),
+  get: (key) => sessionStorage.getItem(key) || "",
+  remove: (key) => sessionStorage.removeItem(key),
 };

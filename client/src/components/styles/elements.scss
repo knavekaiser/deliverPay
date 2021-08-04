@@ -224,8 +224,8 @@
   box-shadow: 0 0 0.2rem rgba(0, 0, 0, 0.16);
   ul {
     display: grid;
-    button,
-    a {
+    & > button,
+    & > a {
       padding: 0.5rem 1rem;
       border: none;
       outline: none;

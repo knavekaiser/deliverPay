@@ -1,0 +1,239 @@
+@import "variables";
+
+.marketplace {
+  display: grid;
+  grid-gap: 1rem;
+  .filters {
+    .sort {
+      .combobox {
+        input {
+          width: 9rem;
+        }
+      }
+    }
+  }
+  .products {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-gap: 0.5rem;
+  }
+}
+.product {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.01);
+  border-radius: 0.7rem;
+  display: grid;
+  grid-gap: 0.7rem;
+  .thumb {
+    width: 100%;
+    padding-bottom: 100%;
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    &.noThumb {
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      img {
+        height: 5rem;
+        width: 5rem;
+        opacity: 0.5;
+      }
+    }
+    img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  .detail {
+    h3 {
+      font-weight: 400;
+      font-size: 1.1rem;
+    }
+    .price {
+      font-size: 1.3rem;
+      .originalPrice {
+        font-size: 1rem;
+        color: rgba(0, 0, 0, 0.6);
+        text-decoration: line-through;
+      }
+    }
+  }
+}
+
+.singleProduct {
+  display: grid;
+  grid-template-columns: 1fr 20rem;
+  grid-gap: 1.5rem;
+  .gallery {
+    display: grid;
+    grid-gap: 1rem;
+    .mainView {
+      border-radius: 1rem;
+      border: 1px solid rgba(0, 0, 0, 0.19);
+      position: relative;
+      padding-bottom: 100%;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      cursor: crosshair;
+      img {
+        position: absolute;
+        width: 100%;
+        max-height: 100%;
+        transition: none;
+        transition: transform 0.1s linear;
+        &.scale {
+        }
+      }
+      &:hover {
+        img {
+          transform: scale(1.5);
+        }
+      }
+      &.noImg {
+        cursor: default;
+        background: rgba(0, 0, 0, 0.01);
+        img {
+          transform: none !important;
+          width: 8rem;
+          height: 8rem;
+          opacity: 0.5;
+        }
+      }
+    }
+    img {
+      max-width: 100%;
+    }
+  }
+}
+
+.popupCart {
+  width: 25rem;
+  .placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.6);
+  }
+  .actions {
+    display: flex;
+    padding: 0.5rem;
+    grid-gap: 0.5rem;
+    a {
+      border-radius: 0.3rem;
+      flex: 1;
+      text-align: center;
+      padding: 0.7rem 1rem;
+      display: block;
+      background: rgb(96, 76, 189);
+      color: white;
+      &:hover {
+        background: rgb(134, 115, 223);
+      }
+    }
+  }
+}
+
+.popupCart,
+.fullCart {
+  .allCarts {
+    display: grid;
+    grid-gap: 2rem;
+    .shop {
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      .seller {
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.06);
+      }
+      .products {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+        .item {
+          padding: 0.5rem;
+          display: flex;
+          grid-gap: 1rem;
+          align-items: center;
+          &:not(:last-child) {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+          }
+          &:hover {
+            background: rgba(0, 0, 0, 0.01);
+          }
+          img {
+            width: 5rem;
+            height: 5rem;
+            object-fit: cover;
+          }
+          .detail {
+            flex: 1;
+            display: grid;
+            grid-gap: 0.7rem;
+            .qty {
+              display: flex;
+              grid-gap: 1rem;
+              .addRemove {
+                display: flex;
+                grid-gap: 0.5rem;
+                font-size: 1.1rem;
+                font-weight: 500;
+                button {
+                  cursor: pointer;
+                  padding: 0.35rem;
+                  height: 1.5rem;
+                  width: 1.5rem;
+                  display: grid;
+                  border: none;
+                  outline: none;
+                  border-radius: 50%;
+                  background: none;
+                  svg {
+                    height: 100%;
+                    width: 100%;
+                    line {
+                      stroke: rgba(0, 0, 0, 0.4);
+                    }
+                  }
+                  &:hover {
+                    background: rgba(0, 0, 0, 0.07);
+                  }
+                }
+              }
+            }
+          }
+          .price {
+            font-size: 1.2rem;
+            font-weight: 500;
+          }
+        }
+      }
+      .total {
+        text-align: right;
+        font-weight: 400;
+      }
+      .actions {
+        display: flex;
+        padding: 0.5rem;
+        grid-gap: 0.5rem;
+        button {
+          border-radius: 0.3rem;
+          margin: auto;
+          margin-right: 0;
+          font-size: 1rem;
+          text-align: center;
+          padding: 0.7rem 1rem;
+          display: block;
+          background: rgb(96, 76, 189);
+          color: white;
+          &:hover {
+            background: rgb(134, 115, 223);
+          }
+        }
+      }
+    }
+  }
+}

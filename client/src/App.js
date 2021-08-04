@@ -35,7 +35,7 @@ function ProtectedRoute({ children, path, component }) {
       <Redirect
         to={{
           pathname: "/u/login",
-          state: { from: history.location.pathname },
+          state: { from: history.location.pathname + history.location.search },
         }}
       />
     );

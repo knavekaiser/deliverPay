@@ -11,6 +11,8 @@ import {
   Plus_svg,
   Minus_svg,
   Footer,
+  Actions,
+  calculatePrice,
 } from "./Elements";
 import Hold from "./Hold.js";
 import Transactions from "./Transactions";
@@ -18,7 +20,7 @@ import Wallet from "./Wallet";
 import Products from "./Products";
 import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
-import Marketplace from "./Marketplace";
+import Marketplace, { SingleProduct, Cart } from "./Marketplace";
 import Deals from "./Deals";
 import QRCode from "qrcode.react";
 import { GoogleLogout } from "react-google-login";
@@ -248,24 +250,28 @@ const Home = () => {
             {users.length && showUsers ? (
               <ul className="searchResult">
                 {users.map((user, i) => (
-                  <li key={i}>
-                    <div className="profile">
-                      <img src={user.profileImg} />
-                      <p className="name">
-                        {user.firstName + " " + user.lastName}
-                        <span className="phone">{user.phone}</span>
-                      </p>
-                    </div>
-                    <Link
-                      className="sendReq"
-                      to={{
-                        pathname: "/account/home/pay",
-                      }}
-                      onClick={() => setClient(user)}
-                    >
-                      Create Milestone
-                    </Link>
-                  </li>
+                  <Link key={i} to={`/account/marketplace?seller${user._id}`}>
+                    <li>
+                      <div className="profile">
+                        <img src={user.profileImg} />
+                        <p className="name">
+                          {user.firstName + " " + user.lastName}
+                          <span className="phone">{user.phone}</span>
+                        </p>
+                      </div>
+                      {
+                        //   <Link
+                        //   className="sendReq"
+                        //   to={{
+                        //     pathname: "/account/home/pay",
+                        //   }}
+                        //   onClick={() => setClient(user)}
+                        // >
+                        //   Create Milestone
+                        // </Link>
+                      }
+                    </li>
+                  </Link>
                 ))}
               </ul>
             ) : null}
@@ -347,10 +353,11 @@ const Home = () => {
             {recentPayments.map((user) => (
               <li key={user._id}>
                 <Link
-                  to="/account/home/pay"
-                  onClick={() => {
-                    setClient(user);
-                  }}
+                  to={`/account/marketplace?seller=${user._id}`}
+                  // to="/account/home/pay"
+                  // onClick={() => {
+                  //   setClient(user);
+                  // }}
                 >
                   <img src={user.profileImg} />
                   <p className="name">{user.firstName + " " + user.lastName}</p>
@@ -1165,9 +1172,11 @@ function Account({ location }) {
             <Route path="/account/deals/:_id?" component={Deals} />
             <Route path="/account/wallet" component={Wallet} />
             <Route path="/account/hold" component={Hold} />
-            <Route path="/account/marketplace" component={Marketplace} />
+            <Route exact path="/account/marketplace" component={Marketplace} />
+            <Route path="/account/marketplace/:_id" component={SingleProduct} />
             <Route path="/account/transactions" component={Transactions} />
             <Route path="/account/products" component={Products} />
+            <Route path="/account/cart" component={Cart} />
             <Route
               path="/account/support/ticket/:_id"
               component={SingleTicket}
@@ -1469,13 +1478,14 @@ function Account({ location }) {
   );
 }
 const ProfileAvatar = () => {
-  const { user, setUser } = useContext(SiteContext);
+  const { user, setUser, cart, setCart } = useContext(SiteContext);
   const history = useHistory();
   const menuRef = useRef(null);
   const [menu, setMenu] = useState(false);
   const [invite, setInvite] = useState(false);
   const [noti, setNoti] = useState(false);
   const [unread, setUnread] = useState(false);
+  const [showCart, setShowCart] = useState(false);
   const [msg, setMsg] = useState(null);
   const logout = (e) => {
     console.log(e);
@@ -1521,41 +1531,140 @@ const ProfileAvatar = () => {
       setUnread(false);
     }
   }, [noti, user]);
+  useEffect(() => {
+    console.log(cart);
+  }, [cart]);
   const referLink = `${window.location.origin}/u/join?referer=${user._id}`;
   return (
     <>
       <div className="profile">
-        <button
-          className={`bell ${unread ? "unread" : ""}`}
+        <Actions
+          className="cart"
+          icon={
+            <>
+              <img src="/cart.svg" />
+              {cart.length > 0 && (
+                <span className="itemCount">
+                  {cart.reduce((a, c) => a + c.qty, 0)}
+                </span>
+              )}
+            </>
+          }
+          clickable={true}
+          wrapperClassName="popupCart"
+        >
+          {cart.map(({ product, qty }, i) => {
+            const price = calculatePrice(product);
+            return (
+              <li key={i} className="item">
+                <img src={product.images[0]} />
+                <div className="detail">
+                  <p className="name">{product.name}</p>
+                  <div className="qty">
+                    QTY:{" "}
+                    <div className="addRemove">
+                      <button
+                        onClick={() => {
+                          setCart((prev) =>
+                            prev
+                              .map((item) => {
+                                if (item.product._id === product._id) {
+                                  return {
+                                    ...item,
+                                    qty: item.qty - 1,
+                                  };
+                                } else {
+                                  return item;
+                                }
+                              })
+                              .filter((item) => item.qty > 0)
+                          );
+                        }}
+                      >
+                        <Minus_svg />
+                      </button>
+                      {qty}
+                      <button
+                        onClick={() => {
+                          setCart((prev) =>
+                            prev.map((item) => {
+                              if (item.product._id === product._id) {
+                                return {
+                                  ...item,
+                                  qty: item.qty + 1,
+                                };
+                              } else {
+                                return item;
+                              }
+                            })
+                          );
+                        }}
+                      >
+                        <Plus_svg />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="price">₹{price * qty}</div>
+              </li>
+            );
+          })}
+          {cart.length > 0 && (
+            <li className="actions">
+              <Link to="/account/cart">View Cart</Link>
+              {
+                // <Link to="/account/checkout">Place order</Link>
+              }
+            </li>
+          )}
+          {cart.length === 0 && <p className="placeholder">cart is empty</p>}
+        </Actions>
+        <Actions
+          icon={
+            <svg
+              id="bell"
+              xmlns="http://www.w3.org/2000/svg"
+              width="15.918"
+              height="16"
+              viewBox="0 0 15.918 16"
+            >
+              <path
+                id="Path_1"
+                data-name="Path 1"
+                d="M15,14H10a2,2,0,0,1-4,0H1a.961.961,0,0,1-.9-.7,1.068,1.068,0,0,1,.3-1.1A4.026,4.026,0,0,0,2,9V6A6,6,0,0,1,14,6V9a4.026,4.026,0,0,0,1.6,3.2.947.947,0,0,1,.3,1.1A.961.961,0,0,1,15,14Z"
+                transform="translate(-0.063)"
+                fill="#fff"
+                fillRule="evenodd"
+              />
+            </svg>
+          }
+          wrapperClassName="notiWrapper"
           onClick={() => setNoti(true)}
         >
-          <svg
-            id="bell"
-            xmlns="http://www.w3.org/2000/svg"
-            width="15.918"
-            height="16"
-            viewBox="0 0 15.918 16"
-          >
-            <path
-              id="Path_1"
-              data-name="Path 1"
-              d="M15,14H10a2,2,0,0,1-4,0H1a.961.961,0,0,1-.9-.7,1.068,1.068,0,0,1,.3-1.1A4.026,4.026,0,0,0,2,9V6A6,6,0,0,1,14,6V9a4.026,4.026,0,0,0,1.6,3.2.947.947,0,0,1,.3,1.1A.961.961,0,0,1,15,14Z"
-              transform="translate(-0.063)"
-              fill="#fff"
-              fillRule="evenodd"
-            />
-          </svg>
-        </button>
+          {[...user.notifications].reverse().map((item, i) => {
+            return (
+              <li key={i}>
+                <Moment format="hh:mm">{item.createdAt}</Moment>
+                <p className="title">{item.title}</p>
+                <p className="body">{item.body}</p>
+              </li>
+            );
+          })}
+        </Actions>
         <p className="name">
           {user?.firstName + " " + user?.lastName || user.phone}
         </p>
-        <img
-          src={user?.profileImg || "/profile-user.jpg"}
+        <Actions
+          wrapperClassName="menu"
           className="avatar"
-          onClick={() => setMenu(!menu)}
-        />
-        {menu && (
-          <div className="menu" ref={menuRef} onClick={() => setMenu(false)}>
+          icon={
+            <img
+              src={user?.profileImg || "/profile-user.jpg"}
+              onClick={() => setMenu(!menu)}
+            />
+          }
+        >
+          <div ref={menuRef} onClick={() => setMenu(false)}>
             <Link className="link" to="/aboutUs">
               More about us
             </Link>
@@ -1612,36 +1721,14 @@ const ProfileAvatar = () => {
               </svg>
             </button>
           </div>
-        )}
-        {noti && (
-          <ul className="notiWrapper">
-            {[...user.notifications].reverse().map((item, i) => {
-              return (
-                <li key={i}>
-                  <Moment format="hh:mm">{item.createdAt}</Moment>
-                  <p className="title">{item.title}</p>
-                  <p className="body">{item.body}</p>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        </Actions>
       </div>
-      {(menu || noti) && (
-        <div
-          className="backdrop"
-          onClick={() => {
-            setMenu(false);
-            setNoti(false);
-          }}
-        />
-      )}
       <Modal
         className="invite"
         open={invite}
         onBackdropClick={() => setInvite(false)}
       >
-        <div className="imgWrapper">
+        <div className="imgWrapper" onClick={() => setInvite(false)}>
           <QRCode value={referLink} size={250} renderAs="svg" />
         </div>
         <div className="shareBtns">
@@ -1713,6 +1800,7 @@ export const MilestoneForm = ({
   searchClient,
   onSuccess,
   onSubmit,
+  definedAmount,
 }) => {
   const { user, setUser } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
@@ -1727,7 +1815,7 @@ export const MilestoneForm = ({
     new Date().toISOString().substring(0, 16)
   );
   const [dscr, setDscr] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(definedAmount || "");
   const [msg, setMsg] = useState(null);
   const [productResult, setProductResult] = useState([]);
   const [showSelectedProducts, setShowSelectedProducts] = useState(false);
@@ -1898,7 +1986,7 @@ export const MilestoneForm = ({
             <label>Amount</label>
             <NumberInput
               min={10}
-              defaultValue={0}
+              defaultValue={definedAmount || 0}
               required={true}
               onChange={(e) => setAmount((+e.target.value).toString())}
             />
