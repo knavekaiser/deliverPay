@@ -46,8 +46,8 @@ const RegisterForm = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.user) {
+          history.replace("/account/home");
           setUser(user);
-          history.push("/account/home");
         } else if (data.code === 11000) {
           setErrMsg("Email/Phone already exists.");
         }
@@ -60,7 +60,7 @@ const RegisterForm = () => {
     <div className="formWrapper register">
       <img
         className="logo"
-        onClick={() => history.push("")}
+        onClick={() => history.push("/")}
         src="/logo_benner.jpg"
         alt="Delivery pay logo"
       />
@@ -180,7 +180,7 @@ const LoginForm = () => {
     );
     let user;
     if (phoneReg.test(username.toLowerCase())) {
-      user = "+91" + username.replace(/^\+?9?1?/, "");
+      user = "+91" + username.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "");
     } else if (emailReg.test(username.toLowerCase())) {
       user = username.toLowerCase();
     } else {
@@ -199,7 +199,7 @@ const LoginForm = () => {
       .then((data) => {
         if (data.user) {
           setUser(data.user);
-          history.push("/account/home");
+          history.replace("/account/home");
         } else if (data.code === 401) {
           setErrMsg("Invalid credential!");
         }
@@ -216,7 +216,7 @@ const LoginForm = () => {
         .then((data) => {
           if (data.user) {
             setUser(user);
-            history.push("/account/home");
+            history.replace("/account/home");
           } else if (data.code === 401) {
             setErrMsg("No account is associated with this Google account.");
             setTimeout(() => setErrMsg(null), 2000);
@@ -228,7 +228,7 @@ const LoginForm = () => {
     <div className="formWrapper login">
       <img
         className="logo"
-        onClick={() => history.push("")}
+        onClick={() => history.push("/")}
         src="/logo_benner.jpg"
         alt="Delivery pay logo"
       />
@@ -314,7 +314,7 @@ const PasswordReset = () => {
     if (emailReg.test(id.toLowerCase())) {
       email = id.toLowerCase();
     } else if (phoneReg.test(id.toLowerCase())) {
-      phone = "+91" + id.replace(/^\+?9?1?/, "");
+      phone = "+91" + id.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "");
     }
     if (step === 1) {
       if (errMsg) return;
@@ -376,7 +376,7 @@ const PasswordReset = () => {
           setLoading(false);
           if (data.user) {
             setUser(user);
-            history.push("/account/home");
+            history.replace("/account/home");
           }
         })
         .catch((err) => {
@@ -572,7 +572,7 @@ function UserStart() {
       .then((data) => {
         if (data.user) {
           setUser(data.user);
-          history.push(history.location.state?.from || "/account/home");
+          history.replace(history.location.state?.from || "/account/home");
         }
       });
   }, []);

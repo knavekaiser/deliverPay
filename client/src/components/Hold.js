@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useContext,
+} from "react";
+import { SiteContext } from "../SiteContext";
 import { Link } from "react-router-dom";
 import { Modal, Confirm } from "./Modal";
 import {
@@ -18,51 +25,46 @@ import { MilestoneReleaseForm, DisputeForm } from "./Forms";
 import { DateRange } from "react-date-range";
 import Moment from "react-moment";
 import moment from "moment";
+import queryString from "query-string";
 require("./styles/hold.scss");
 
 const Hold = ({ history, location, match }) => {
+  const { userType } = useContext(SiteContext);
   const dateFilterRef = useRef();
   const [milestones, setMilestones] = useState([]);
   const [total, setTotal] = useState(null);
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(
+    queryString.parse(location.search).page || 1
+  );
+  const [perPage, setPerPage] = useState(
+    queryString.parse(location.search).perPage || 20
+  );
+  const [search, setSearch] = useState(
+    queryString.parse(location.search).q || ""
+  );
+  const [status, setStatus] = useState(
+    queryString.parse(location.search).status || ""
+  );
   const [dateOpen, setDateOpen] = useState(false);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(),
     endDate: new Date(),
   });
-  const [sort, setSort] = useState({ column: "createdAt", order: "dsc" });
+  const [sort, setSort] = useState({
+    column: queryString.parse(location.search).sort || "createdAt",
+    order: queryString.parse(location.search).order || "dsc",
+  });
   const [dateFilter, setDateFilter] = useState(false);
   const [datePickerStyle, setDatePickerStyle] = useState({});
   const [date, setDate] = useState("");
   const [msg, setMsg] = useState(null);
   useEffect(() => {
-    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
-    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
-    const lastDate = moment(
-      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
-    ).format("YYYY-MM-DD");
-    fetch(
-      `/api/milestone?${new URLSearchParams({
-        page,
-        perPage,
-        sort: sort.column,
-        order: sort.order,
-        ...(dateFilter && {
-          dateFrom: startDate,
-          dateTo: lastDate,
-        }),
-        ...(search && { q: search }),
-        ...(status && { status }),
-      }).toString()}`
-    )
+    fetch(`/api/milestone${location.search}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "ok") {
           setMilestones(data.milestones);
-          setTotal(data.pageInfo[0]?.count || 0);
+          setTotal(data.total);
         }
       })
       .catch((err) => {
@@ -77,7 +79,41 @@ const Hold = ({ history, location, match }) => {
           </>
         );
       });
-  }, [page, perPage, sort.column, sort.order, search, dateFilter, status]);
+  }, [location.search, userType]);
+  useEffect(() => {
+    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
+    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
+    const lastDate = moment(
+      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
+    ).format("YYYY-MM-DD");
+    history.replace({
+      pathname: location.pathname,
+      search:
+        "?" +
+        new URLSearchParams({
+          // userType,
+          page,
+          perPage,
+          sort: sort.column,
+          order: sort.order,
+          ...(search && { q: search }),
+          ...(dateFilter && {
+            dateFrom: startDate,
+            dateTo: lastDate,
+          }),
+          ...(status && { status }),
+        }).toString(),
+    });
+  }, [
+    page,
+    perPage,
+    sort.column,
+    sort.order,
+    search,
+    dateFilter,
+    status,
+    userType,
+  ]);
   useLayoutEffect(() => {
     const {
       height,
@@ -140,7 +176,7 @@ const Hold = ({ history, location, match }) => {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Buyer or Seller's name, phone"
+              placeholder="Search Buyer's or Seller's name, phone, Milestone ID"
             />
             {search && (
               <button onClick={() => setSearch("")}>
@@ -151,7 +187,7 @@ const Hold = ({ history, location, match }) => {
           <section className="status">
             <label>Status:</label>
             <Combobox
-              defaultValue={0}
+              defaultValue={status || 0}
               options={[
                 { label: "All", value: "" },
                 { label: "In Progress", value: "inProgress" },
@@ -286,7 +322,7 @@ const CommonMilestoneElement = ({ milestone }) => {
               <p>Role</p>-<p className="role">{milestone.role}</p>
             </li>
             <li>
-              <p>Product Detail</p>-<p>{milestone.dscr}</p>
+              <p>Desciption</p>-<p>{milestone.dscr}</p>
             </li>
             <li>
               <p>Transaction ID</p>-<p>{milestone._id}</p>

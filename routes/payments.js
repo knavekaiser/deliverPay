@@ -350,20 +350,33 @@ app.put(
   }
 );
 app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
-  const { q, page, perPage, sort, order, status, dateFrom, dateTo } = req.query;
+  const {
+    q,
+    page,
+    perPage,
+    sort,
+    order,
+    status,
+    dateFrom,
+    dateTo,
+    userType,
+  } = req.query;
   const sortOrder = {
     [sort || "createdAt"]: order === "asc" ? 1 : -1,
   };
   const query = {
-    $or: [
-      {
-        "buyer._id": new ObjectId(req.user._id),
-      },
-      {
-        "seller._id": new ObjectId(req.user._id),
-      },
-    ],
-
+    ...(userType
+      ? { [userType + "._id"]: new ObjectId(req.user._id) }
+      : {
+          $or: [
+            {
+              "buyer._id": new ObjectId(req.user._id),
+            },
+            {
+              "seller._id": new ObjectId(req.user._id),
+            },
+          ],
+        }),
     ...(dateFrom &&
       dateTo && {
         createdAt: {
@@ -379,7 +392,7 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
         { "client.firstName": new RegExp(q, "gi") },
         { "client.phone": new RegExp(q, "gi") },
         // { note: new RegExp(q, "gi") },
-        // ...(ObjectId.isValid(q) ? [{ _id: ObjectId(q) }] : []),
+        ...(ObjectId.isValid(q) ? [{ _id: ObjectId(q) }] : []),
       ],
     }),
   };
@@ -430,6 +443,7 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
               email: 1,
               phone: 1,
               address: 1,
+              profileImg: 1,
             },
           },
         ],
@@ -475,15 +489,16 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
           { $skip: +perPage * (+(page || 1) - 1) },
           { $limit: +(perPage || 20) },
         ],
-        pageInfo: [{ $group: { _id: null, count: { $sum: 1 } } }],
+        total: [{ $group: { _id: null, count: { $sum: 1 } } }],
       },
     },
+    { $set: { total: { $first: "$total.count" } } },
   ])
-    .then((dbRes) => {
+    .then(([{ milestones, total }]) => {
       res.json({
         code: "ok",
-        milestones: dbRes[0].milestones,
-        pageInfo: dbRes[0].pageInfo,
+        milestones,
+        total: total || 0,
       });
     })
     .catch((err) => {
@@ -513,9 +528,9 @@ app.post(
       case "BankCard":
         fundAccountDetail = {
           account_type: "card",
-          "card.name": accountDetail.name,
-          "card.number": accountDetail.number,
-          // card: { ...accountDetail },
+          // "card.name": accountDetail.name,
+          // "card.number": accountDetail.number,
+          card: { ...accountDetail },
         };
         break;
       case "VpaAccount":
@@ -793,9 +808,23 @@ app.post(
   "/api/requestMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { buyer_id, amount, products, dscr, deliveryDetail } = req.body;
+    const {
+      buyer_id,
+      amount,
+      products,
+      dscr,
+      deliveryDetail,
+      order,
+      refund,
+    } = req.body;
+    if (buyer_id?.toString() === req.user._id.toString()) {
+      res
+        .status(403)
+        .json({ code: 403, message: "Can not request milestone to self." });
+      return;
+    }
     const buyer = await User.findOne({ _id: buyer_id });
-    if (buyer && products && amount && dscr && deliveryDetail) {
+    if (buyer && amount && dscr) {
       new Milestone({
         ...req.body,
         status: "pending",
@@ -805,6 +834,20 @@ app.post(
         .save()
         .then((milestone) => {
           if (milestone) {
+            if (ObjectId.isValid(order)) {
+              Order.findOneAndUpdate(
+                { _id: order, "seller._id": req.user._id },
+                { $addToSet: { milestones: milestone._id } },
+                { new: true }
+              ).then((value) => {});
+            }
+            if (ObjectId.isValid(refund)) {
+              Refund.findOneAndUpdate(
+                { _id: refund, "buyer._id": req.user._id },
+                { $addToSet: { milestones: milestone._id } },
+                { new: true }
+              ).then((value) => {});
+            }
             InitiateChat({
               user: req.user._id,
               client: buyer._id,
@@ -822,6 +865,7 @@ app.post(
               })
               .then((chatRes) => {
                 res.json({
+                  code: "ok",
                   message: "milestone requested",
                   milestone: milestone,
                 });
@@ -838,12 +882,12 @@ app.post(
         })
         .catch((err) => {
           console.log(err);
-          res.status(500).json({ message: "something went wrong" });
+          res.status(500).json({ code: 500, message: "something went wrong" });
         });
     } else {
       res.status(400).json({
         code: 400,
-        message: "valid buyer_id, amount and products, dscr is required",
+        message: "valid buyer_id, amount, dscr is required",
       });
     }
   }
@@ -1104,12 +1148,18 @@ app.post(
   "/api/createMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { amount, seller, dscr, deliveryDetail } = req.body;
+    const { amount, seller, dscr, deliveryDetail, order, refund } = req.body;
+    if (seller?.toString() === req.user._id.toString()) {
+      res
+        .status(403)
+        .json({ code: 403, message: "Can not create milestone for self." });
+      return;
+    }
     if (+amount > req.user.balance) {
       res.status(403).json({ code: 403, message: "insufficient fund" });
       return;
     }
-    if (+amount && seller && dscr && deliveryDetail) {
+    if (+amount && seller && dscr) {
       new Milestone({
         ...req.body,
         status: "inProgress",
@@ -1119,6 +1169,20 @@ app.post(
         .save()
         .then((milestone) => {
           if (milestone) {
+            if (ObjectId.isValid(order)) {
+              Order.findOneAndUpdate(
+                { _id: order, "buyer._id": req.user._id },
+                { $addToSet: { milestones: milestone._id } },
+                { new: true }
+              ).then((value) => {});
+            }
+            if (ObjectId.isValid(refund)) {
+              Refund.findOneAndUpdate(
+                { _id: refund, "seller._id": req.user._id },
+                { $addToSet: { milestones: milestone._id } },
+                { new: true }
+              ).then((value) => {});
+            }
             new P2PTransaction({
               milestoneId: milestone._id,
               amount: -Math.abs(milestone.amount),
@@ -1165,6 +1229,7 @@ app.post(
               })
               .then((chatRes) => {
                 res.json({
+                  code: "ok",
                   message: "milestone created",
                   milestone: milestone,
                 });
@@ -1179,7 +1244,9 @@ app.post(
               })
               .catch((err) => {
                 console.log(err);
-                res.status(500).json({ message: "something went wrong" });
+                res
+                  .status(500)
+                  .json({ code: 500, message: "something went wrong" });
               });
           } else {
             res.status(500).json({ message: "something went wrong" });
@@ -1187,7 +1254,7 @@ app.post(
         })
         .catch((err) => {
           console.log(err);
-          res.status(500).json({ message: "something went wrong" });
+          res.status(500).json({ code: 500, message: "something went wrong" });
         });
     } else {
       res.status(400).json({

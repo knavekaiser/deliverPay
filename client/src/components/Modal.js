@@ -1,55 +1,62 @@
-import React, { useEffect } from "react";
+import React, { useEffect, forwardRef } from "react";
 import ReactDOM from "react-dom";
 import { createPortal } from "react-dom";
 import { X_svg } from "./Elements";
 
-export const Modal = ({
-  containerClass,
-  open,
-  setOpen,
-  children,
-  className,
-  onBackdropClick,
-  backdropClass,
-  style,
-  head,
-  label,
-}) => {
-  useEffect(() => {
-    if (!containerClass) return;
-    const portal = document.querySelector("#portal");
-    portal.classList.add(containerClass);
-    return () => portal.classList.remove(containerClass);
-  });
-  if (!open) return null;
-  return createPortal(
-    <>
-      <div
-        className={`modalBackdrop ${backdropClass}`}
-        onClick={() => {
-          onBackdropClick?.();
-        }}
-      />
-      <div
-        style={{ ...style }}
-        className={`modal ${className ? className : ""}`}
-      >
-        {head && (
-          <div className="head">
-            <p className="modalName">{label}</p>
-            <button onClick={() => setOpen?.(false)}>
-              <X_svg />
-            </button>
-          </div>
-        )}
-        {children}
-      </div>
-    </>,
-    document.querySelector("#portal")
-  );
-};
+export const Modal = forwardRef(
+  (
+    {
+      containerClass,
+      open,
+      setOpen,
+      children,
+      className,
+      onBackdropClick,
+      backdropClass,
+      style,
+      head,
+      label,
+    },
+    ref
+  ) => {
+    useEffect(() => {
+      if (!containerClass) return;
+      const portal = document.querySelector("#portal");
+      portal.classList.add(containerClass);
+      return () => portal.classList.remove(containerClass);
+    });
+    if (!open) return null;
+    return createPortal(
+      <>
+        <div
+          className={`modalBackdrop ${backdropClass}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onBackdropClick?.();
+          }}
+        />
+        <div
+          style={{ ...style }}
+          ref={ref}
+          className={`modal ${className || ""}`}
+        >
+          {head && (
+            <div className="head">
+              <p className="modalName">{label}</p>
+              <button onClick={() => setOpen?.(false)}>
+                <X_svg />
+              </button>
+            </div>
+          )}
+          {children}
+        </div>
+      </>,
+      document.querySelector("#portal")
+    );
+  }
+);
 
-export const Confirm = ({ label, question, callback }) => {
+export const Confirm = ({ className, label, question, callback }) => {
   const cleanup = () =>
     ReactDOM.render(<></>, document.querySelector("#confirm"));
   const confirm = () => {
@@ -60,7 +67,7 @@ export const Confirm = ({ label, question, callback }) => {
   ReactDOM.render(
     <>
       <div className={`modalBackdrop`} />
-      <div className={`modal confirm `}>
+      <div className={`modal confirm ${className || ""}`}>
         <div className="head">
           <p className="modalName">{label}</p>
           <button onClick={decline}>

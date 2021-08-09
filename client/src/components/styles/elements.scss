@@ -6,7 +6,7 @@
   .ticks {
     display: grid;
     place-items: center;
-    img,
+    svg,
     input {
       grid-column: 1/2;
       grid-row: 1/2;
@@ -16,6 +16,16 @@
       width: 100%;
       height: 100%;
       opacity: 0;
+    }
+    svg {
+      &.border {
+        height: 1.5em;
+        width: 1.5em;
+      }
+      &.tick {
+        height: 0.9em;
+        width: 0.9em;
+      }
     }
   }
 }
@@ -171,6 +181,11 @@
       }
     }
   }
+  .placeholder {
+    height: 5rem;
+    background: rgba(0, 0, 0, 0.22);
+    width: 8rem;
+  }
   .uploadBtn {
     border: 1px solid rgba(0, 0, 0, 0.2);
     background: white;
@@ -210,6 +225,7 @@
     padding: 0.3rem;
     cursor: pointer;
     border-radius: 0.3rem;
+    place-items: center;
     &:hover {
       background: rgba(0, 0, 0, 0.03);
     }
@@ -221,7 +237,7 @@
 .modal.actions {
   width: max-content;
   border-radius: 4px;
-  box-shadow: 0 0 0.2rem rgba(0, 0, 0, 0.16);
+  box-shadow: 0 0 0.4rem rgba(0, 0, 0, 0.25);
   ul {
     display: grid;
     & > button,
@@ -241,6 +257,47 @@
 }
 .actionsBackdrop {
   background: none !important;
+}
+
+.actions.tip {
+  display: inline-block !important;
+  padding: 0 !important;
+  border: 0;
+  transform: translateY(-20%);
+  button.btn {
+    display: grid !important;
+    background: none !important;
+    padding: 0 !important;
+    height: 0.85rem;
+    width: 0.85rem;
+    img {
+      opacity: 0.4;
+      width: 100%;
+      height: 100%;
+    }
+    &:hover {
+      img {
+        opacity: 0.7;
+      }
+    }
+  }
+}
+.tipWrapper {
+  padding: 1rem;
+  font-size: 0.85rem;
+  width: clamp(10ch, 30ch, 40ch);
+  display: block !important;
+  a {
+    padding: 0 !important;
+    display: inline-block !important;
+    color: $blue;
+    // font-weight: 500;
+    cursor: pointer !important;
+    &:hover {
+      background: none !important;
+      text-decoration: underline;
+    }
+  }
 }
 
 .modal {
@@ -279,7 +336,7 @@
   grid-gap: 2rem;
   padding: 1rem 1.5rem;
   background: rgba(99, 52, 209, 0.1);
-  // box-shadow: 0 0 0.3rem rgba(0, 0, 0, 0.17);
+  border-radius: 0.75rem;
   & > section {
     grid-gap: 1rem;
     display: flex;
@@ -404,22 +461,160 @@
   width: min-content;
 }
 
-div {
-  form + .spinnerContainer {
-    z-index: 15;
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.19);
+.table {
+  width: 100%;
+  .checkContainer {
     display: grid;
-    place-items: center;
-    .spinner {
-      border: 3px solid white;
-      border-top: 3px solid $blue;
-      border-radius: 50%;
-      width: 4rem;
-      height: 4rem;
-      animation: spin 1.5s linear infinite;
+    .checkbox {
+      margin: auto;
+      .ticks {
+        font-size: 0.85rem;
+      }
+      svg {
+        g {
+          stroke: rgba(0, 0, 0, 0.5);
+        }
+        path {
+          fill: rgba(0, 0, 0, 0.5);
+        }
+      }
+    }
+  }
+  .actions {
+    width: min-content;
+    margin: auto;
+    svg {
+      path {
+        fill: rgba(0, 0, 0, 0.5);
+      }
+    }
+  }
+  thead {
+    border-radius: 0.7rem;
+    box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.15);
+    tr {
+      th {
+        padding: 0.5rem 0;
+      }
+      &.batchAction {
+        background: rgba(0, 0, 0, 0.78);
+        color: white;
+        button {
+          color: white;
+          font-size: 1rem;
+          background: none;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          font-weight: 600;
+        }
+        .checkContainer {
+          .checkbox {
+            svg {
+              g {
+                stroke: rgba(255, 255, 255, 0.8);
+              }
+              path {
+                fill: rgba(255, 255, 255, 0.8);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  tbody,
+  thead {
+    border: 1px dashed red;
+    width: 100%;
+    tr {
+      padding: 0.5rem;
+      &:not(:last-child) {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.19);
+      }
+    }
+  }
+  tr {
+    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    grid-gap: 0.7rem;
+    td,
+    th {
+      &:last-child {
+        text-align: right;
+      }
+    }
+    &.selected {
+      background: rgba(0, 0, 50, 0.1) !important;
+    }
+    &.placeholder {
+      grid-template-columns: 1fr;
+      border-radius: 0.7rem;
+      padding: 3rem 1rem;
+      background: rgba(0, 0, 0, 0.03);
+      text-align: center;
+      color: rgba(0, 0, 0, 0.5);
+      font-style: italic;
+      td {
+        text-align: center !important;
+      }
+    }
+    td {
+      img {
+        border-radius: 0.3rem;
+        height: 4.5rem;
+        width: 4.5rem;
+        object-fit: cover;
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        background: white;
+      }
+      .actions {
+        margin-right: 0;
+      }
+    }
+  }
+}
+
+.tabs {
+  z-index: 50;
+  display: flex;
+  // position: sticky;
+  // top: -1rem;
+  background: white;
+  padding-top: 1rem;
+  margin-top: -1rem;
+  border-bottom: 1px solid $blue;
+  li {
+    padding: 1rem 2rem;
+    cursor: default;
+    background: rgba(0, 0, 0, 0.01);
+    &.active {
+      background: rgba(0, 0, 0, 0.05);
+      box-shadow: inset 0 -5px 0 0 $blue;
+    }
+  }
+}
+
+div {
+  form,
+  .shop {
+    & + .spinnerContainer {
+      z-index: 15;
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.19);
+      display: grid;
+      place-items: center;
+      .spinner {
+        border: 3px solid white;
+        border-top: 3px solid $blue;
+        border-radius: 50%;
+        width: 4rem;
+        height: 4rem;
+        animation: spin 1.5s linear infinite;
+      }
     }
   }
 }

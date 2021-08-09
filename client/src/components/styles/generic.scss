@@ -13,16 +13,111 @@
     box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    grid-gap: 1rem;
+    // justify-content: space-between;
     .logo {
       max-height: 3rem;
     }
+    & .links {
+      a {
+        font-size: 1.1rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        &:hover {
+          background: rgba(0, 0, 0, 0.05);
+        }
+      }
+    }
     .clas {
       justify-content: flex-end;
+      align-items: center;
       z-index: 1;
+      margin: auto;
       margin-right: 0;
       display: flex;
       grid-gap: 2rem;
+      .actions {
+        button {
+          img {
+            opacity: 0.7;
+            border-radius: 0;
+            height: 1.5rem;
+            width: 1.5rem;
+          }
+          svg {
+            height: 100%;
+            width: 100%;
+            path {
+              fill: rgba(0, 0, 0, 0.5);
+            }
+          }
+        }
+        .bell {
+          &.unread {
+            svg {
+              path {
+                fill: $blue;
+              }
+            }
+          }
+        }
+        &.avatar {
+          // height: 3rem;
+          width: max-content;
+          button {
+            width: max-content;
+            align-items: center;
+            display: flex;
+            padding: 0;
+            img {
+              order: 2;
+              flex-shrink: 0;
+              height: 3rem;
+              width: 3rem;
+              border-radius: 50%;
+              opacity: 1;
+              border: 2px solid $blue;
+            }
+            .userTypeTag {
+              border-radius: 2rem;
+              margin-right: -1rem;
+              order: 1;
+              padding: 0.3rem 0.7rem;
+              padding-right: 1.5rem;
+              background: $blue;
+              color: white;
+            }
+          }
+        }
+      }
+      .cart {
+        position: relative;
+        .itemCount {
+          pointer-events: none;
+          position: absolute;
+          background: $blue;
+          color: white;
+          font-weight: 500;
+          font-size: 1rem;
+          top: -25%;
+          right: -25%;
+          padding: 0.25rem;
+          border-radius: 7px;
+        }
+      }
+      .bell,
+      .name {
+        font-size: 1rem;
+        font-weight: 500;
+        text-transform: capitalize;
+        .contact {
+          display: block;
+          font-size: 0.8rem;
+          font-weight: 400;
+          color: rgba(0, 0, 0, 0.6);
+        }
+      }
       a {
         flex: 1;
         border-radius: 2rem;

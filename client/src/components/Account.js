@@ -14,15 +14,18 @@ import {
   Actions,
   calculatePrice,
 } from "./Elements";
+import { AddressForm } from "./Forms";
 import Hold from "./Hold.js";
 import Transactions from "./Transactions";
 import Wallet from "./Wallet";
-import Products from "./Products";
+import MyShop from "./MyShop";
 import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
-import Marketplace, { SingleProduct, Cart } from "./Marketplace";
+import Marketplace, { SingleProduct, Cart, CartItem } from "./Marketplace";
 import Deals from "./Deals";
+import MyShopping from "./myShopping";
 import QRCode from "qrcode.react";
+import OrderManagement from "./OrderManagement";
 import { GoogleLogout } from "react-google-login";
 import {
   EmailShareButton,
@@ -75,9 +78,9 @@ require("./styles/account.scss");
 require("./styles/generic.scss");
 
 const Home = () => {
+  const { userType, setUserType } = useContext(SiteContext);
   const history = useHistory();
   const [value, setValue] = useState("");
-  const [userType, setUserType] = useState("");
   const [users, setUsers] = useState([]);
   const [recentPayments, setRecentPayments] = useState([]);
   const [client, setClient] = useState(null);
@@ -250,7 +253,13 @@ const Home = () => {
             {users.length && showUsers ? (
               <ul className="searchResult">
                 {users.map((user, i) => (
-                  <Link key={i} to={`/account/marketplace?seller${user._id}`}>
+                  <Link
+                    key={i}
+                    to={
+                      // `/account/marketplace?seller${user._id}`
+                      "/account/home/pay"
+                    }
+                  >
                     <li>
                       <div className="profile">
                         <img src={user.profileImg} />
@@ -353,11 +362,15 @@ const Home = () => {
             {recentPayments.map((user) => (
               <li key={user._id}>
                 <Link
-                  to={`/account/marketplace?seller=${user._id}`}
-                  // to="/account/home/pay"
-                  // onClick={() => {
-                  //   setClient(user);
-                  // }}
+                  // to={`/account/marketplace?seller=${user._id}`}
+                  to={
+                    userType === "buyer"
+                      ? "/account/home/createMilestone"
+                      : "/account/home/requestMilestone"
+                  }
+                  onClick={() => {
+                    setClient(user);
+                  }}
                 >
                   <img src={user.profileImg} />
                   <p className="name">{user.firstName + " " + user.lastName}</p>
@@ -368,13 +381,11 @@ const Home = () => {
         </div>
       )}
       <Footer />
-      <Route path="/account/home/pay">
+      <Route path={"/account/home/createMilestone"}>
         <Modal
           open={true}
           head={true}
-          label={
-            userType === "seller" ? "Request Milestone" : "Create Milestone"
-          }
+          label="Create Milestone"
           setOpen={() => {
             history.push("/account/home");
             setClient(null);
@@ -382,140 +393,56 @@ const Home = () => {
           className="milestoneRequest"
         >
           <MilestoneForm
-            userType={userType}
-            searchClient={client}
-            onSubmit={({ e, type, body }) => {
+            action="create"
+            client={client}
+            onSuccess={(milestone) => {
               history.push("/account/home");
-              toast(
-                <div className="toast">
-                  Milestone {type === "seller" ? "requested." : "created."}{" "}
-                  <button
-                    className="undo"
-                    onClick={() => {
-                      milestoneTimeout.current = null;
-                    }}
-                  >
-                    Undo
-                  </button>
-                </div>,
-                {
-                  position: "bottom-center",
-                  autoClose: 30000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  onClose: () => {
-                    milestoneTimeout.current?.();
-                  },
-                  draggable: true,
-                  progress: undefined,
-                }
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Succ_svg />
+                    <h4 className="amount">₹{milestone?.amount}</h4>
+                    <h4>Milestone has been created</h4>
+                  </div>
+                  <Link to="/account/hold" onClick={() => setMsg(null)}>
+                    Check your Delivery pay Hold
+                  </Link>
+                </>
               );
-              milestoneTimeout.current = () => {
-                if (type === "seller") {
-                  fetch("/api/requestMilestone", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body),
-                  })
-                    .then((res) => res.json())
-                    .then(({ message, milestone }) => {
-                      if (milestone) {
-                        setMsg(
-                          <>
-                            <button onClick={() => setMsg(null)}>Okay</button>
-                            <div>
-                              {milestone ? <Succ_svg /> : <Err_svg />}
-                              {milestone && (
-                                <h4 className="amount">₹{milestone?.amount}</h4>
-                              )}
-                              <h4>{message}</h4>
-                            </div>
-                            {milestone && (
-                              <Link
-                                to="/account/hold"
-                                onClick={() => setMsg(null)}
-                              >
-                                Check your Delivery pay Hold
-                              </Link>
-                            )}
-                          </>
-                        );
-                      } else {
-                        setMsg(
-                          <>
-                            <button onClick={() => setMsg(null)}>Okay</button>
-                            <div>
-                              <Err_svg />
-                              <h4>Could not create milestone.</h4>
-                            </div>
-                          </>
-                        );
-                      }
-                    })
-                    .catch((err) => {
-                      console.log(err);
-                      setMsg(
-                        <>
-                          <button onClick={() => setMsg(null)}>Okay</button>
-                          <div>
-                            <Err_svg />
-                            <h4>
-                              Could not create milestone. Make sure you're
-                              online.
-                            </h4>
-                          </div>
-                        </>
-                      );
-                    });
-                } else {
-                  fetch("/api/createMilestone", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body),
-                  })
-                    .then((res) => res.json())
-                    .then((milestone) => {
-                      setMsg(
-                        <>
-                          <button onClick={() => setMsg(null)}>Okay</button>
-                          <div>
-                            {milestone.milestone ? <Succ_svg /> : <Err_svg />}
-                            {milestone.milestone && (
-                              <h4 className="amount">
-                                ₹{milestone.milestone?.amount}
-                              </h4>
-                            )}
-                            <h4>{milestone.message}</h4>
-                          </div>
-                          {milestone.milestone && (
-                            <Link
-                              to="/account/hold"
-                              onClick={() => setMsg(null)}
-                            >
-                              Check your Delivery pay Hold
-                            </Link>
-                          )}
-                        </>
-                      );
-                    })
-                    .catch((err) => {
-                      console.log(err);
-                      setMsg(
-                        <>
-                          <button onClick={() => setMsg(null)}>Okay</button>
-                          <div>
-                            <Err_svg />
-                            <h4>
-                              Could not create milestone. Make sure you're
-                              online.
-                            </h4>
-                          </div>
-                        </>
-                      );
-                    });
-                }
-              };
+            }}
+          />
+        </Modal>
+      </Route>
+      <Route path={"/account/home/requestMilestone"}>
+        <Modal
+          open={true}
+          head={true}
+          label="Request Milestone"
+          setOpen={() => {
+            history.push("/account/home");
+            setClient(null);
+          }}
+          className="milestoneRequest"
+        >
+          <MilestoneForm
+            action="request"
+            client={client}
+            onSuccess={(milestone) => {
+              history.push("/account/home");
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Succ_svg />
+                    <h4 className="amount">₹{milestone?.amount}</h4>
+                    <h4>Milestone has been requested</h4>
+                  </div>
+                  <Link to="/account/hold" onClick={() => setMsg(null)}>
+                    Check your Delivery pay Hold
+                  </Link>
+                </>
+              );
             }}
           />
         </Modal>
@@ -526,137 +453,9 @@ const Home = () => {
     </div>
   );
 };
-const AddressForm = ({ client, onSuccess, onCancel }) => {
-  const [name, setName] = useState(
-    client ? client.firstName + " " + client.lastName : ""
-  );
-  const [phone, setPhone] = useState(client?.phone || "");
-  const [zip, setZip] = useState(client?.address?.zip || "");
-  const [locality, setLocatily] = useState(client?.address?.locality || "");
-  const [street, setStreet] = useState(client?.address?.street || "");
-  const [city, setCity] = useState(client?.address?.city || "");
-  const [state, setState] = useState(client?.address?.state || "");
-  const [landmark, setLandmark] = useState(client?.address?.landmark || "");
-  const [altPhone, setAltPhone] = useState(client?.address?.altPhone || "");
-  return (
-    <form
-      className="addressForm"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSuccess?.({
-          address: {
-            name,
-            phone,
-            street,
-            city,
-            state,
-            zip,
-            locality,
-            landmark,
-          },
-        });
-      }}
-    >
-      <section>
-        <label htmlFor="name">Full Name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          type="text"
-          name="name"
-          required={true}
-        />
-      </section>
-      <section>
-        <label htmlFor="phone">Phone Number</label>
-        <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          type="tel"
-          name="phone"
-          required={true}
-        />
-      </section>
-      <section>
-        <label htmlFor="zip">PIN Code</label>
-        <input
-          value={zip}
-          onChange={(e) => setZip(e.target.value)}
-          type="number"
-          name="zip"
-          required={true}
-        />
-      </section>
-      <section>
-        <label htmlFor="locality">Locality</label>
-        <input
-          value={locality}
-          onChange={(e) => setLocatily(e.target.value)}
-          type="text"
-          name="locality"
-          required={true}
-        />
-      </section>
-      <section className="street">
-        <label htmlFor="address">Address</label>
-        <textarea
-          value={street}
-          onChange={(e) => setStreet(e.target.value)}
-          resiz="off"
-          type="text"
-          name="address"
-          required={true}
-        />
-      </section>
-      <section>
-        <label htmlFor="city">City</label>
-        <input
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          type="text"
-          name="city"
-          required={true}
-        />
-      </section>
-      <section>
-        <label htmlFor="state">State</label>
-        <input
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-          type="text"
-          name="state"
-          required={true}
-        />
-      </section>
-      <section>
-        <label htmlFor="landmark">Landmark (Optional)</label>
-        <input
-          value={landmark}
-          onChange={(e) => setLandmark(e.target.value)}
-          type="text"
-          name="landmark"
-        />
-      </section>
-      <section>
-        <label htmlFor="altPhone">Alternate Phone (Optional)</label>
-        <input
-          value={altPhone}
-          onChange={(e) => setAltPhone(e.target.value)}
-          type="tel"
-          name="altPhone"
-        />
-      </section>
-      <button className="save">Save</button>
-      <button className="cancel" type="button" onClick={() => onCancel?.()}>
-        Cancel
-      </button>
-      <section className="pBtm" />
-    </form>
-  );
-};
 
 function Account({ location }) {
-  const { user } = useContext(SiteContext);
+  const { user, userType } = useContext(SiteContext);
   return (
     <div
       className={`account ${
@@ -672,6 +471,9 @@ function Account({ location }) {
             alt="Delivery pay logo"
           />
         </Link>
+        <div className="links">
+          {userType === "buyer" && <Link to="/marketplace">Browse</Link>}
+        </div>
         <ProfileAvatar />
       </header>
       <div className="content">
@@ -702,60 +504,6 @@ function Account({ location }) {
                 </svg>
               </div>
               Home
-            </Link>
-          </li>
-          <li
-            className={`deals ${
-              location.pathname.startsWith("/account/deals")
-                ? "active"
-                : undefined
-            }`}
-          >
-            <Link to="/account/deals">
-              <div className="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="26.55"
-                  height="25.219"
-                  viewBox="0 0 26.55 25.219"
-                >
-                  <path
-                    id="Path_1"
-                    data-name="Path 1"
-                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-                    transform="translate(255.198 195.071)"
-                    fill="#fff"
-                  />
-                </svg>
-              </div>
-              Deals
-            </Link>
-          </li>
-          <li
-            className={`deals ${
-              location.pathname.startsWith("/account/marketplace")
-                ? "active"
-                : undefined
-            }`}
-          >
-            <Link to="/account/marketplace">
-              <div className="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="26.55"
-                  height="25.219"
-                  viewBox="0 0 26.55 25.219"
-                >
-                  <path
-                    id="Path_1"
-                    data-name="Path 1"
-                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-                    transform="translate(255.198 195.071)"
-                    fill="#fff"
-                  />
-                </svg>
-              </div>
-              Browse
             </Link>
           </li>
           <li
@@ -820,6 +568,176 @@ function Account({ location }) {
               Wallet
             </Link>
           </li>
+          <li
+            className={`deals ${
+              location.pathname.startsWith("/account/deals")
+                ? "active"
+                : undefined
+            }`}
+          >
+            <Link to="/account/deals">
+              <div className="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="26.55"
+                  height="25.219"
+                  viewBox="0 0 26.55 25.219"
+                >
+                  <path
+                    id="Path_1"
+                    data-name="Path 1"
+                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+                    transform="translate(255.198 195.071)"
+                    fill="#fff"
+                  />
+                </svg>
+              </div>
+              Chat
+            </Link>
+          </li>
+          {userType === "buyer" && (
+            <>
+              {
+                //   <li
+                //   className={`${
+                //     location.pathname.startsWith("/account/marketplace")
+                //       ? "active"
+                //       : undefined
+                //   }`}
+                // >
+                //   <Link to="/account/marketplace">
+                //     <div className="icon">
+                //       <svg
+                //         xmlns="http://www.w3.org/2000/svg"
+                //         width="26.55"
+                //         height="25.219"
+                //         viewBox="0 0 26.55 25.219"
+                //       >
+                //         <path
+                //           id="Path_1"
+                //           data-name="Path 1"
+                //           d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+                //           transform="translate(255.198 195.071)"
+                //           fill="#fff"
+                //         />
+                //       </svg>
+                //     </div>
+                //     Browse
+                //   </Link>
+                // </li>
+              }
+              <li
+                className={`${
+                  location.pathname.startsWith("/account/myShopping")
+                    ? "active"
+                    : undefined
+                }`}
+              >
+                <Link to="/account/myShopping/orders">
+                  <div className="icon">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="26.55"
+                      height="25.219"
+                      viewBox="0 0 26.55 25.219"
+                    >
+                      <path
+                        id="Path_1"
+                        data-name="Path 1"
+                        d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+                        transform="translate(255.198 195.071)"
+                        fill="#fff"
+                      />
+                    </svg>
+                  </div>
+                  My Orders
+                </Link>
+              </li>
+            </>
+          )}
+          {userType === "seller" && (
+            <li
+              className={`products ${
+                location.pathname.startsWith("/account/myShop")
+                  ? "active"
+                  : undefined
+              }`}
+            >
+              <Link to="/account/myShop/products">
+                <div className="icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="19.872"
+                    height="21.086"
+                    viewBox="0 0 19.872 21.086"
+                  >
+                    <g
+                      id="Group_4"
+                      data-name="Group 4"
+                      transform="translate(0 5.63)"
+                    >
+                      <g id="Path_288" data-name="Path 288" fill="none">
+                        <path
+                          d="M1,0H18.872a1,1,0,0,1,1,1V14.456a1,1,0,0,1-1,1H1a1,1,0,0,1-1-1V1A1,1,0,0,1,1,0Z"
+                          stroke="none"
+                        />
+                        <path
+                          d="M 2 2.000001907348633 L 2 13.45590209960938 L 17.87188148498535 13.45590209960938 L 17.87188148498535 2.000001907348633 L 2 2.000001907348633 M 1 1.9073486328125e-06 L 18.87188148498535 1.9073486328125e-06 C 19.42416000366211 1.9073486328125e-06 19.87188148498535 0.4477119445800781 19.87188148498535 1.000001907348633 L 19.87188148498535 14.45590209960938 C 19.87188148498535 15.00819206237793 19.42416000366211 15.45590209960938 18.87188148498535 15.45590209960938 L 1 15.45590209960938 C 0.4477100372314453 15.45590209960938 0 15.00819206237793 0 14.45590209960938 L 0 1.000001907348633 C 0 0.4477119445800781 0.4477100372314453 1.9073486328125e-06 1 1.9073486328125e-06 Z"
+                          stroke="none"
+                          fill="#fff"
+                        />
+                      </g>
+                      <g
+                        id="Rectangle_3"
+                        data-name="Rectangle 3"
+                        transform="translate(0 8.832)"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="2"
+                      >
+                        <rect
+                          width="19.872"
+                          height="6.624"
+                          rx="2"
+                          stroke="none"
+                        />
+                        <rect
+                          x="1"
+                          y="1"
+                          width="17.872"
+                          height="4.624"
+                          rx="1"
+                          fill="none"
+                        />
+                      </g>
+                    </g>
+                    <g
+                      id="Rectangle_1134"
+                      data-name="Rectangle 1134"
+                      transform="translate(4)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <path
+                        d="M2,0h8a2,2,0,0,1,2,2V7a0,0,0,0,1,0,0H0A0,0,0,0,1,0,7V2A2,2,0,0,1,2,0Z"
+                        stroke="none"
+                      />
+                      <rect
+                        x="1"
+                        y="1"
+                        width="10"
+                        height="5"
+                        rx="1"
+                        fill="none"
+                      />
+                    </g>
+                  </svg>
+                </div>
+                My Shop
+              </Link>
+            </li>
+          )}
           <li
             className={`hold ${
               location.pathname.startsWith("/account/hold")
@@ -990,87 +908,91 @@ function Account({ location }) {
               Delivery pay Transactions
             </Link>
           </li>
-          <li
-            className={`products ${
-              location.pathname.startsWith("/account/products")
-                ? "active"
-                : undefined
-            }`}
-          >
-            <Link to="/account/products">
-              <div className="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="19.872"
-                  height="21.086"
-                  viewBox="0 0 19.872 21.086"
-                >
-                  <g
-                    id="Group_4"
-                    data-name="Group 4"
-                    transform="translate(0 5.63)"
-                  >
-                    <g id="Path_288" data-name="Path 288" fill="none">
-                      <path
-                        d="M1,0H18.872a1,1,0,0,1,1,1V14.456a1,1,0,0,1-1,1H1a1,1,0,0,1-1-1V1A1,1,0,0,1,1,0Z"
-                        stroke="none"
-                      />
-                      <path
-                        d="M 2 2.000001907348633 L 2 13.45590209960938 L 17.87188148498535 13.45590209960938 L 17.87188148498535 2.000001907348633 L 2 2.000001907348633 M 1 1.9073486328125e-06 L 18.87188148498535 1.9073486328125e-06 C 19.42416000366211 1.9073486328125e-06 19.87188148498535 0.4477119445800781 19.87188148498535 1.000001907348633 L 19.87188148498535 14.45590209960938 C 19.87188148498535 15.00819206237793 19.42416000366211 15.45590209960938 18.87188148498535 15.45590209960938 L 1 15.45590209960938 C 0.4477100372314453 15.45590209960938 0 15.00819206237793 0 14.45590209960938 L 0 1.000001907348633 C 0 0.4477119445800781 0.4477100372314453 1.9073486328125e-06 1 1.9073486328125e-06 Z"
-                        stroke="none"
-                        fill="#fff"
-                      />
-                    </g>
-                    <g
-                      id="Rectangle_3"
-                      data-name="Rectangle 3"
-                      transform="translate(0 8.832)"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    >
-                      <rect
-                        width="19.872"
-                        height="6.624"
-                        rx="2"
-                        stroke="none"
-                      />
-                      <rect
-                        x="1"
-                        y="1"
-                        width="17.872"
-                        height="4.624"
-                        rx="1"
-                        fill="none"
-                      />
-                    </g>
-                  </g>
-                  <g
-                    id="Rectangle_1134"
-                    data-name="Rectangle 1134"
-                    transform="translate(4)"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="2"
-                  >
-                    <path
-                      d="M2,0h8a2,2,0,0,1,2,2V7a0,0,0,0,1,0,0H0A0,0,0,0,1,0,7V2A2,2,0,0,1,2,0Z"
-                      stroke="none"
-                    />
-                    <rect
-                      x="1"
-                      y="1"
-                      width="10"
-                      height="5"
-                      rx="1"
-                      fill="none"
-                    />
-                  </g>
-                </svg>
-              </div>
-              Products
-            </Link>
-          </li>
+          {
+            //     <li
+            //       className={`products ${
+            //         location.pathname.startsWith("/account/orderManagement")
+            //           ? "active"
+            //           : undefined
+            //       }`}
+            //     >
+            //       <Link to="/account/orderManagement">
+            //         <div className="icon">
+            //           <svg
+            //             xmlns="http://www.w3.org/2000/svg"
+            //             width="19.872"
+            //             height="21.086"
+            //             viewBox="0 0 19.872 21.086"
+            //           >
+            //             <g
+            //               id="Group_4"
+            //               data-name="Group 4"
+            //               transform="translate(0 5.63)"
+            //             >
+            //               <g id="Path_288" data-name="Path 288" fill="none">
+            //                 <path
+            //                   d="M1,0H18.872a1,1,0,0,1,1,1V14.456a1,1,0,0,1-1,1H1a1,1,0,0,1-1-1V1A1,1,0,0,1,1,0Z"
+            //                   stroke="none"
+            //                 />
+            //                 <path
+            //                   d="M 2 2.000001907348633 L 2 13.45590209960938 L 17.87188148498535 13.45590209960938 L 17.87188148498535 2.000001907348633 L 2 2.000001907348633 M 1 1.9073486328125e-06 L 18.87188148498535 1.9073486328125e-06 C 19.42416000366211 1.9073486328125e-06 19.87188148498535 0.4477119445800781 19.87188148498535 1.000001907348633 L 19.87188148498535 14.45590209960938 C 19.87188148498535 15.00819206237793 19.42416000366211 15.45590209960938 18.87188148498535 15.45590209960938 L 1 15.45590209960938 C 0.4477100372314453 15.45590209960938 0 15.00819206237793 0 14.45590209960938 L 0 1.000001907348633 C 0 0.4477119445800781 0.4477100372314453 1.9073486328125e-06 1 1.9073486328125e-06 Z"
+            //                   stroke="none"
+            //                   fill="#fff"
+            //                 />
+            //               </g>
+            //               <g
+            //                 id="Rectangle_3"
+            //                 data-name="Rectangle 3"
+            //                 transform="translate(0 8.832)"
+            //                 fill="none"
+            //                 stroke="#fff"
+            //                 strokeWidth="2"
+            //               >
+            //                 <rect
+            //                   width="19.872"
+            //                   height="6.624"
+            //                   rx="2"
+            //                   stroke="none"
+            //                 />
+            //                 <rect
+            //                   x="1"
+            //                   y="1"
+            //                   width="17.872"
+            //                   height="4.624"
+            //                   rx="1"
+            //                   fill="none"
+            //                 />
+            //               </g>
+            //             </g>
+            //             <g
+            //               id="Rectangle_1134"
+            //               data-name="Rectangle 1134"
+            //               transform="translate(4)"
+            //               fill="none"
+            //               stroke="#fff"
+            //               strokeWidth="2"
+            //             >
+            //               <path
+            //                 d="M2,0h8a2,2,0,0,1,2,2V7a0,0,0,0,1,0,0H0A0,0,0,0,1,0,7V2A2,2,0,0,1,2,0Z"
+            //                 stroke="none"
+            //               />
+            //               <rect
+            //                 x="1"
+            //                 y="1"
+            //                 width="10"
+            //                 height="5"
+            //                 rx="1"
+            //                 fill="none"
+            //               />
+            //             </g>
+            //           </svg>
+            //         </div>
+            //         Order Management
+            //       </Link>
+            //     </li>
+            //   </>
+            // )
+          }
           <li
             className={`support ${
               location.pathname.startsWith("/account/support")
@@ -1172,11 +1094,18 @@ function Account({ location }) {
             <Route path="/account/deals/:_id?" component={Deals} />
             <Route path="/account/wallet" component={Wallet} />
             <Route path="/account/hold" component={Hold} />
-            <Route exact path="/account/marketplace" component={Marketplace} />
-            <Route path="/account/marketplace/:_id" component={SingleProduct} />
+            {
+              // <Route exact path="/account/marketplace" component={Marketplace} />
+              // <Route path="/account/marketplace/:_id" component={SingleProduct} />
+            }
             <Route path="/account/transactions" component={Transactions} />
-            <Route path="/account/products" component={Products} />
+            <Route path="/account/myShop" component={MyShop} />
             <Route path="/account/cart" component={Cart} />
+            <Route path="/account/myShopping" component={MyShopping} />
+            <Route
+              path="/account/orderManagement"
+              component={OrderManagement}
+            />
             <Route
               path="/account/support/ticket/:_id"
               component={SingleTicket}
@@ -1478,7 +1407,7 @@ function Account({ location }) {
   );
 }
 const ProfileAvatar = () => {
-  const { user, setUser, cart, setCart } = useContext(SiteContext);
+  const { user, setUser, cart, setCart, userType } = useContext(SiteContext);
   const history = useHistory();
   const menuRef = useRef(null);
   const [menu, setMenu] = useState(false);
@@ -1531,94 +1460,43 @@ const ProfileAvatar = () => {
       setUnread(false);
     }
   }, [noti, user]);
-  useEffect(() => {
-    console.log(cart);
-  }, [cart]);
   const referLink = `${window.location.origin}/u/join?referer=${user._id}`;
   return (
     <>
       <div className="profile">
-        <Actions
-          className="cart"
-          icon={
-            <>
-              <img src="/cart.svg" />
-              {cart.length > 0 && (
-                <span className="itemCount">
-                  {cart.reduce((a, c) => a + c.qty, 0)}
-                </span>
-              )}
-            </>
-          }
-          clickable={true}
-          wrapperClassName="popupCart"
-        >
-          {cart.map(({ product, qty }, i) => {
-            const price = calculatePrice(product);
-            return (
-              <li key={i} className="item">
-                <img src={product.images[0]} />
-                <div className="detail">
-                  <p className="name">{product.name}</p>
-                  <div className="qty">
-                    QTY:{" "}
-                    <div className="addRemove">
-                      <button
-                        onClick={() => {
-                          setCart((prev) =>
-                            prev
-                              .map((item) => {
-                                if (item.product._id === product._id) {
-                                  return {
-                                    ...item,
-                                    qty: item.qty - 1,
-                                  };
-                                } else {
-                                  return item;
-                                }
-                              })
-                              .filter((item) => item.qty > 0)
-                          );
-                        }}
-                      >
-                        <Minus_svg />
-                      </button>
-                      {qty}
-                      <button
-                        onClick={() => {
-                          setCart((prev) =>
-                            prev.map((item) => {
-                              if (item.product._id === product._id) {
-                                return {
-                                  ...item,
-                                  qty: item.qty + 1,
-                                };
-                              } else {
-                                return item;
-                              }
-                            })
-                          );
-                        }}
-                      >
-                        <Plus_svg />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="price">₹{price * qty}</div>
+        {
+          // <UserTypeSwitch />
+        }
+        {userType === "buyer" && (
+          <Actions
+            className="cart"
+            icon={
+              <>
+                <img src="/cart.svg" />
+                {cart.length > 0 && (
+                  <span className="itemCount">
+                    {cart.reduce((a, c) => a + c.qty, 0)}
+                  </span>
+                )}
+              </>
+            }
+            clickable={true}
+            wrapperClassName="popupCart"
+          >
+            {cart.map(({ product, qty }, i) => (
+              <CartItem key={i} product={product} qty={qty} />
+            ))}
+            {cart.length > 0 && (
+              <li className="actions">
+                <Link to="/account/cart">View Cart</Link>
+                {
+                  // <Link to="/account/checkout">Place order</Link>
+                }
               </li>
-            );
-          })}
-          {cart.length > 0 && (
-            <li className="actions">
-              <Link to="/account/cart">View Cart</Link>
-              {
-                // <Link to="/account/checkout">Place order</Link>
-              }
-            </li>
-          )}
-          {cart.length === 0 && <p className="placeholder">cart is empty</p>}
-        </Actions>
+            )}
+            {cart.length === 0 && <p className="placeholder">cart is empty</p>}
+          </Actions>
+        )}
         <Actions
           icon={
             <svg
@@ -1651,76 +1529,83 @@ const ProfileAvatar = () => {
             );
           })}
         </Actions>
-        <p className="name">
-          {user?.firstName + " " + user?.lastName || user.phone}
-        </p>
+        {
+          //   <p className="name">
+          //   {user?.firstName + " " + user?.lastName || user.phone}
+          // </p>
+        }
         <Actions
           wrapperClassName="menu"
           className="avatar"
           icon={
-            <img
-              src={user?.profileImg || "/profile-user.jpg"}
-              onClick={() => setMenu(!menu)}
-            />
+            <>
+              <img
+                src={user?.profileImg || "/profile-user.jpg"}
+                onClick={() => setMenu(!menu)}
+              />
+              {userType && <p className="userTypeTag">{userType}</p>}
+            </>
           }
         >
-          <div ref={menuRef} onClick={() => setMenu(false)}>
-            <Link className="link" to="/aboutUs">
-              More about us
-            </Link>
-            <Link className="link settings" to="/account/profile">
-              Settings
-            </Link>
-            <div className="referral">
-              <button
-                onClick={() => {
-                  setInvite(true);
-                }}
-              >
-                Invite now
-              </button>
-              <p>Refer and earn flat ₹50/- cashback to your wallet</p>
-            </div>
+          <p className="name">
+            {user?.firstName + " " + user?.lastName || user.phone}
+          </p>
+          <UserTypeSwitch />
+          <Link className="link" to="/aboutUs">
+            More about us
+          </Link>
+          <Link className="link settings" to="/account/profile">
+            Settings
+          </Link>
+          <div className="referral">
             <button
-              className="logout"
               onClick={() => {
-                fetch("/api/logout")
-                  .then((res) => res.json())
-                  .then((data) => {
-                    setUser(null);
-                    history.push("/");
-                  })
-                  .catch((err) => {
-                    console.log(err);
-                    setMsg(
-                      <>
-                        <button onClick={() => setMsg(null)}>Okay</button>
-                        <div>
-                          <Err_svg />
-                          <h4>Could not logout.</h4>
-                        </div>
-                      </>
-                    );
-                  });
+                setInvite(true);
               }}
             >
-              Logout
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="31.702"
-                height="31.702"
-                viewBox="0 0 31.702 31.702"
-              >
-                <path
-                  id="Path_1758"
-                  data-name="Path 1758"
-                  d="M15.487,25.174l2.483,2.483,8.806-8.806L17.97,10.045l-2.483,2.483,4.544,4.562H3v3.522H20.031ZM31.18,3H6.522A3.521,3.521,0,0,0,3,6.522v7.045H6.522V6.522H31.18V31.18H6.522V24.135H3V31.18A3.521,3.521,0,0,0,6.522,34.7H31.18A3.533,3.533,0,0,0,34.7,31.18V6.522A3.533,3.533,0,0,0,31.18,3Z"
-                  transform="translate(-3 -3)"
-                  fill="#fc0660"
-                />
-              </svg>
+              Invite now
             </button>
+            <p>Refer and earn flat ₹50/- cashback to your wallet</p>
           </div>
+          <button
+            className="logout"
+            onClick={() => {
+              fetch("/api/logout")
+                .then((res) => res.json())
+                .then((data) => {
+                  setUser(null);
+                  history.push("/");
+                })
+                .catch((err) => {
+                  console.log(err);
+                  setMsg(
+                    <>
+                      <button onClick={() => setMsg(null)}>Okay</button>
+                      <div>
+                        <Err_svg />
+                        <h4>Could not logout.</h4>
+                      </div>
+                    </>
+                  );
+                });
+            }}
+          >
+            Logout
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="31.702"
+              height="31.702"
+              viewBox="0 0 31.702 31.702"
+            >
+              <path
+                id="Path_1758"
+                data-name="Path 1758"
+                d="M15.487,25.174l2.483,2.483,8.806-8.806L17.97,10.045l-2.483,2.483,4.544,4.562H3v3.522H20.031ZM31.18,3H6.522A3.521,3.521,0,0,0,3,6.522v7.045H6.522V6.522H31.18V31.18H6.522V24.135H3V31.18A3.521,3.521,0,0,0,6.522,34.7H31.18A3.533,3.533,0,0,0,34.7,31.18V6.522A3.533,3.533,0,0,0,31.18,3Z"
+                transform="translate(-3 -3)"
+                fill="#fc0660"
+              />
+            </svg>
+          </button>
         </Actions>
       </div>
       <Modal
@@ -1795,193 +1680,339 @@ const ProfileAvatar = () => {
   );
 };
 
+const UserTypeSwitch = () => {
+  const { userType, setUserType } = useContext(SiteContext);
+  return (
+    <div className="userTypeSwitch">
+      <label>Browse as</label>
+      <ul className="options">
+        <li
+          className={userType === "buyer" ? "active" : ""}
+          onClick={() => setUserType("buyer")}
+        >
+          Buyer
+        </li>
+        <li
+          className={userType === "seller" ? "active" : ""}
+          onClick={() => setUserType("seller")}
+        >
+          Seller
+        </li>
+      </ul>
+    </div>
+  );
+};
+
 export const MilestoneForm = ({
-  userType,
-  searchClient,
+  action,
+  // searchClient,
+  client,
   onSuccess,
-  onSubmit,
+  // onSubmit,
   definedAmount,
+  order,
+  refund,
 }) => {
   const { user, setUser } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [type, setType] = useState("product");
+  // const [type, setType] = useState("product");
   const [addressForm, setAddressForm] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [client, setClient] = useState({
-    ...(userType === "seller" ? searchClient : user),
-  });
-  const [deliveryTime, setDeliveryTime] = useState(
-    new Date().toISOString().substring(0, 16)
-  );
+  // const [products, setProducts] = useState([]);
+  const [userDetail, setUserDetail] = useState({ ...user });
+  const [clientDetail, setClientDetail] = useState({ ...client });
+  // const [deliveryTime, setDeliveryTime] = useState(
+  //   new Date().toISOString().substring(0, 16)
+  // );
   const [dscr, setDscr] = useState("");
   const [amount, setAmount] = useState(definedAmount || "");
   const [msg, setMsg] = useState(null);
-  const [productResult, setProductResult] = useState([]);
-  const [showSelectedProducts, setShowSelectedProducts] = useState(false);
-  const searchInput = useRef(null);
-  const sellerSubmit = useCallback(
-    (e) => {
-      e.preventDefault();
-      onSubmit?.({
-        e,
-        type: "seller",
-        body: {
-          buyer_id: client._id,
-          amount,
-          products,
-          dscr,
-          deliveryDetail: {
-            phone: client.phone,
-            name: client.firstName + " " + client.lastName,
-            ...client.address,
-            timeOfDelivery: deliveryTime,
-          },
-        },
+  // const [productResult, setProductResult] = useState([]);
+  // const [showSelectedProducts, setShowSelectedProducts] = useState(false);
+  // const searchInput = useRef(null);
+  const onTimeout = useRef();
+  const requestMilestone = useCallback(() => {
+    fetch("/api/requestMilestone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        buyer_id: client._id,
+        amount,
+        // products,
+        dscr,
+        order,
+        refund,
+        // deliveryDetail: {
+        //   phone: client.phone,
+        //   name: client.firstName + " " + client.lastName,
+        //   ...client.address,
+        //   timeOfDelivery: deliveryTime,
+        // },
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          onSuccess?.(data.milestone);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not request milestone. Try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not request milestone. Make sure you're online.</h4>
+            </div>
+          </>
+        );
       });
-    },
-    [client, searchClient, amount, dscr, type, deliveryTime]
-  );
-  const buyerSubmit = useCallback(
-    (e) => {
-      e.preventDefault();
-      onSubmit?.({
-        e,
-        type: "buyer",
-        body: {
-          seller: { ...searchClient },
-          amount,
-          dscr,
-          deliveryDetail: {
-            phone: client.phone,
-            name: client.firstName + " " + client.lastName,
-            ...client.address,
-            timeOfDelivery: deliveryTime,
-          },
-        },
+  }, [
+    clientDetail,
+    userDetail,
+    amount,
+    dscr,
+    // type,
+    // deliveryTime,
+  ]);
+  const createMilestone = useCallback(() => {
+    fetch("/api/createMilestone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        seller: { ...clientDetail },
+        amount,
+        dscr,
+        order,
+        refund,
+        // deliveryDetail: {
+        //   phone: client.phone,
+        //   name: client.firstName + " " + client.lastName,
+        //   ...client.address,
+        //   timeOfDelivery: deliveryTime,
+        // },
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          onSuccess?.(data.milestone);
+        } else if (data.code === 403) {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Insufficient fund</h4>
+              </div>
+            </>
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not create milestone. Try again</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not create milestone. Make sure you're online.</h4>
+            </div>
+          </>
+        );
       });
-    },
-    [client, searchClient, amount, dscr, type, deliveryTime]
-  );
-  useEffect(() => {
-    if (search) {
-      fetch(`/api/products?q=${search}&perPage=8`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.products) {
-            setProductResult(data.products);
-          }
-        });
-    }
-  }, [search]);
-  useEffect(() => {
-    if (products.length === 0) {
-      setShowSelectedProducts(false);
-    }
-  }, [products]);
+  }, [
+    clientDetail,
+    userDetail,
+    amount,
+    dscr,
+    // type,
+    // deliveryTime,
+  ]);
+  // useEffect(() => {
+  //   if (search) {
+  //     fetch(`/api/products?q=${search}&perPage=8`)
+  //       .then((res) => res.json())
+  //       .then((data) => {
+  //         if (data.products) {
+  //           setProductResult(data.products);
+  //         }
+  //       });
+  //   }
+  // }, [search]);
+  // useEffect(() => {
+  //   if (products.length === 0) {
+  //     setShowSelectedProducts(false);
+  //   }
+  // }, [products]);
   return (
     <>
       <form
         className="milestonesForm"
-        onSubmit={userType === "seller" ? sellerSubmit : buyerSubmit}
+        onSubmit={(e) => {
+          setLoading(true);
+          e.preventDefault();
+          toast(
+            <div className="toast">
+              Milestone is being{" "}
+              {action === "create" ? "created." : "requested."}{" "}
+              <button
+                className="undo"
+                onClick={() => {
+                  onTimeout.current = null;
+                }}
+              >
+                Undo
+              </button>
+            </div>,
+            {
+              position: "bottom-center",
+              autoClose: 8000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              onClose: () => {
+                onTimeout.current?.();
+                setLoading(false);
+              },
+              draggable: true,
+              progress: undefined,
+            }
+          );
+          if (action === "create") {
+            onTimeout.current = createMilestone;
+          } else {
+            onTimeout.current = requestMilestone;
+          }
+        }}
       >
         <section className="transactionDetail">
-          {userType === "seller" && (
-            <>
-              <section className="products">
-                <label>Products</label>
-                <div className="count">
-                  <p className="totalProduct">
-                    {products.length} items selected.
-                  </p>
-                  {products.length > 0 && (
-                    <button
-                      type="button"
-                      className={showSelectedProducts ? "open" : undefined}
-                      onClick={() =>
-                        setShowSelectedProducts(!showSelectedProducts)
-                      }
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="11.872"
-                        height="18"
-                        viewBox="0 0 11.872 18"
-                      >
-                        <path
-                          id="Path_36"
-                          data-name="Path 36"
-                          d="M9,11.872,0,2.725,2.681,0,9,6.423,15.319,0,18,2.725Z"
-                          transform="translate(11.872) rotate(90)"
-                          fill="rgba(0, 0, 0, 0.5)"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-                {showSelectedProducts && (
-                  <ul>
-                    {products.map((product) => (
-                      <li key={product._id}>
-                        <img src={product.images[0]} />
-                        <div className="productDetail">
-                          <p className="name">{product.name}</p>
-                          <p className="price">₹ {product.price}</p>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn"
-                          onClick={() =>
-                            setProducts((prev) =>
-                              prev.filter((item) => item._id !== product._id)
-                            )
-                          }
-                        >
-                          <Minus_svg />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-              <section className="productSearch">
-                <label>Search products</label>
-                <input
-                  ref={searchInput}
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                {search && productResult.length > 0 && (
-                  <ul className="productSearchList">
-                    {productResult.map((product) => (
-                      <li key={product._id}>
-                        <img src={product.images[0]} />
-                        <div className="productDetail">
-                          <p className="name">{product.name}</p>
-                          <p className="price">₹ {product.price}</p>
-                        </div>
-                        {!products.some((item) => item._id === product._id) ? (
-                          <button
-                            type="button"
-                            className="btn"
-                            onClick={() => {
-                              setProducts((prev) => [...prev, product]);
-                              searchInput.current.focus();
-                            }}
-                          >
-                            <Plus_svg />
-                          </button>
-                        ) : (
-                          <p className="addedLabel">Added</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>{" "}
-            </>
-          )}
+          {
+            // userType === "seller"
+            //  && (
+            //   <>
+            //     <section className="products">
+            //       <label>Products</label>
+            //       <div className="count">
+            //         <p className="totalProduct">
+            //           {products.length} items selected.
+            //         </p>
+            //         {products.length > 0 && (
+            //           <button
+            //             type="button"
+            //             className={showSelectedProducts ? "open" : undefined}
+            //             onClick={() =>
+            //               setShowSelectedProducts(!showSelectedProducts)
+            //             }
+            //           >
+            //             <svg
+            //               xmlns="http://www.w3.org/2000/svg"
+            //               width="11.872"
+            //               height="18"
+            //               viewBox="0 0 11.872 18"
+            //             >
+            //               <path
+            //                 id="Path_36"
+            //                 data-name="Path 36"
+            //                 d="M9,11.872,0,2.725,2.681,0,9,6.423,15.319,0,18,2.725Z"
+            //                 transform="translate(11.872) rotate(90)"
+            //                 fill="rgba(0, 0, 0, 0.5)"
+            //               />
+            //             </svg>
+            //           </button>
+            //         )}
+            //       </div>
+            //       {showSelectedProducts && (
+            //         <ul>
+            //           {products.map((product) => (
+            //             <li key={product._id}>
+            //               <img src={product.images[0]} />
+            //               <div className="productDetail">
+            //                 <p className="name">{product.name}</p>
+            //                 <p className="price">₹ {product.price}</p>
+            //               </div>
+            //               <button
+            //                 type="button"
+            //                 className="btn"
+            //                 onClick={() =>
+            //                   setProducts((prev) =>
+            //                     prev.filter((item) => item._id !== product._id)
+            //                   )
+            //                 }
+            //               >
+            //                 <Minus_svg />
+            //               </button>
+            //             </li>
+            //           ))}
+            //         </ul>
+            //       )}
+            //     </section>
+            //     <section className="productSearch">
+            //       <label>Search products</label>
+            //       <input
+            //         ref={searchInput}
+            //         type="text"
+            //         value={search}
+            //         onChange={(e) => setSearch(e.target.value)}
+            //       />
+            //       {search && productResult.length > 0 && (
+            //         <ul className="productSearchList">
+            //           {productResult.map((product) => (
+            //             <li key={product._id}>
+            //               <img src={product.images[0]} />
+            //               <div className="productDetail">
+            //                 <p className="name">{product.name}</p>
+            //                 <p className="price">₹ {product.price}</p>
+            //               </div>
+            //               {!products.some(
+            //                 (item) => item._id === product._id
+            //               ) ? (
+            //                 <button
+            //                   type="button"
+            //                   className="btn"
+            //                   onClick={() => {
+            //                     setProducts((prev) => [...prev, product]);
+            //                     searchInput.current.focus();
+            //                   }}
+            //                 >
+            //                   <Plus_svg />
+            //                 </button>
+            //               ) : (
+            //                 <p className="addedLabel">Added</p>
+            //               )}
+            //             </li>
+            //           ))}
+            //         </ul>
+            //       )}
+            //     </section>{" "}
+            //   </>
+            // )
+          }
           <section className="amount">
             <label>Amount</label>
             <NumberInput
@@ -2000,53 +2031,66 @@ export const MilestoneForm = ({
             />
           </section>
           <button type="submit">
-            {userType === "seller" ? "Request Milestone" : "Create Milestone"}
+            {action === "create" ? "Create Milestone" : "Request Milestone"}
           </button>
         </section>
         <section className="clientDetail">
-          <img src={client?.profileImg} />
-          <label>Delivery Address</label>
-          <div className="detail" onClick={() => setAddressForm(true)}>
-            <button type="button">+ Add/Edit Address</button>
-            <section className="profileDetail">
-              <p className="name">
-                {client?.firstName + " " + client?.lastName}
-              </p>
-              <p className="phone">{client?.phone}</p>
-              <p className="email">{client?.email}</p>
-            </section>
-            {client?.address?.street && (
-              <section className="address">
-                <p className="street">
-                  {client.address?.street}, {client.address?.city},{" "}
-                  {client.address?.zip}
-                </p>
-              </section>
-            )}
-          </div>
-          {userType === "seller" ? null : (
+          {action === "request" && (
+            <>
+              <img src={client?.profileImg || "/profile-user.jpg"} />
+              <label>Buyer Information</label>
+              <div
+                className="detail"
+                onClick={() => {
+                  // setAddressForm(true)
+                }}
+              >
+                {
+                  // <button type="button">+ Add/Edit Address</button>
+                }
+                <section className="profileDetail">
+                  <p className="name">
+                    {client?.firstName + " " + client?.lastName}
+                  </p>
+                  <p className="phone">{client?.phone}</p>
+                  <p className="email">{client?.email}</p>
+                </section>
+                {client?.address?.street && (
+                  <section className="address">
+                    <p className="street">
+                      {client.address?.street}, {client.address?.city},{" "}
+                      {client.address?.zip}
+                    </p>
+                  </section>
+                )}
+              </div>
+            </>
+          )}
+          {action === "request" ? null : (
             <div className="sellerInfo">
-              <img src={searchClient?.profileImg} />
+              <img src={clientDetail?.profileImg || "/profile-user.jpg"} />
               <label>Seller Information</label>
               <div className="detail">
                 <section className="profileDetail">
                   <p className="name">
-                    {searchClient?.firstName + " " + searchClient?.lastName}
+                    {clientDetail?.firstName} {clientDetail?.lastName}
                   </p>
-                  <p className="phone">{searchClient?.phone}</p>
-                  <p className="email">{searchClient?.email}</p>
+                  <p className="phone">{clientDetail?.phone}</p>
+                  <p className="email">{clientDetail?.email}</p>
                 </section>
               </div>
             </div>
           )}
-          <div className="deliveryTime">
-            <p>Delivery Time</p>
-            <input
-              value={deliveryTime}
-              type="datetime-local"
-              onChange={(e) => setDeliveryTime(e.target.value)}
-            />
-          </div>
+          {
+            //   <div className="deliveryTime">
+            //   <p>Delivery Time</p>
+            //   <input
+            //     value={deliveryTime}
+            //     type="datetime-local"
+            //     onChange={(e) => setDeliveryTime(e.target.value)}
+            //   />
+            // </div>
+          }
         </section>
       </form>
       {loading && (
@@ -2054,23 +2098,26 @@ export const MilestoneForm = ({
           <div className="spinner" />
         </div>
       )}
-      <Modal
-        open={addressForm}
-        head={true}
-        label="Add/Edit Address"
-        setOpen={setAddressForm}
-        className="addAddress"
-      >
-        <AddressForm
-          client={client}
-          setClient={setClient}
-          onSuccess={(data) => {
-            setClient((prev) => ({ ...prev, ...data }));
-            setAddressForm(false);
-          }}
-          onCancel={() => setAddressForm(false)}
-        />
-      </Modal>
+      {
+        //   <Modal
+        //   open={addressForm}
+        //   head={true}
+        //   label="Add/Edit Address"
+        //   setOpen={setAddressForm}
+        //   className="addAddress"
+        // >
+        //   <AddressForm
+        //     client={client}
+        //     // setClient={setClient}
+        //     onSuccess={(data) => {
+        //       console.log(data);
+        //       // setClient((prev) => ({ ...prev, ...data }));
+        //       setAddressForm(false);
+        //     }}
+        //     onCancel={() => setAddressForm(false)}
+        //   />
+        // </Modal>
+      }
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>

@@ -85,6 +85,136 @@ export const MilestoneReleaseForm = ({
   );
 };
 
+export const AddressForm = ({ client, onSuccess, onCancel }) => {
+  const [name, setName] = useState(
+    client ? client.name || client.firstName + " " + client.lastName : ""
+  );
+  const [phone, setPhone] = useState(client?.phone || "");
+  const [zip, setZip] = useState(client?.address?.zip || "");
+  const [locality, setLocatily] = useState(client?.address?.locality || "");
+  const [street, setStreet] = useState(client?.address?.street || "");
+  const [city, setCity] = useState(client?.address?.city || "");
+  const [state, setState] = useState(client?.address?.state || "");
+  const [landmark, setLandmark] = useState(client?.address?.landmark || "");
+  const [altPhone, setAltPhone] = useState(client?.address?.altPhone || "");
+  return (
+    <form
+      className="addressForm"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSuccess?.({
+          address: {
+            name,
+            phone,
+            street,
+            city,
+            state,
+            zip,
+            locality,
+            landmark,
+            altPhone,
+          },
+        });
+      }}
+    >
+      <section>
+        <label htmlFor="name">Full Name</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          type="text"
+          name="name"
+          required={true}
+        />
+      </section>
+      <section>
+        <label htmlFor="phone">Phone Number</label>
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          type="tel"
+          name="phone"
+          required={true}
+        />
+      </section>
+      <section>
+        <label htmlFor="zip">PIN Code</label>
+        <input
+          value={zip}
+          onChange={(e) => setZip(e.target.value)}
+          type="number"
+          name="zip"
+          required={true}
+        />
+      </section>
+      <section>
+        <label htmlFor="locality">Locality</label>
+        <input
+          value={locality}
+          onChange={(e) => setLocatily(e.target.value)}
+          type="text"
+          name="locality"
+          required={true}
+        />
+      </section>
+      <section className="street">
+        <label htmlFor="address">Address</label>
+        <textarea
+          value={street}
+          onChange={(e) => setStreet(e.target.value)}
+          resiz="off"
+          type="text"
+          name="address"
+          required={true}
+        />
+      </section>
+      <section>
+        <label htmlFor="city">City</label>
+        <input
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          type="text"
+          name="city"
+          required={true}
+        />
+      </section>
+      <section>
+        <label htmlFor="state">State</label>
+        <input
+          value={state}
+          onChange={(e) => setState(e.target.value)}
+          type="text"
+          name="state"
+          required={true}
+        />
+      </section>
+      <section>
+        <label htmlFor="landmark">Landmark (Optional)</label>
+        <input
+          value={landmark}
+          onChange={(e) => setLandmark(e.target.value)}
+          type="text"
+          name="landmark"
+        />
+      </section>
+      <section>
+        <label htmlFor="altPhone">Alternate Phone (Optional)</label>
+        <input
+          value={altPhone}
+          onChange={(e) => setAltPhone(e.target.value)}
+          type="tel"
+          name="altPhone"
+        />
+      </section>
+      <button className="save">Save</button>
+      <button className="cancel" type="button" onClick={() => onCancel?.()}>
+        Cancel
+      </button>
+      <section className="pBtm" />
+    </form>
+  );
+};
+
 export const DisputeForm = ({ milestone, setDisputeForm, onSuccess }) => {
   const [issue, setIssue] = useState("");
   const [loading, setLoading] = useState(false);

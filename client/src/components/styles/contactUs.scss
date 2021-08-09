@@ -24,9 +24,12 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       .detail {
+        margin: auto;
+        margin-right: 0;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        grid-gap: 5rem;
+        grid-gap: 6rem;
+        grid-column-gap: 8rem;
         padding: 5rem;
         height: min-content;
         & > div {
@@ -50,10 +53,12 @@
       }
       .contactForm {
         border-left: 1px solid black;
-        padding: 3rem 4rem;
+        padding: 5rem 8rem;
+        // padding: 3rem 4rem;
         form {
           max-width: 25rem;
           margin: auto;
+          margin-left: 0;
           width: 100%;
           display: grid;
           grid-gap: 1.2rem;

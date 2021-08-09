@@ -1,16 +1,23 @@
 import React, { createContext, useState, useEffect } from "react";
-import { SS } from "./components/Elements";
+import { LS } from "./components/Elements";
 
 export const SiteContext = createContext();
 export const Provider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [cart, setCart] = useState(
-    (SS.get("localCart") && JSON.parse(SS.get("localCart"))) || []
-  );
+  const [userType, setUserType] = useState(LS.get("userType"));
+  const [cart, setCart] = useState(JSON.parse(LS.get("localCart")) || []);
   useEffect(() => {
-    SS.set("localCart", JSON.stringify(cart));
+    LS.set("localCart", JSON.stringify(cart));
   }, [cart]);
+  useEffect(() => {
+    if (userType === "seller") {
+      document.body.style.setProperty("--blue", `#2598b6`);
+    } else {
+      document.body.style.setProperty("--blue", `#3b2ab4`);
+    }
+    LS.set("userType", userType);
+  }, [userType]);
   return (
     <SiteContext.Provider
       value={{
@@ -20,6 +27,8 @@ export const Provider = ({ children }) => {
         setIsAuthenticated,
         cart,
         setCart,
+        userType,
+        setUserType,
       }}
     >
       {children}

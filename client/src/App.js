@@ -23,6 +23,7 @@ import HowItWorks from "./components/howItWorks";
 import ContactUs from "./components/contactUs";
 import RefundPolicy from "./components/refundPolicy";
 import ShippingPolicy from "./components/shippingPolicy";
+import Marketplace, { SingleProduct } from "./components/Marketplace";
 import WorkWithUs from "./components/WorkWithUs";
 import Apply from "./components/Apply";
 import { ToastContainer } from "react-toastify";
@@ -79,6 +80,8 @@ function App() {
           <Route path="/u" component={UserStart} />
           <ProtectedRoute path="/account" component={Account} />
           <Route path="/aboutUs" component={AboutUs} />
+          <Route path="/marketplace/:_id" component={SingleProduct} />
+          <Route path="/marketplace" component={Marketplace} />
           <Route path="/privacyPolicy" component={PrivacyPolicy} />
           <Route path="/codeOfConduct" component={CodeOfConduct} />
           <Route path="/copyrightPolicy" component={CopyrightPolicy} />

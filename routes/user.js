@@ -210,8 +210,14 @@ app.patch(
       { new: true }
     )
       .then((user) => {
-        delete user._doc.pass;
-        res.json({ message: "profile updated", user: user._doc });
+        if (user) {
+          delete user._doc.pass;
+          res.json({ message: "profile updated", user: user._doc, code: "ok" });
+        } else {
+          res
+            .status(400)
+            .json({ code: 400, message: "User could not be found" });
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -231,9 +237,17 @@ app.post("/api/sendUserOTP", async (req, res) => {
     ]);
     new OTP({ id: phone, code: hash })
       .save()
-      .then((dbRes) => {
-        if (dbRes) {
-          // send text massage here
+      .then((dbRes) =>
+        sendSms({
+          to: [phone.replace("+91", "")],
+          otp: true,
+          message: 127687,
+          variables_values: code,
+        })
+      )
+      .then((smsRes) => {
+        console.log(smsRes);
+        if (smsRes) {
           res.json({
             code: "ok",
             message: "6 digit code has been sent, enter it within 2 minutes",
@@ -322,11 +336,24 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
                   .json({ code: 500, message: "Could not send Email" });
               });
           } else if (true) {
-            // send text massage or email here
-            res.json({
-              testCode: code,
-              message: "6 digit code has been sent, enter it within 2 minutes",
-            });
+            sendSms({
+              to: [phone.replace("+91", "")],
+              otp: true,
+              message: 127687,
+              variables_values: code,
+            })
+              .then((smsRes) => {
+                res.json({
+                  message:
+                    "6 digit code has been sent, enter it within 2 minutes",
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+                res
+                  .status(500)
+                  .json({ code: 424, message: "Could not send SMS" });
+              });
           }
         } else {
           res.status(500).json({ message: "something went wrong" });
@@ -406,26 +433,3 @@ app.patch("/api/userResetPass", async (req, res) => {
     }
   }
 });
-
-// sendEmail({
-//   to: "naeem.ahmad.9m@gmail.com",
-//   subject: "Delivery Pay email test",
-//   text: "This email was sent using nodemailer and cPanel email account.",
-// })
-//   .then((res) => {
-//     console.log(res);
-//   })
-//   .catch((err) => {
-//     console.log(err);
-//   });
-
-// sendSms({
-//   to: ["9625259527"],
-//   body: "this is a test message sent to 9625259527",
-// })
-//   .then((res) => {
-//     console.log(res);
-//   })
-//   .catch((err) => {
-//     console.log(err);
-//   });

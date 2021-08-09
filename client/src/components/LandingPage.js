@@ -5,7 +5,7 @@ import { Footer } from "./Elements";
 require("./styles/landingPage.scss");
 
 function LandingPage({ history }) {
-  const { user, setUser } = useContext(SiteContext);
+  const { user, setUser, setUserType } = useContext(SiteContext);
   useEffect(() => {
     fetch("/api/authUser")
       .then((res) => res.json())
@@ -27,8 +27,18 @@ function LandingPage({ history }) {
                 alt="Delivery pay logo"
               />
             </Link>
-            <Link to="/u/join">I am a Seller</Link>
-            <Link to="/u/join">I am a Buyer</Link>
+            <Link
+              to={user ? "/account/home" : "/u/join"}
+              onClick={() => setUserType("seller")}
+            >
+              I am a Seller
+            </Link>
+            <Link
+              to={user ? "/account/home" : "/u/join"}
+              onClick={() => setUserType("buyer")}
+            >
+              I am a Buyer
+            </Link>
           </div>
           <div className="path">
             <svg
@@ -70,6 +80,9 @@ function LandingPage({ history }) {
               protects you from being scammed when you want to buy or sell with
               someone you don't know.
             </p>
+            <div className="clas">
+              <Link to="/marketplace">Delivery Pay Marketplace</Link>
+            </div>
           </div>
           <img
             className="illustration"

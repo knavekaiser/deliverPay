@@ -11,7 +11,6 @@ const userModel = new Schema(
       type: String,
       trim: true,
       unique: true,
-      sparse: true,
     },
     balance: { type: Number, default: 0 },
     email: { type: String, unique: true, sparse: true },
@@ -73,6 +72,7 @@ const userModel = new Schema(
         reg: { type: String },
         files: [{ type: String }],
       },
+      amount: { type: Number },
     },
   },
   { timestamps: true }

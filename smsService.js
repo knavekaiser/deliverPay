@@ -1,12 +1,12 @@
-global.sendSms = ({ to, otp, body }) => {
+global.sendSms = ({ variables_values, to, otp, message }) => {
   const reqBody = {
     route: "dlt",
     sender_id: otp ? "DelOTP" : "DelPay",
-    message: body,
+    message,
+    variables_values,
     flash: 0,
     numbers: to.join(),
   };
-  console.log(reqBody);
   return fetch(`https://www.fast2sms.com/dev/bulkV2`, {
     method: "POST",
     headers: {

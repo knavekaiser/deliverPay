@@ -99,6 +99,21 @@
           font-size: 1.4rem;
           width: clamp(45ch, 90%, 75ch);
         }
+        .clas {
+          a {
+            background: white;
+            color: $blue;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            border: 2px solid white;
+            font-size: 1.1rem;
+            &:hover {
+              background: none;
+              color: white;
+            }
+          }
+        }
       }
       .illustration {
         max-width: 35vw;

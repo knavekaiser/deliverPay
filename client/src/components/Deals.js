@@ -464,27 +464,21 @@ const Chat = ({
         setOpen={() => history.push(`/account/deals/${userCard._id}`)}
       >
         <MilestoneForm
-          userType="buyer"
-          searchClient={userCard}
+          action="create"
+          client={userCard}
           onSuccess={(milestone) => {
-            if (milestone.milestone) {
-              history.push(`/account/deals/${userCard._id}`);
-            }
+            history.push(`/account/deals/${userCard._id}`);
             setMsg(
               <>
                 <button onClick={() => setMsg(null)}>Okay</button>
                 <div>
-                  {milestone.milestone ? <Succ_svg /> : <Err_svg />}
-                  {milestone.milestone && (
-                    <h4 className="amount">₹{milestone.milestone?.amount}</h4>
-                  )}
-                  <h4>{milestone.message}</h4>
+                  <Succ_svg />
+                  <h4 className="amount">₹{milestone?.amount}</h4>
+                  <h4>Milestone has been created</h4>
                 </div>
-                {milestone.milestone && (
-                  <Link to="/account/hold" onClick={() => setMsg(null)}>
-                    Check your Delivery pay Hold
-                  </Link>
-                )}
+                <Link to="/account/hold" onClick={() => setMsg(null)}>
+                  Check your Delivery pay Hold
+                </Link>
               </>
             );
           }}

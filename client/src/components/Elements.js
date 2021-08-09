@@ -5,11 +5,11 @@ import {
   useEffect,
   useContext,
 } from "react";
-import tick from "../tick.svg";
 import { SiteContext } from "../SiteContext";
-import tick_border from "../tick_border.svg";
 import { Modal } from "./Modal";
 import { Link, useHistory } from "react-router-dom";
+import { CartItem } from "./Marketplace";
+import Moment from "react-moment";
 require("./styles/elements.scss");
 
 export const Err_svg = () => {
@@ -693,8 +693,30 @@ export const Chev_down_svg = () => {
   );
 };
 
-export const Checkbox = ({ defaultValue, required, onChange }) => {
-  const [checked, setChecked] = useState(defaultValue);
+export const Tick = () => {
+  return (
+    <svg
+      className="tick"
+      xmlns="http://www.w3.org/2000/svg"
+      width="15.1"
+      height="10.8"
+      viewBox="0 0 15.1 10.8"
+    >
+      <path
+        id="Path_207"
+        data-name="Path 207"
+        d="M6.5,10.8,0,4.3,2.1,2.2,6.5,6.5,13,0l2.1,2.1Z"
+        fill="#2699fb"
+      />
+    </svg>
+  );
+};
+
+export const Checkbox = ({ defaultValue, value, required, onChange }) => {
+  const [checked, setChecked] = useState(!!defaultValue);
+  useEffect(() => {
+    setChecked(value);
+  }, [value]);
   return (
     <section className="checkbox">
       <div className="ticks" onClick={() => setChecked(!checked)}>
@@ -704,11 +726,28 @@ export const Checkbox = ({ defaultValue, required, onChange }) => {
           required={required}
           onChange={(e) => {
             setChecked(!checked);
-            onChange?.(e);
+            onChange?.(!checked);
           }}
         />
-        <img src={tick_border} />
-        {checked && <img src={tick} />}
+        <svg
+          className="border"
+          xmlns="http://www.w3.org/2000/svg"
+          width="30"
+          height="30"
+          viewBox="0 0 30 30"
+        >
+          <g
+            id="Rectangle_661"
+            data-name="Rectangle 661"
+            fill="none"
+            stroke="#7fc4fd"
+            strokeWidth="3"
+          >
+            <rect width="30" height="30" rx="4" stroke="none" />
+            <rect x="1.5" y="1.5" width="27" height="27" rx="2.5" fill="none" />
+          </g>
+        </svg>
+        {checked && <Tick />}
       </div>
     </section>
   );
@@ -730,6 +769,8 @@ export const Combobox = ({
       return options[defaultValue].label;
     } else if (typeof defaultValue === "object") {
       return defaultValue;
+    } else if (options.find((item) => item.value === defaultValue)) {
+      return options.find((item) => item.value === defaultValue).label;
     } else {
       return "";
     }
@@ -760,7 +801,6 @@ export const Combobox = ({
       <input
         ref={input}
         required={required}
-        data={data}
         value={value}
         onFocus={(e) => e.target.blur()}
         onChange={() => {}}
@@ -1010,7 +1050,7 @@ export const Paginaiton = ({
       <ul className="pages">
         {pages.length <= btns &&
           pages.map((item) => (
-            <li key={item} className={item === currentPage ? "active" : ""}>
+            <li key={item} className={item === +currentPage ? "active" : ""}>
               <button onClick={() => setPage(item)}>{item}</button>
             </li>
           ))}
@@ -1045,8 +1085,9 @@ export const Paginaiton = ({
 };
 
 export const Header = () => {
-  const { user, setUser } = useContext(SiteContext);
+  const { user, setUser, cart, setCart, userType } = useContext(SiteContext);
   const history = useHistory();
+  const [noti, setNoti] = useState(false);
   useEffect(() => {
     fetch("/api/authUser")
       .then((res) => res.json())
@@ -1061,7 +1102,74 @@ export const Header = () => {
       <Link className="logoLink" to="/">
         <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
       </Link>
+      <div className="links">
+        <Link to="/marketplace">Browse</Link>
+      </div>
       <div className="clas">
+        {userType === "buyer" && (
+          <Actions
+            className="cart"
+            icon={
+              <>
+                <img src="/cart.svg" />
+                {cart.length > 0 && (
+                  <span className="itemCount">
+                    {cart.reduce((a, c) => a + c.qty, 0)}
+                  </span>
+                )}
+              </>
+            }
+            clickable={true}
+            wrapperClassName="popupCart"
+          >
+            {cart.map(({ product, qty }, i) => (
+              <CartItem key={i} product={product} qty={qty} />
+            ))}
+            {cart.length > 0 && (
+              <li className="actions">
+                <Link to="/account/cart">View Cart</Link>
+                {
+                  // <Link to="/account/checkout">Place order</Link>
+                }
+              </li>
+            )}
+            {cart.length === 0 && <p className="placeholder">cart is empty</p>}
+          </Actions>
+        )}
+        {user && (
+          <Actions
+            icon={
+              <svg
+                id="bell"
+                xmlns="http://www.w3.org/2000/svg"
+                width="15.918"
+                height="16"
+                viewBox="0 0 15.918 16"
+              >
+                <path
+                  id="Path_1"
+                  data-name="Path 1"
+                  d="M15,14H10a2,2,0,0,1-4,0H1a.961.961,0,0,1-.9-.7,1.068,1.068,0,0,1,.3-1.1A4.026,4.026,0,0,0,2,9V6A6,6,0,0,1,14,6V9a4.026,4.026,0,0,0,1.6,3.2.947.947,0,0,1,.3,1.1A.961.961,0,0,1,15,14Z"
+                  transform="translate(-0.063)"
+                  fill="#fff"
+                  fillRule="evenodd"
+                />
+              </svg>
+            }
+            wrapperClassName="notiWrapper"
+            onClick={() => setNoti(true)}
+          >
+            {[...user.notifications].reverse().map((item, i) => {
+              return (
+                <li key={i}>
+                  <Moment format="hh:mm">{item.createdAt}</Moment>
+                  <p className="title">{item.title}</p>
+                  <p className="body">{item.body}</p>
+                </li>
+              );
+            })}
+          </Actions>
+        )}
         {user ? (
           <Link to="/account/home">Dashboard</Link>
         ) : (
@@ -1222,7 +1330,7 @@ export const Actions = ({
   const [style, setStyle] = useState({});
   const buttonRef = useRef();
   useLayoutEffect(() => {
-    const { height, y, width, x } = buttonRef.current.getBoundingClientRect();
+    const { height, y, width, x } = buttonRef.current?.getBoundingClientRect();
     setStyle({
       position: "fixed",
       top: height + y + 4,
@@ -1232,9 +1340,11 @@ export const Actions = ({
   return (
     <div className={`actions ${className || ""}`}>
       <button
+        type="button"
         className="btn"
         ref={buttonRef}
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           setOpen(true);
           onClick?.();
         }}
@@ -1250,7 +1360,8 @@ export const Actions = ({
       >
         <ul
           className={wrapperClassName}
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             !clickable && setOpen(false);
           }}
         >
@@ -1260,21 +1371,111 @@ export const Actions = ({
     </div>
   );
 };
+export const Tabs = ({ basepath, tabs }) => {
+  const history = useHistory();
+  return (
+    <ul className="tabs">
+      {tabs.map((item, i) => (
+        <Link
+          to={basepath + item.path}
+          key={i}
+          onClick={() => item.onClick?.()}
+        >
+          <li
+            className={
+              history.location.pathname.startsWith(basepath + item.path)
+                ? "active"
+                : ""
+            }
+          >
+            {item.label}
+          </li>
+        </Link>
+      ))}
+    </ul>
+  );
+};
 
-export const calculatePrice = (product) => {
-  const discountPrice = product.price;
-  if (product.discount?.amount) {
+export const User = ({ user }) => {
+  return (
+    <div className="profile">
+      <img src={user.profileImg || "/profile-user.jpg"} />
+      <p className="name">
+        {user.name || user.firstName + " " + user.lastName}
+        <span className="contact">{user.phone}</span>
+      </p>
+    </div>
+  );
+};
+
+export const calculatePrice = ({ product, gst, discount }) => {
+  let finalPrice = product.price;
+  if (gst?.verified) {
+    finalPrice += product.price * ((product.gst || gst.amount) / 100);
+  }
+  if (gst === true) {
+    finalPrice += product.price * (product.gst / 100);
+  }
+  finalPrice *= 1.1;
+  if (discount !== false && product.discount?.amount) {
     const { type, amount } = product.discount;
     if (type === "flat") {
-      discountPrice = product.price - amount;
+      finalPrice -= amount;
     } else if (type === "percent") {
-      discountPrice = product.price - (product.price / 100) * amount;
+      finalPrice *= amount / 100;
     }
   }
-  return discountPrice;
+  return +finalPrice.toFixed(2);
+};
+export const calculateDiscount = (product) => {
+  const { discount, price } = product;
+  if (discount?.amount) {
+    if (discount.type === "flat") {
+      return +(+discount.amount).toFixed(2);
+    } else if (discount.type === "percent") {
+      return +((+price / 100) * discount.amount).toFixed(2);
+    } else {
+      return 0;
+    }
+  } else {
+    return null;
+  }
 };
 export const SS = {
   set: (key, value) => sessionStorage.setItem(key, value),
-  get: (key) => sessionStorage.getItem(key) || "",
+  get: (key) => sessionStorage.getItem(key),
   remove: (key) => sessionStorage.removeItem(key),
+};
+export const LS = {
+  set: (key, value) => localStorage.setItem(key, value),
+  get: (key) => localStorage.getItem(key),
+  remove: (key) => localStorage.removeItem(key),
+};
+export const addToCart = (prev, product) => {
+  if (prev.some((item) => item.product._id === product._id)) {
+    return prev.map((item) => {
+      if (item.product._id === product._id) {
+        return {
+          ...item,
+          qty: item.qty + 1,
+        };
+      } else {
+        return item;
+      }
+    });
+  } else {
+    return [...prev, { product, qty: 1 }];
+  }
+};
+
+export const Tip = ({ className, children }) => {
+  return (
+    <Actions
+      className={`${className || ""} tip`}
+      wrapperClassName="tipWrapper"
+      icon={<img src="/help.png" />}
+    >
+      {children}
+    </Actions>
+  );
 };

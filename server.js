@@ -13,6 +13,7 @@ require("./models/payment");
 require("./models/dispute");
 require("./models/chat");
 require("./models/support");
+require("./models/product");
 require("dotenv").config();
 require("./mailService");
 require("./smsService");
@@ -112,6 +113,7 @@ require("./routes/disputes.js");
 require("./routes/products.js");
 require("./routes/chats.js");
 require("./routes/support.js");
+require("./routes/orders.js");
 
 app.post("/api/contactUsRequest", (req, res) => {
   const { name, email, phone, message } = req.body;

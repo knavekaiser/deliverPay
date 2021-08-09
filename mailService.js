@@ -16,7 +16,7 @@ global.sendEmail = (message) => {
       let info = await transporter.sendMail({
         from: {
           name: "Delivery Pay",
-          address: "support@deliverypay.com",
+          address: "support@deliverypay.in",
         },
         ...message,
       });
