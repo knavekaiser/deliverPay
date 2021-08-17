@@ -15,8 +15,12 @@
     align-items: center;
     grid-gap: 1rem;
     // justify-content: space-between;
-    .logo {
+    .logo,
+    .logo_small {
       max-height: 3rem;
+    }
+    .logo_small {
+      display: none;
     }
     & .links {
       a {
@@ -230,6 +234,17 @@
   .generic {
     header {
       padding: 0.75rem 1rem;
+      .logo {
+        display: none;
+      }
+      .logo_small {
+        display: block;
+      }
+      .links {
+        display: none;
+        .home {
+        }
+      }
     }
     .content {
       padding: 1rem;

@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import "./index.scss";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { Provider, SiteContext } from "./SiteContext";
+import { Provider } from "./SiteContext";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
 class ErrorBoundary extends React.Component {

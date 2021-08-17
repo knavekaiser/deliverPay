@@ -152,45 +152,7 @@ const Wallet = ({ history, location, match }) => {
         setWithdrawMoneyFail(true);
       });
   };
-  const displayCheckoutForm = (card) => {
-    setLoading(true);
-    fetch("/api/createAddMoneyOrder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: addMoneyAmount }),
-    })
-      .then((res) => res.json())
-      .then(({ order, key }) => {
-        setLoading(false);
-        if (order) {
-          handleOrder(order, key, card);
-        } else {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Error happend. Please try again.</h4>
-              </div>
-            </>
-          );
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
-        setMsg(
-          <>
-            <button onClick={() => setMsg(null)}>Okay</button>
-            <div>
-              <Err_svg />
-              <h4>Error happend. Make sure you're online.</h4>
-            </div>
-          </>
-        );
-      });
-  };
-  const handleOrder = (order, key, method) => {
+  const handleOrder = (order, key) => {
     const Razorpay = window.Razorpay;
     if (Razorpay) {
       const options = {
@@ -199,7 +161,7 @@ const Wallet = ({ history, location, match }) => {
         currency: order.currency,
         accept_partial: false,
         name: `${user.firstName} ${user.lastName}`,
-        description: "add money to wallet",
+        description: "Add money to Delivery Pay wallet",
         image: "/logo_big.jpg",
         order_id: order.id,
         handler: (res) => {
@@ -243,35 +205,12 @@ const Wallet = ({ history, location, match }) => {
         },
         modal: { ondismiss: () => setLoading(false) },
         theme: { color: "#336cf9" },
-        customer: {
-          name: method.name || method.nameOnCard,
-          contact: user.phone,
-          email: user.email,
-        },
         notify: {
           sms: true,
           email: true,
         },
         reminder_enable: true,
-        options: {
-          checkout: {
-            prefill: {
-              ...(method.__t === "BankCard" && {
-                method: "card",
-                "card[name]": method.nameOnCard,
-                "card[number]": +method.cardNumber,
-                "card[expiry]": method.exp,
-                "card[cvv]": +method.cvv,
-              }),
-              ...(method.__t === "BankAccount" && {
-                method: "netBanking",
-                bank: "HDCF",
-              }),
-            },
-          },
-        },
       };
-      console.log(options);
       const rzp1 = new Razorpay(options);
       rzp1.on("payment.failed", (res) => {
         setAddMoneyFailed(true);
@@ -282,7 +221,41 @@ const Wallet = ({ history, location, match }) => {
   };
   const addMoneySubmit = (e) => {
     e.preventDefault();
-    history.push("/account/wallet/addMoney");
+    fetch("/api/createAddMoneyOrder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: addMoneyAmount }),
+    })
+      .then((res) => res.json())
+      .then(({ order, key }) => {
+        setLoading(false);
+        if (order) {
+          handleOrder(order, key);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Error happend. Please try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Error happend. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
   };
   useEffect(() => {
     loadScript("https://checkout.razorpay.com/v1/checkout.js");
@@ -337,9 +310,9 @@ const Wallet = ({ history, location, match }) => {
         <div className="balance">
           <div className="currentBalance">
             <p className="label">Wallet Balance</p>
-            <h1>₹ {balance}</h1>
+            <h1>₹ {balance.fix()}</h1>
             <p className="updateTime">
-              <Moment format="ddd, DD MM YYYY">{new Date()}</Moment>
+              <Moment format="ddd, DD MMM YYYY">{new Date()}</Moment>
             </p>
           </div>
           <Graph data={monthlyBalance} />
@@ -360,40 +333,42 @@ const Wallet = ({ history, location, match }) => {
               <button>Proceed</button>
             </form>
           </div>
-          <div className="withdraw money">
-            <p className="label">Withdraw</p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (withdrawMoneyAmount > balance) {
-                  setMsg(
-                    <>
-                      <button onClick={() => setMsg(null)}>Okay</button>
-                      <div>
-                        <Err_svg />
-                        <h4>
-                          Enter an amount less or equal to currect balance.
-                        </h4>
-                      </div>
-                    </>
-                  );
-                } else {
-                  history.push("/account/wallet/withdrawMoney");
-                }
-              }}
-            >
-              <input
-                type="number"
-                step="0.01"
-                min="10"
-                placeholder="Enter ammount"
-                required={true}
-                value={withdrawMoneyAmount}
-                onChange={(e) => setWithdrawMoneyAmount(e.target.value)}
-              />
-              <button>Proceed</button>
-            </form>
-          </div>
+          {
+            //   <div className="withdraw money">
+            //   <p className="label">Withdraw</p>
+            //   <form
+            //     onSubmit={(e) => {
+            //       e.preventDefault();
+            //       if (withdrawMoneyAmount > balance) {
+            //         setMsg(
+            //           <>
+            //             <button onClick={() => setMsg(null)}>Okay</button>
+            //             <div>
+            //               <Err_svg />
+            //               <h4>
+            //                 Enter an amount less or equal to currect balance.
+            //               </h4>
+            //             </div>
+            //           </>
+            //         );
+            //       } else {
+            //         history.push("/account/wallet/withdrawMoney");
+            //       }
+            //     }}
+            //   >
+            //     <input
+            //       type="number"
+            //       step="0.01"
+            //       min="10"
+            //       placeholder="Enter ammount"
+            //       required={true}
+            //       value={withdrawMoneyAmount}
+            //       onChange={(e) => setWithdrawMoneyAmount(e.target.value)}
+            //     />
+            //     <button>Proceed</button>
+            //   </form>
+            // </div>
+          }
         </div>
         <div className="rewards">
           <p className="label">Rewards</p>
@@ -491,28 +466,6 @@ const Wallet = ({ history, location, match }) => {
         <Cards paymentMethods={user.paymentMethods} />
         <Transactions />
       </div>
-      <Modal
-        className="addMoney"
-        head={true}
-        label="Add Money"
-        setOpen={() => {
-          history.push("/account/wallet");
-        }}
-        open={location.pathname.startsWith("/account/wallet/addMoney")}
-        style={
-          loading
-            ? {
-                filter: "grayscale(.4)",
-                pointerEvents: "none",
-              }
-            : {}
-        }
-      >
-        <PaymentOption
-          label="Choose a payment method."
-          action={displayCheckoutForm}
-        />
-      </Modal>
       <Modal
         className="paymentMethodsForm"
         head={true}
@@ -729,7 +682,9 @@ const Wallet = ({ history, location, match }) => {
 };
 
 const Graph = ({ data }) => {
-  const max = data.sort((a, b) => (a.balance < b.balance ? 1 : -1))[0]?.balance;
+  const max =
+    data.sort((a, b) => (a.balance < b.balance ? 1 : -1))[0]?.balance?.fix() ||
+    0;
   return (
     <div className="graph">
       <p className="label">Analytics</p>
@@ -776,32 +731,36 @@ const PaymentOption = ({ label, action }) => {
   );
 };
 const PaymentMethodForm = ({ onSuccess }) => {
-  const [type, setType] = useState("upi");
+  const [type, setType] = useState("netBanking");
   return (
     <div className="addPaymentMethod">
-      <section className="paymentOption">
-        <div className="header" onClick={() => setType("upi")}>
-          <div className={`redial ${type === "upi" && "active"}`}>
-            <div className="fill" />
-          </div>
-          <label>
-            UPI <img src="/payment_upi.png" />
-          </label>
-        </div>
-        {type === "upi" && <UpiForm />}
-      </section>
-      <section className="paymentOption">
-        <div className="header" onClick={() => setType("bankCard")}>
-          <div className={`redial ${type === "bankCard" && "active"}`}>
-            <div className="fill" />
-          </div>
-          <label>
-            Add Debit/Credit Card <img src="/payment_visa.png" />{" "}
-            <img src="/payment_mc.png" />
-          </label>
-        </div>
-        {type === "bankCard" && <BankCardForm onSuccess={onSuccess} />}
-      </section>
+      {
+        //   <section className="paymentOption">
+        //   <div className="header" onClick={() => setType("upi")}>
+        //     <div className={`redial ${type === "upi" && "active"}`}>
+        //       <div className="fill" />
+        //     </div>
+        //     <label>
+        //       UPI <img src="/payment_upi.png" />
+        //     </label>
+        //   </div>
+        //   {type === "upi" && <UpiForm />}
+        // </section>
+      }
+      {
+        //   <section className="paymentOption">
+        //   <div className="header" onClick={() => setType("bankCard")}>
+        //     <div className={`redial ${type === "bankCard" && "active"}`}>
+        //       <div className="fill" />
+        //     </div>
+        //     <label>
+        //       Add Debit/Credit Card <img src="/payment_visa.png" />{" "}
+        //       <img src="/payment_mc.png" />
+        //     </label>
+        //   </div>
+        //   {type === "bankCard" && <BankCardForm onSuccess={onSuccess} />}
+        // </section>
+      }
       <section className="paymentOption">
         <div className="header" onClick={() => setType("netBanking")}>
           <div className={`redial ${type === "netBanking" && "active"}`}>
@@ -1020,6 +979,8 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
   const [bank, setBank] = useState(prefill?.bank || "");
   const [name, setName] = useState(prefill?.name || "");
   const [ifsc, setIfsc] = useState(prefill?.ifsc || "");
+  const [city, setCity] = useState(prefill?.city || "");
+  const [type, setType] = useState(prefill?.type || "");
   const [msg, setMsg] = useState(null);
   const [accountNumber, setAccountNumber] = useState(
     prefill?.accountNumber || ""
@@ -1035,6 +996,8 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
         bank,
         ifsc,
         accountNumber,
+        city,
+        accountType: type,
         ...(prefill && { _id: prefill._id }),
       }),
     })
@@ -1091,14 +1054,6 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
       <section className="inputs">
         <input
           type="text"
-          name="bank"
-          placeholder="Bank"
-          value={bank}
-          onChange={(e) => setBank(e.target.value)}
-          required={true}
-        />
-        <input
-          type="text"
           name="name"
           placeholder="Full name"
           value={name}
@@ -1107,10 +1062,26 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
         />
         <input
           type="text"
-          name="ifsc"
-          placeholder="IFSC"
-          value={ifsc}
-          onChange={(e) => setIfsc(e.target.value)}
+          name="bank"
+          placeholder="Bank"
+          value={bank}
+          onChange={(e) => setBank(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="city"
+          placeholder="City"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="type"
+          placeholder="Account type ie. Savings / Current"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
           required={true}
         />
         <input
@@ -1119,6 +1090,14 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
           placeholder="Account Number"
           value={accountNumber}
           onChange={(e) => setAccountNumber(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="ifsc"
+          placeholder="IFSC"
+          value={ifsc}
+          onChange={(e) => setIfsc(e.target.value)}
           required={true}
         />
       </section>
@@ -1152,9 +1131,15 @@ export const BankAccount = ({ account, onClick }) => {
       onClick={() => onClick?.(account)}
     >
       <p className="bank">{account.bank}</p>
+      {
+        // <p className="accountType">{account.type}</p>
+      }
       <p className="name">{account.name}</p>
       <p className="accountNumber">{account.accountNumber}</p>
       <p className="ifsc">{account.ifsc}</p>
+      {
+        // <p className="city">{account.city}</p>
+      }
     </div>
   );
 };
@@ -1454,7 +1439,7 @@ const SingleTransaction = ({ transaction }) => {
   return (
     <li className="transaction">
       {icon}
-      <p className="amount">₹{Math.abs(transaction.amount)}</p>
+      <p className="amount">₹{Math.abs(transaction.amount.fix())}</p>
     </li>
   );
 };

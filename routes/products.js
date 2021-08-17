@@ -84,6 +84,31 @@ app.post(
     }
   }
 );
+app.post(
+  "/api/addManyProducts",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const newProducts =
+      req.body.items?.map(
+        (item) => new Product({ ...item, user: req.user._id })
+      ) || [];
+    if (newProducts.length) {
+      Product.insertMany(newProducts, { ordered: false })
+        .then((dbRes) => {
+          res.json({ code: "ok", products: dbRes });
+        })
+        .catch((err) => {
+          console.log(err, "err");
+        });
+    } else {
+      res.status(400).json({
+        code: 400,
+        message:
+          "items is required. Make sure data structure of all the products are currect",
+      });
+    }
+  }
+);
 app.patch(
   "/api/editProduct",
   passport.authenticate("userPrivate"),
@@ -125,7 +150,6 @@ app.delete(
         _id: { $in: _ids },
         user: req.user._id,
       }).then((deleted) => {
-        console.log(deleted);
         if (deleted) {
           res.json({ code: "ok", product: deleted });
         } else {
@@ -175,6 +199,7 @@ app.get("/api/getProducts", (req, res) => {
     {
       $set: {
         sellerGst: { $first: "$sellerGst.gst" },
+        seller_id: { $first: "$sellerGst._id" },
       },
     },
     {
@@ -192,9 +217,10 @@ app.get("/api/getProducts", (req, res) => {
           },
         },
         "user.gst": "$sellerGst",
+        "user._id": "$seller_id",
       },
     },
-    { $unset: "sellerGst" },
+    { $unset: ["sellerGst", "seller_id"] },
     { $sort: sortOrder },
     {
       $facet: {
@@ -215,6 +241,9 @@ app.get("/api/getProducts", (req, res) => {
         seller: await User.findOne(
           { _id: seller },
           "firstName lastName phone email profileImg"
+        ),
+        categories: await Category.findOne({ user: seller }).then(
+          (dbRes) => dbRes?.categories || null
         ),
       }),
     });
@@ -242,7 +271,14 @@ app.post(
   passport.authenticate("userPrivate"),
   (req, res) => {
     const { cart } = req.body;
-    if (cart.length) {
+    if (Array.isArray([cart])) {
+      if (!cart.length) {
+        res.json({
+          code: "ok",
+          carts: [],
+        });
+        return;
+      }
       Product.aggregate([
         {
           $match: {
@@ -287,6 +323,7 @@ app.post(
             "seller.profileImg": 1,
             "seller.gst": 1,
             "seller.rating": 1,
+            "seller.shopInfo": 1,
           },
         },
         {

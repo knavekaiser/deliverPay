@@ -215,6 +215,7 @@ io.on("connection", async (socket) => {
     async (err, decoded) => {
       if (decoded) {
         socket.on("joinRooms", async ({ rooms }) => {
+          socket.join(decoded.sub.toString());
           rooms.forEach((room) => {
             socket.join(room);
           });
@@ -233,14 +234,29 @@ io.on("connection", async (socket) => {
               socket.disconnect();
             });
         });
-        socket.on("messageToServer", async ({ rooms, message }) => {
-          const [userBlockList, clientBlockList] = await Promise.all([
-            User.findOne({ _id: decoded.sub }, "blockList").then(
-              (dbRes) => dbRes?.blockList
-            ),
-            User.findOne({ _id: message.to }, "blockList").then(
-              (dbRes) => dbRes?.blockList
-            ),
+        socket.on("messageToServer", async ({ rooms, message, newChat }) => {
+          const [
+            { userBlockList, userProfile },
+            { clientBlockList, clientProfile },
+          ] = await Promise.all([
+            User.findOne(
+              { _id: decoded.sub },
+              `${
+                newChat && "firstName lastName profileImg phone email"
+              } blockList`
+            ).then((dbRes) => ({
+              userBlockList: dbRes?.blockList,
+              ...(newChat && { userProfile: { ...dbRes._doc } }),
+            })),
+            User.findOne(
+              { _id: message.to },
+              `${
+                newChat && "firstName lastName profileImg phone email"
+              } blockList`
+            ).then((dbRes) => ({
+              clientBlockList: dbRes?.blockList,
+              ...(newChat && { clientProfile: { ...dbRes._doc } }),
+            })),
           ]);
           const blocked =
             clientBlockList.some(
@@ -256,16 +272,90 @@ io.on("connection", async (socket) => {
                 ...message,
                 from: decoded.sub,
               },
-            }).then((chatRes) => {
+            }).then(async (chatRes) => {
               if (chatRes) {
-                notify(
-                  message.to,
-                  JSON.stringify({
-                    title: "New message!",
-                    body: message.text,
-                  }),
-                  "User"
-                );
+                if (newChat) {
+                  const chat = await Chat.aggregate([
+                    {
+                      $match: {
+                        user: clientProfile._id,
+                        client: ObjectId(decoded.sub),
+                      },
+                    },
+                    {
+                      $lookup: {
+                        from: "users",
+                        as: "clientProfile",
+                        let: {
+                          client: "$client",
+                        },
+                        pipeline: [
+                          { $match: { $expr: { $eq: ["$$client", "$_id"] } } },
+                          {
+                            $project: {
+                              firstName: 1,
+                              lastName: 1,
+                              phone: 1,
+                              email: 1,
+                              profileImg: 1,
+                              address: 1,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                    {
+                      $lookup: {
+                        from: "chats",
+                        as: "clientChat",
+                        let: { client: "$client", user: "$user" },
+                        pipeline: [
+                          {
+                            $match: {
+                              $expr: {
+                                $and: [
+                                  { $eq: ["$$client", "$user"] },
+                                  { $eq: ["$$user", "$client"] },
+                                ],
+                              },
+                            },
+                          },
+                          { $project: { lastSeen: 1 } },
+                        ],
+                      },
+                    },
+                    {
+                      $set: {
+                        client: {
+                          $mergeObjects: [
+                            { $first: "$clientProfile" },
+                            { _id: "$client" },
+                          ],
+                        },
+                      },
+                    },
+                    {
+                      $set: {
+                        "client.lastSeen": { $first: "$clientChat.lastSeen" },
+                      },
+                    },
+                    { $unset: ["clientProfile", "clientChat"] },
+                  ]).then((dbRes) =>
+                    dbRes.map((item) => ({
+                      ...item,
+                      status: "",
+                      userBlock: userBlockList?.some(
+                        (_id) => _id.toString() === clientProfile._id.toString()
+                      ),
+                      clientBlock: clientBlockList?.some(
+                        (_id) => _id.toString() === decoded.sub.toString()
+                      ),
+                    }))
+                  );
+                  io.to(clientProfile._id.toString()).emit("newChat", {
+                    chat: chat[0],
+                  });
+                }
               } else {
                 socket.emit("sendFail", { err: "Room does not exists" });
               }
@@ -276,8 +366,17 @@ io.on("connection", async (socket) => {
             });
           }
         });
+        socket.on("clientAway", (payload) => {
+          notify(
+            payload.to,
+            JSON.stringify({
+              title: "New message!",
+              body: payload.text,
+            }),
+            "User"
+          );
+        });
       } else {
-        console.log("could not verify for socket");
         socket.disconnect();
       }
     }

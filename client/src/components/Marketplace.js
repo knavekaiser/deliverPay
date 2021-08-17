@@ -18,6 +18,7 @@ import {
   Header,
   Footer,
   Tip,
+  Cart_svg,
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import { SiteContext } from "../SiteContext";
@@ -31,6 +32,7 @@ require("./styles/marketplace.scss");
 
 const Marketplace = ({ history, location, match }) => {
   const { userType } = useContext(SiteContext);
+  const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState(
@@ -51,10 +53,11 @@ const Marketplace = ({ history, location, match }) => {
   });
   const [products, setProducts] = useState([]);
   const [msg, setMsg] = useState(null);
+  const [category, setCategory] = useState("");
   const [seller, setSeller] = useState(
     queryString.parse(location.search).seller
   );
-  const [sellerDetail, setsellerDetail] = useState(null);
+  const [sellerDetail, setSellerDetail] = useState(null);
   useEffect(() => {
     fetch(`/api/getProducts${location.search}`)
       .then((res) => res.json())
@@ -63,9 +66,12 @@ const Marketplace = ({ history, location, match }) => {
           setTotal(data.total);
           setProducts(data.products);
           if (data.seller) {
-            setsellerDetail(data.seller);
+            setSellerDetail(data.seller);
+            if (data.categories) {
+              setCategories(data.categories);
+            }
           } else {
-            setsellerDetail(null);
+            setSellerDetail(null);
           }
         } else {
           setMsg(
@@ -105,126 +111,159 @@ const Marketplace = ({ history, location, match }) => {
           sort: sort.column,
           order: sort.order,
           ...(type && { type }),
+          ...(category && { category }),
         }).toString(),
     });
-  }, [perPage, page, search, sort, seller, type]);
+  }, [perPage, page, search, sort, seller, type, category]);
   return (
     <div className="generic marketplace">
       <Header />
       {userType === "seller" && <Redirect to="/account/myShop/products" />}
+      <div style={{ display: "none" }}>
+        <X_svg />
+      </div>
+      <div className="benner">
+        <h1>Delivery Pay Marketplace</h1>
+      </div>
       <div className="content">
-        <div style={{ display: "none" }}>
-          <X_svg />
-        </div>
-        <div className="benner">
-          <h1>Delivery Pay Marketplace</h1>
-        </div>
-        <div className="filters">
-          <section>
-            <label>Total:</label>
-            {total}
-          </section>
-          <section>
-            <label>Per Page:</label>
-            <Combobox
-              defaultValue={0}
-              options={[
-                { label: "20", value: 20 },
-                { label: "30", value: 30 },
-                { label: "50", value: 50 },
-              ]}
-              onChange={(e) => setPerPage(e.value)}
-            />
-          </section>
-          <section className="search">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="23"
-              height="23"
-              viewBox="0 0 23 23"
-            >
-              <path
-                id="Icon_ionic-ios-search"
-                data-name="Icon ionic-ios-search"
-                d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
-                transform="translate(-4.5 -4.493)"
-                fill="#707070"
-                opacity="0.74"
-              />
-            </svg>
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-              }}
-              placeholder="Search for products"
-            />
-            {search && (
-              <button onClick={() => setSearch("")}>
-                <X_svg />
-              </button>
-            )}
-          </section>
-          <section className="type">
-            <label>Type:</label>
-            <Combobox
-              defaultValue={type}
-              options={[
-                { label: "All", value: "" },
-                { label: "Product", value: "product" },
-                { label: "Service", value: "service" },
-                { label: "Other", value: "other" },
-              ]}
-              onChange={(e) => setType(e.value)}
-            />
-          </section>
-          <section className="sort">
-            <label>Sort by:</label>
-            <Combobox
-              defaultValue={0}
-              options={[
-                {
-                  label: "popularity",
-                  value: { column: "popularity", order: "dsc" },
-                },
-                {
-                  label: "Price high-low",
-                  value: { column: "price", order: "dsc" },
-                },
-                {
-                  label: "Price low-high",
-                  value: { column: "price", order: "asc" },
-                },
-              ]}
-              onChange={(e) => setSort(e.value)}
-            />
-          </section>
-        </div>
-        {sellerDetail && (
-          <div className="sellerDetail">
-            Only showing products from{" "}
-            <div className="profile">
-              <img src={sellerDetail.profileImg || "/profile-user.jpg"} />
-              <p className="name">
-                {sellerDetail.firstName} {sellerDetail.lastName}
-                <span className="contact">{sellerDetail.phone}</span>
-              </p>
-            </div>
-            <button className="close" onClick={() => setSeller(null)}>
-              <X_svg />
-            </button>
+        <div className="sidebar">
+          <div className="categories">
+            <p className="label">
+              Categories{" "}
+              {category && (
+                <button className="clear" onClick={() => setCategory("")}>
+                  <X_svg />
+                </button>
+              )}
+            </p>
+            <ul>
+              {categories.map((item) => (
+                <li
+                  key={item}
+                  className={item === category ? "active" : ""}
+                  onClick={() => setCategory(item)}
+                >
+                  {item}
+                </li>
+              ))}
+              {categories.length === 0 && (
+                <li className="placeholder">No category found.</li>
+              )}
+            </ul>
           </div>
-        )}
-        <div className={`products ${products.length === 0 ? "empty" : ""}`}>
-          {products.map((item) => (
-            <Product key={item._id} data={item} />
-          ))}
-          {products.length === 0 && (
-            <div className="placeholder">
-              <img src="/open_box.png" />
-              <p>No Product Found</p>
+        </div>
+        <div className="mainContent">
+          {sellerDetail && (
+            <div className="sellerDetail">
+              Products from{" "}
+              <div className="profile">
+                <img src={sellerDetail.profileImg || "/profile-user.jpg"} />
+                <p className="name">
+                  {sellerDetail.firstName} {sellerDetail.lastName}
+                  <span className="contact">{sellerDetail.phone}</span>
+                </p>
+              </div>
+              {
+                //   <button className="close" onClick={() => setSeller(null)}>
+                //   <X_svg />
+                // </button>
+              }
             </div>
           )}
+          <div className="filters">
+            {
+              //   <section>
+              //   <label>Total:</label>
+              //   {total}
+              // </section>
+            }
+            <section>
+              <label>Per Page:</label>
+              <Combobox
+                defaultValue={0}
+                options={[
+                  { label: "20", value: 20 },
+                  { label: "30", value: 30 },
+                  { label: "50", value: 50 },
+                ]}
+                onChange={(e) => setPerPage(e.value)}
+              />
+            </section>
+            <section className="search">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="23"
+                height="23"
+                viewBox="0 0 23 23"
+              >
+                <path
+                  id="Icon_ionic-ios-search"
+                  data-name="Icon ionic-ios-search"
+                  d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
+                  transform="translate(-4.5 -4.493)"
+                  fill="#707070"
+                  opacity="0.74"
+                />
+              </svg>
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                }}
+                placeholder="Search for products or services"
+              />
+              {search && (
+                <button onClick={() => setSearch("")}>
+                  <X_svg />
+                </button>
+              )}
+            </section>
+            <section className="type">
+              <label>Type:</label>
+              <Combobox
+                defaultValue={type}
+                options={[
+                  { label: "All", value: "" },
+                  { label: "Product", value: "product" },
+                  { label: "Service", value: "service" },
+                  { label: "Other", value: "other" },
+                ]}
+                onChange={(e) => setType(e.value)}
+              />
+            </section>
+            <section className="sort">
+              <label>Sort by:</label>
+              <Combobox
+                defaultValue={0}
+                options={[
+                  {
+                    label: "popularity",
+                    value: { column: "popularity", order: "dsc" },
+                  },
+                  {
+                    label: "Price high-low",
+                    value: { column: "price", order: "dsc" },
+                  },
+                  {
+                    label: "Price low-high",
+                    value: { column: "price", order: "asc" },
+                  },
+                ]}
+                onChange={(e) => setSort(e.value)}
+              />
+            </section>
+          </div>
+          <div className={`products ${products.length === 0 ? "empty" : ""}`}>
+            {products.map((item) => (
+              <Product key={item._id} data={item} />
+            ))}
+            {products.length === 0 && (
+              <div className="placeholder">
+                <img src="/open_box.png" />
+                <p>No Product Found</p>
+              </div>
+            )}
+          </div>
         </div>
         <Modal className="msg" open={msg}>
           {msg}
@@ -236,7 +275,7 @@ const Marketplace = ({ history, location, match }) => {
 };
 
 const Product = ({ data }) => {
-  const { setCart } = useContext(SiteContext);
+  const { user, userType, setCart } = useContext(SiteContext);
   let finalPrice = calculatePrice({ product: data, gst: data.user?.gst });
   return (
     <div className="product">
@@ -247,8 +286,9 @@ const Product = ({ data }) => {
       </Link>
       <div className="detail">
         <h3>{data.name}</h3>
+        <p className="dscr">{data.dscr}</p>
         <div className="price">
-          <span className="symbol">₹</span>
+          <span className="symbol">₹ </span>
           {finalPrice}{" "}
           {finalPrice !==
             calculatePrice({
@@ -267,12 +307,16 @@ const Product = ({ data }) => {
         </div>
       </div>
       <div className="actions">
+        {userType === "buyer" && data?.user._id === user?._id && (
+          <p className="note">Can't buy product from self.</p>
+        )}
         <button
+          disabled={!data.available || data?.user._id === user?._id}
           onClick={() => {
             setCart((prev) => addToCart(prev, data));
           }}
         >
-          Add to cart
+          <Cart_svg />
         </button>
       </div>
     </div>
@@ -280,7 +324,7 @@ const Product = ({ data }) => {
 };
 
 export const SingleProduct = ({ match }) => {
-  const { setCart } = useContext(SiteContext);
+  const { user, setCart, userType } = useContext(SiteContext);
   const [product, setProduct] = useState(null);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
@@ -367,22 +411,37 @@ export const SingleProduct = ({ match }) => {
             }
             <div className="seller">
               <label>Being sold by:</label>
-              <div className="profile">
-                <img src={product.user.profileImg || "/profile-user.jpg"} />
-                <p className="name">
-                  {product.user.firstName} {product.user.lastName}{" "}
-                  <span className="contact">{product.user.phone}</span>
-                </p>
-              </div>
+              <Link to={`/marketplace?seller=${product.user._id}`}>
+                <div className="profile">
+                  <img src={product.user.profileImg || "/profile-user.jpg"} />
+                  <p className="name">
+                    {product.user.firstName} {product.user.lastName}{" "}
+                    <span className="contact">{product.user.phone}</span>
+                  </p>
+                </div>
+              </Link>
             </div>
             <div className="actions">
               <button
+                disabled={
+                  !product.available ||
+                  userType === "seller" ||
+                  product.user?._id === user?._id
+                }
                 onClick={() => {
                   setCart((prev) => addToCart(prev, product));
                 }}
               >
                 Add to Cart
               </button>
+              {userType === "seller" && product?.user._id !== user?._id && (
+                <p className="note">
+                  Switch to buyer profile to buy this product.
+                </p>
+              )}
+              {userType === "buyer" && product?.user._id === user?._id && (
+                <p className="note">Can't buy product from self.</p>
+              )}
             </div>
           </div>
           <Modal className="msg" open={msg}>
@@ -452,6 +511,37 @@ const ImageView = ({ img }) => {
           });
         }
       }}
+      onTouchStart={(e) => {
+        document.querySelector("body").style.overflow = "hidden";
+        setApplyStyle(true);
+      }}
+      onTouchEnd={(e) => {
+        document.querySelector("body").style.overflow = "auto";
+        setApplyStyle(false);
+      }}
+      onTouchMove={(e) => {
+        if (img) {
+          const x =
+            Math.abs(
+              Math.round(
+                (e.touches[0].clientX - boundingBody.x) /
+                  (boundingBody.width / 100)
+              )
+            ) * 0.65;
+          const y =
+            Math.round(
+              (e.touches[0].clientY - boundingBody.y) /
+                (boundingBody.height / 100)
+            ) * 0.65;
+          setStyle({
+            transform: `scale(2) translateY(${Math.max(
+              30 + -y,
+              -30
+            )}%) translateX(${Math.max(30 + -x, -30)}%)`,
+            transition: "none",
+          });
+        }
+      }}
       onMouseEnter={() => setApplyStyle(true)}
       onMouseLeave={() => setApplyStyle(false)}
     >
@@ -469,7 +559,6 @@ export const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [carts, setCarts] = useState(null);
   const [msg, setMsg] = useState(null);
-
   useEffect(() => {
     setLoading(true);
     fetch("/api/getCartDetail", {
@@ -517,6 +606,7 @@ export const Cart = () => {
               />
             ) : null
           )}
+          {carts?.length === 0 && <p>Cart is empty</p>}
         </div>
         <Modal open={msg} className="msg">
           {msg}
@@ -545,75 +635,80 @@ const Shop = ({ seller, products, loading }) => {
     phone: user.phone,
   });
   const [addressForm, setAddressForm] = useState(false);
-  const total = products.reduce(
-    (a, c) =>
-      +(
-        a +
-        calculatePrice({ product: c.product, gst: seller.gst }) * c.qty
-      ).toFixed(2),
-    0
-  );
-  const milestoneTimeout = useRef();
-  const submitOrder = () => {
-    fetch("/api/submitOrder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        seller: seller._id,
-        products: products.map(({ product, qty }) => ({
-          product: {
-            ...product,
-            gst: seller.gst?.verified ? product.gst || seller.gst?.amount : 0,
-          },
-          qty,
-        })),
-        deliveryDetail,
-        total,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.code === "ok") {
-          setCart((prev) =>
-            prev.filter(
-              ({ product }) => !data.products.some((_id) => _id === product._id)
-            )
-          );
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Succ_svg />
-                <h4>Order successfully submitted.</h4>
-                <Link to="/account/myShopping/orders">View All orders</Link>
-              </div>
-            </>
-          );
-        } else {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not submit order. Please try again.</h4>
-              </div>
-            </>
-          );
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        setMsg(
-          <>
-            <button onClick={() => setMsg(null)}>Okay</button>
-            <div>
-              <Err_svg />
-              <h4>Could not submit order. Make sure you're online.</h4>
-            </div>
-          </>
-        );
-      });
-  };
+  const [milestoneForm, setMilestoneForm] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const total = +(
+    (products.reduce(
+      (a, c) =>
+        (
+          a +
+          calculatePrice({ product: c.product, gst: seller.gst }) * c.qty
+        ).fix(),
+      0
+    ) +
+      (seller.shopInfo?.shippingCost || 0)) *
+    1.1
+  ).fix();
+  // const submitOrder = () => {
+  //   fetch("/api/submitOrder", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({
+  //       seller: seller._id,
+  //       products: products.map(({ product, qty }) => ({
+  //         product: {
+  //           ...product,
+  //           gst: seller.gst?.verified ? product.gst || seller.gst?.amount : 0,
+  //         },
+  //         qty,
+  //       })),
+  //       deliveryDetail,
+  //       total,
+  //     }),
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       if (data.code === "ok") {
+  //         setCart((prev) =>
+  //           prev.filter(
+  //             ({ product }) => !data.products.some((_id) => _id === product._id)
+  //           )
+  //         );
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Succ_svg />
+  //               <h4>Order successfully submitted.</h4>
+  //               <Link to="/account/myShopping/orders">View All orders</Link>
+  //             </div>
+  //           </>
+  //         );
+  //       } else {
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Err_svg />
+  //               <h4>Could not submit order. Please try again.</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //       setMsg(
+  //         <>
+  //           <button onClick={() => setMsg(null)}>Okay</button>
+  //           <div>
+  //             <Err_svg />
+  //             <h4>Could not submit order. Make sure you're online.</h4>
+  //           </div>
+  //         </>
+  //       );
+  //     });
+  // };
   return (
     <>
       <div className="shop">
@@ -634,15 +729,37 @@ const Shop = ({ seller, products, loading }) => {
             ))}
             <div className="total">
               <p>
+                <label>Shipping</label>₹{seller.shopInfo?.shippingCost}
+              </p>
+              <p>
+                <label>Delivery Pay Fee 10%</label>₹
+                {((total / 110) * 100 * 0.1).fix()}
+              </p>
+              <hr />
+              <p>
                 <label>Total</label>₹{total}
               </p>
-              <span className="note">
-                All tax and fee inclued.
-                <Tip>
-                  Seller specified GST TAX and 10% Delivery Pay Fee applies to
-                  all orders.
-                </Tip>
-              </span>
+              {
+                //   <span className="note">
+                //   All tax and fee inclued.
+                //   <Tip>
+                //     Seller specified GST TAX and 10% Delivery Pay Fee applies to
+                //     all orders.
+                //   </Tip>
+                // </span>
+              }
+            </div>
+            <div className="terms">
+              <p>
+                <label>Refundable: </label>
+                {seller.shopInfo?.refundable || "N/A"}
+              </p>
+              <p>
+                By proceeding, I agree to seller's all{" "}
+                <span className="btn" onClick={() => setShowTerms(true)}>
+                  Terms
+                </span>
+              </p>
             </div>
           </ul>
           <span className="devider" />
@@ -662,27 +779,7 @@ const Shop = ({ seller, products, loading }) => {
           </div>
         </div>
         <div className="actions">
-          <button
-            onClick={() =>
-              Confirm({
-                label: "Placing order",
-                className: "submitOrder",
-                question: (
-                  <>
-                    You sure want to submit this order to seller?
-                    <span className="note">
-                      Note: You will only be charged when the seller approves
-                      your order. and you create a Milestone.
-                    </span>
-                  </>
-                ),
-                callback: submitOrder,
-              })
-            }
-            className=""
-          >
-            Submit order to seller
-          </button>
+          <button onClick={() => setMilestoneForm(true)}>Place order</button>
         </div>
         <Modal
           open={addressForm}
@@ -703,6 +800,64 @@ const Shop = ({ seller, products, loading }) => {
             }}
             onCancel={() => setAddressForm(false)}
           />
+        </Modal>
+        <Modal
+          className="milestoneRequest"
+          head={true}
+          label="Checkout"
+          open={milestoneForm}
+          setOpen={setMilestoneForm}
+        >
+          <MilestoneForm
+            action="create"
+            client={seller}
+            definedAmount={total}
+            strict={true}
+            order={{
+              products,
+              deliveryDetail: {
+                ...deliveryDetail,
+                deliveryWithin: seller.shopInfo?.deliveryWithin,
+              },
+              total,
+              refundable: seller.shopInfo?.refundable,
+              terms: seller.shopInfo?.terms,
+              shippingCost: seller.shopInfo?.shippingCost,
+            }}
+            onSuccess={({ milestone, order }) => {
+              setCart((prev) =>
+                prev.filter(({ product }) => {
+                  return !order.products.some(
+                    (order) => order.product._id === product._id
+                  );
+                })
+              );
+              setMilestoneForm(false);
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Succ_svg />
+                    <h4>Order successfully submitted.</h4>
+                    <Link to="/account/myShopping/orders">View All orders</Link>
+                  </div>
+                </>
+              );
+            }}
+          />
+        </Modal>
+        <Modal
+          open={showTerms}
+          setOpen={setShowTerms}
+          head={true}
+          label="Seller's Terms"
+          className="shopTerms"
+        >
+          <ul>
+            {seller.shopInfo?.terms?.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
         </Modal>
         <Modal className="msg" open={msg}>
           {msg}
@@ -774,11 +929,9 @@ export const CartItem = ({ product, gst, qty }) => {
         <span className="qty">
           {price} x {qty}
         </span>
-        ₹{+(price * qty).toFixed(2)}
-        {
-          // product.gst && <span className="gst">+{product.gst}% GST</span>
-        }
+        ₹{(price * qty).fix()}
       </div>
+      {gst?.verified && <Tip>Including {product.gst}% GST.</Tip>}
     </li>
   );
 };

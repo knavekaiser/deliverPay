@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from "react";
-import { SiteContext } from "./SiteContext";
+import { SiteContext, ChatProvider } from "./SiteContext";
 import {
   Route,
   Switch,
@@ -28,7 +28,11 @@ import WorkWithUs from "./components/WorkWithUs";
 import Apply from "./components/Apply";
 import { ToastContainer } from "react-toastify";
 
-function ProtectedRoute({ children, path, component }) {
+Number.prototype.fix = function (p) {
+  return +this.toFixed(p || 2);
+};
+
+function ProtectedRoute({ component, ...restOfProps }) {
   const { user } = useContext(SiteContext);
   const history = useHistory();
   if (!user) {
@@ -43,9 +47,7 @@ function ProtectedRoute({ children, path, component }) {
   }
   return (
     <>
-      <Route path={path} component={component}>
-        {children}
-      </Route>
+      <Route component={component} {...restOfProps} />
     </>
   );
 }
@@ -75,34 +77,36 @@ function App() {
             <p>Download our mobile app for a better experience.</p>
           </div>
         </Modal>
-        <Switch>
-          <Route path="/" exact component={LandingPage} />
-          <Route path="/u" component={UserStart} />
-          <ProtectedRoute path="/account" component={Account} />
-          <Route path="/aboutUs" component={AboutUs} />
-          <Route path="/marketplace/:_id" component={SingleProduct} />
-          <Route path="/marketplace" component={Marketplace} />
-          <Route path="/privacyPolicy" component={PrivacyPolicy} />
-          <Route path="/codeOfConduct" component={CodeOfConduct} />
-          <Route path="/copyrightPolicy" component={CopyrightPolicy} />
-          <Route path="/fees&Charges" component={FeesCharges} />
-          <Route path="/terms" component={UserAgreement} />
-          <Route path="/howItWorks" component={HowItWorks} />
-          <Route path="/contactUs" component={ContactUs} />
-          <Route path="/refundCancellationPolicy" component={RefundPolicy} />
-          <Route path="/shippingDeliveryPolicy" component={ShippingPolicy} />
-          <Route path="/employment-opportunities" component={WorkWithUs} />
-          <Route path="/apply" component={Apply} />
-          <Route path="/">
-            <div className="generic">
-              <Header />
-              <div className="fourFour">
-                <h1>404</h1>
+        <ChatProvider>
+          <Switch>
+            <Route path="/" exact component={LandingPage} />
+            <Route path="/u" component={UserStart} />
+            <ProtectedRoute path="/account" component={Account} />
+            <Route path="/aboutUs" component={AboutUs} />
+            <Route path="/marketplace/:_id" component={SingleProduct} />
+            <Route path="/marketplace" component={Marketplace} />
+            <Route path="/privacyPolicy" component={PrivacyPolicy} />
+            <Route path="/codeOfConduct" component={CodeOfConduct} />
+            <Route path="/copyrightPolicy" component={CopyrightPolicy} />
+            <Route path="/fees&Charges" component={FeesCharges} />
+            <Route path="/terms" component={UserAgreement} />
+            <Route path="/howItWorks" component={HowItWorks} />
+            <Route path="/contactUs" component={ContactUs} />
+            <Route path="/refundCancellationPolicy" component={RefundPolicy} />
+            <Route path="/shippingDeliveryPolicy" component={ShippingPolicy} />
+            <Route path="/employment-opportunities" component={WorkWithUs} />
+            <Route path="/apply" component={Apply} />
+            <Route path="/">
+              <div className="generic">
+                <Header />
+                <div className="fourFour">
+                  <h1>404</h1>
+                </div>
+                <Footer />
               </div>
-              <Footer />
-            </div>
-          </Route>
-        </Switch>
+            </Route>
+          </Switch>
+        </ChatProvider>
         <ToastContainer
           position="bottom-center"
           autoClose={5000}

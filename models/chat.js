@@ -10,11 +10,12 @@ const chatModel = new Schema(
           to: { type: Schema.Types.ObjectId, ref: "User", required: true },
           text: { type: String, required: true },
           media: { type: String },
+          milestoneId: { type: Schema.Types.ObjectId, ref: "Milestone" },
         },
         { timestamps: true }
       ),
     ],
-    lastSeen: { type: Date, default: Date.now },
+    lastSeen: { type: Date, default: null },
   },
   { timestamps: true }
 );

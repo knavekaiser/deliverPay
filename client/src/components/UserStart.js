@@ -1,8 +1,8 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { SiteContext } from "../SiteContext";
 import { Header, Footer } from "./Elements";
 import { Route, Switch, useHistory, useLocation, Link } from "react-router-dom";
-import { Checkbox } from "./Elements";
+import { Checkbox, Arrow_left_svg } from "./Elements";
 import { GoogleLogin } from "react-google-login";
 require("../components/styles/userStart.scss");
 
@@ -101,7 +101,7 @@ const RegisterForm = () => {
           // />
         }
         <input
-          type="tel"
+          type="text"
           name="phone"
           required={true}
           placeholder="Phone number"
@@ -295,12 +295,31 @@ const PasswordReset = () => {
   const [pass, setPass] = useState("");
   const [confirm_pass, setConfirm_pass] = useState("");
   const [errMsg, setErrMsg] = useState(false);
+  const [attempts, setAttempts] = useState(0);
   const code1 = useRef(null);
   const code2 = useRef(null);
   const code3 = useRef(null);
   const code4 = useRef(null);
   const code5 = useRef(null);
   const code6 = useRef(null);
+  const sendOtp = useCallback((phone) => {
+    setLoading(true);
+    fetch("/api/sendUserForgotPassOTP", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    }).then((res) => {
+      setLoading(false);
+      if (res.status === 200) {
+        setStep(2);
+      } else if (res.status === 424) {
+        setErrMsg(`Could not send OTP. Please contact support.`);
+        setTimeout(() => setErrMsg(null), 2000);
+      } else {
+        setErrMsg("User does does not exists.");
+      }
+    });
+  }, []);
   const submit = (e) => {
     e.preventDefault();
     let phone = null;
@@ -319,19 +338,7 @@ const PasswordReset = () => {
     if (step === 1) {
       if (errMsg) return;
       if (phone) {
-        setLoading(true);
-        fetch("/api/sendUserForgotPassOTP", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone }),
-        }).then((res) => {
-          setLoading(false);
-          if (res.status === 200) {
-            setStep(2);
-          } else {
-            setErrMsg("User does does not exists.");
-          }
-        });
+        sendOtp(phone);
       } else {
         setErrMsg("Enter a valid phone number.");
       }
@@ -348,16 +355,21 @@ const PasswordReset = () => {
         } else if (res.status === 400) {
           setCode(["", "", "", "", "", ""]);
           setErrMsg("Wrong code!");
+          res.json().then((data) => {
+            setAttempts(data.attempt);
+          });
         } else if (res.status === 429) {
           setStep(1);
-          setId("");
           setCode(["", "", "", "", "", ""]);
           setErrMsg("Too many attempts. Start again.");
+          setTimeout(() => setErrMsg(null), 1500);
+          setAttempts(0);
         } else if (res.status === 404) {
+          setAttempts(0);
           setStep(1);
-          setId("");
           setCode(["", "", "", "", "", ""]);
           setErrMsg("Timeout. Start again");
+          setTimeout(() => setErrMsg(null), 1500);
         }
       });
     } else if (step === 3) {
@@ -394,6 +406,11 @@ const PasswordReset = () => {
     <div className="formWrapper resetPass">
       <img className="logo" src="/logo_benner.jpg" alt="Delivery pay logo" />
       <p className="title">Password reset</p>
+      {step === 2 && (
+        <a className="back" onClick={() => setStep(1)}>
+          <Arrow_left_svg /> Back
+        </a>
+      )}
       {
         //   <p className="links">
         //   Already have an account?<Link to="/u/login">Login</Link>
@@ -402,7 +419,7 @@ const PasswordReset = () => {
       {step === 1 && (
         <form onSubmit={submit}>
           <input
-            type="tel"
+            type="text"
             name="phone"
             required={true}
             placeholder="Phone number"
@@ -422,7 +439,24 @@ const PasswordReset = () => {
       {step === 2 && (
         <form onSubmit={submit}>
           <label>
-            A 6 digit code has been sent to your phone. Enter the code below.
+            A 6 digit code has been sent to {id}. Enter the code below.{" "}
+            <span className="attempts">{3 - attempts} attempts left.</span>
+            <span className="resend">
+              Did not get the code?{" "}
+              {loading ? (
+                <a>Sending</a>
+              ) : (
+                <a
+                  onClick={() => {
+                    sendOtp(
+                      "+91" + id.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")
+                    );
+                  }}
+                >
+                  Resend
+                </a>
+              )}
+            </span>
           </label>
           <section className="code">
             <input

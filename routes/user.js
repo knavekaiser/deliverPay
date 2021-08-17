@@ -279,7 +279,7 @@ app.put("/api/submitUserOTP", async (req, res) => {
     signingIn(user._doc, res);
     OTP.findOneAndDelete({ id: phone }).then((value) => {});
   } else {
-    if (dbOtp.attempt > 2) {
+    if (dbOtp.attempt >= 2) {
       OTP.findOneAndDelete({ id: phone }).then(() => {
         res
           .status(403)
@@ -335,7 +335,7 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
                   .status(500)
                   .json({ code: 500, message: "Could not send Email" });
               });
-          } else if (true) {
+          } else if (phone) {
             sendSms({
               to: [phone.replace("+91", "")],
               otp: true,
@@ -343,10 +343,19 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
               variables_values: code,
             })
               .then((smsRes) => {
-                res.json({
-                  message:
-                    "6 digit code has been sent, enter it within 2 minutes",
-                });
+                console.log(smsRes);
+                if (smsRes.return === true) {
+                  res.json({
+                    code: "ok",
+                    message:
+                      "6 digit code has been sent, enter it within 2 minutes",
+                  });
+                } else {
+                  res.status(424).json({
+                    code: 424,
+                    message: smsRes.message,
+                  });
+                }
               })
               .catch((err) => {
                 console.log(err);
@@ -387,7 +396,7 @@ app.put("/api/submitUserForgotPassOTP", async (req, res) => {
         res.status(500).json({ message: "something went wrong" });
       });
   } else {
-    if (dbOtp.attempt > 2) {
+    if (dbOtp.attempt >= 2) {
       OTP.findOneAndDelete({ id: phone || email }).then(() => {
         res.status(429).json({ code: 429, message: "start again" });
       });

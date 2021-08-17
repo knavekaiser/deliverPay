@@ -713,70 +713,75 @@ const FullOrder = ({ history, match }) => {
                   0
                 )}
               </div>
+              <hr />
               <div className="data">
-                <label>Shipping</label>
-                {order.shipping || "N/A"}
+                <label>Shipping</label>₹{order.shippingCost || "N/A"}
               </div>
               <div className="data">
-                <label>Grand Total</label>₹
-                {order.products.reduce(
-                  (a, c) =>
-                    a +
-                    calculatePrice({ product: c.product, gst: true }) * c.qty,
-                  0
-                ) + (+order.shipping || 0)}
+                <label>Delivery Pay fee 10%</label>₹{(order.total * 0.1).fix()}
+              </div>
+              <hr />
+              <div className="data">
+                <label>Grand Total</label>₹{order.total}
               </div>
             </div>
           </div>
           <div className="milestones">
             <h3>
               Milestones
-              {(order.status === "approved" ||
-                order.status === "shipped" ||
-                order.status === "delivered") && (
-                <button onClick={() => setMilestoneForm(true)}>
-                  Create Milestone
-                </button>
-              )}
+              {
+                //   (order.status === "approved" ||
+                //   order.status === "shipped" ||
+                //   order.status === "delivered") && (
+                //   <button onClick={() => setMilestoneForm(true)}>
+                //     Create Milestone
+                //   </button>
+                // )
+              }
             </h3>
-            {order.status == "pending" ? (
-              <p>You can create milestones after seller accepts your order.</p>
-            ) : (
-              <table cellSpacing={0} cellPadding={0}>
-                <thead>
-                  <tr>
-                    <td>Date</td>
-                    <td>Descrption</td>
-                    <td>Amount</td>
-                    <td>Status</td>
+            <p className="subtitle">Click to view milestone detail.</p>
+            {
+              //   {order.status == "pending" ? (
+              //   <p>You can create milestones after seller accepts your order.</p>
+              // ) : (
+            }
+            <table cellSpacing={0} cellPadding={0}>
+              <thead>
+                <tr>
+                  <td>Date</td>
+                  <td>Descrption</td>
+                  <td>Amount</td>
+                  <td>Status</td>
+                </tr>
+              </thead>
+              <tbody>
+                {order.milestones.map((milestone) => (
+                  <tr
+                    key={milestone._id}
+                    onClick={() =>
+                      history.push(`/account/hold?q=${milestone._id}`)
+                    }
+                  >
+                    <td>
+                      <Moment format="DD MMM YYYY, hh:mma">
+                        {milestone.createdAt}
+                      </Moment>
+                    </td>
+                    <td>{milestone.dscr}</td>
+                    <td>₹{milestone.amount}</td>
+                    <td>{milestone.status}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {order.milestones.map((milestone) => (
-                    <tr
-                      key={milestone._id}
-                      onClick={() =>
-                        history.push(`/account/hold?q=${milestone._id}`)
-                      }
-                    >
-                      <td>
-                        <Moment format="DD MMM YYYY, hh:mma">
-                          {milestone.createdAt}
-                        </Moment>
-                      </td>
-                      <td>{milestone.dscr}</td>
-                      <td>₹{milestone.amount}</td>
-                      <td>{milestone.status}</td>
-                    </tr>
-                  ))}
-                  {order.milestones.length === 0 && (
-                    <tr className="placeholdert">
-                      <td>Nothing yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+                ))}
+                {order.milestones.length === 0 && (
+                  <tr className="placeholdert">
+                    <td>Nothing yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {
+              // )}
+            }
           </div>
           <div className="delivery">
             <h3>Proof of delivery</h3>
@@ -1629,7 +1634,7 @@ const FullRefund = ({ history, match }) => {
               </div>
               <div className="data">
                 <label>Shipping</label>
-                {order.shipping || "N/A"}
+                {order.shippingCost || "N/A"}
               </div>
               <div className="data">
                 <label>Grand Total</label>₹
@@ -1638,7 +1643,7 @@ const FullRefund = ({ history, match }) => {
                     a +
                     calculatePrice({ product: c.product, gst: true }) * c.qty,
                   0
-                ) + (+order.shipping || 0)}
+                ) + (+order.shippingCost || 0)}
               </div>
             </div>
           </div>

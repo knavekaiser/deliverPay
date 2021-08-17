@@ -1,6 +1,13 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { Link, useHistory, Route } from "react-router-dom";
-import { SiteContext } from "../SiteContext";
+import { SiteContext, ChatContext } from "../SiteContext";
 import Moment from "react-moment";
 import { Modal, Confirm } from "./Modal";
 import moment from "moment";
@@ -10,11 +17,11 @@ import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
 require("./styles/deals.scss");
 
-const socket = io();
+export const socket = io();
 
 const Deals = ({ history, location, match }) => {
   const { user, setUser } = useContext(SiteContext);
-  const [contacts, setContacts] = useState([]);
+  const { contacts, setContacts } = useContext(ChatContext);
   const [userCard, setUserCard] = useState(null);
   const [chat, setChat] = useState(null);
   useEffect(() => {
@@ -24,80 +31,20 @@ const Deals = ({ history, location, match }) => {
     }
   }, [userCard]);
   useEffect(() => {
-    fetch("/api/getChat")
-      .then((res) => res.json())
-      .then((data) => {
-        setContacts(() =>
-          data.map((chat) => {
-            const status = user.blockList?.some(
-              (item) => item === chat.client._id
-            )
-              ? "blocked"
-              : chat.clientBlock
-              ? "blockedByClient"
-              : "";
-            return {
-              ...chat,
-              ...(chat.client.phone && { status }),
-            };
-          })
-        );
-        history.push();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-    socket.on("connect", () => {
-      console.log("connected");
-    });
-    socket.on("disconnect", () => {
-      console.log("disconnected from socket");
-    });
-  }, []);
-  useEffect(() => {
     if (match.params._id) {
       const person = contacts.find(
         (chat) => chat.client._id.toString() === match.params._id
       );
       if (person) {
         const { client, messages, status, lastSeen } = person;
-        setUserCard({ ...client, status, messages, lastSeen });
+        setUserCard({ ...client, status, messages });
       }
     }
   }, [match.params, contacts]);
-  useEffect(() => {
-    socket.on("messageToUser", (payload) => {
-      if (payload.from) {
-        setContacts((prev) => {
-          const newContacts = prev.map((chat) => {
-            if (payload.from === user._id) {
-              if (chat.client._id === payload.to) {
-                return {
-                  ...chat,
-                  messages: [...chat.messages, payload],
-                };
-              }
-            } else {
-              if (chat.client._id === payload.from) {
-                return {
-                  ...chat,
-                  messages: [...chat.messages, payload],
-                };
-              }
-            }
-            return chat;
-          });
-          return newContacts;
-        });
-      }
-    });
-    socket.emit("joinRooms", {
-      rooms: contacts.map((room) => room._id),
-    });
-  }, []);
   return (
     <div className={`chatContainer ${userCard ? "chatOpen" : ""}`}>
       <div className="contactsContainer">
+        <UserSearch setUserCard={setUserCard} setContacts={setContacts} />
         <div className="userCard">
           {userCard ? (
             <>
@@ -138,7 +85,7 @@ const Deals = ({ history, location, match }) => {
         <p className="label">Messages</p>
         <div className="peopleWrapper">
           <ul className="people">
-            {contacts.map(({ client, messages, status, lastSeen }) => (
+            {contacts.map(({ client, messages, status, lastSeen, unread }) => (
               <Person
                 key={client._id}
                 client={client}
@@ -146,6 +93,7 @@ const Deals = ({ history, location, match }) => {
                 status={status}
                 lastSeen={lastSeen}
                 userCard={userCard}
+                unread={unread}
               />
             ))}
             {contacts.length === 0 && (
@@ -167,27 +115,199 @@ const Deals = ({ history, location, match }) => {
   );
 };
 
-const Person = ({ client, messages, lastSeen, userCard }) => {
+const UserSearch = ({ setUserCard, setContacts }) => {
   const history = useHistory();
-  const [unread, setUnread] = useState(
-    messages.filter((msg) => new Date(msg.createdAt) > new Date(lastSeen))
-      .length || false
-  );
-  useEffect(() => {
-    if (client?._id !== userCard?._id) {
-      setUnread(
-        messages.filter((msg) => new Date(msg.createdAt) > new Date(lastSeen))
-          .length || false
-      );
+  const [msg, setMsg] = useState(null);
+  const [users, setUsers] = useState(false);
+  const [value, setValue] = useState("");
+  const [showUsers, setShowUsers] = useState(false);
+  const formRef = useRef();
+  const inviteUser = useCallback(() => {
+    const phoneReg = new RegExp(
+      /^(\+91|91|1|)(?=\d{10}$)/gi
+      // /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
+    );
+    if (phoneReg.test(value.toLowerCase())) {
+      fetch(
+        `/api/inviteUser?q=+91${value.replace(
+          /^(\+91|91|1|)(?=\d{10}$)/g,
+          ""
+        )}origin=${window.location.origin}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.code === "ok") {
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Succ_svg />
+                  {
+                    // <h4>Invitation sent.</h4>
+                  }
+                  <h4>
+                    An sms will be sent to{" "}
+                    {"+91" + value.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")},
+                    when the sms API is ready.
+                  </h4>
+                </div>
+              </>
+            );
+          } else {
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Err_svg />
+                  <h4>Invitation could not be sent. Please try again.</h4>
+                </div>
+              </>
+            );
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Invitation could not be sent. Make sure you're online.</h4>
+              </div>
+            </>
+          );
+        });
     } else {
-      setUnread(false);
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>Enter a valid phone number to send invitation.</h4>
+          </div>
+        </>
+      );
     }
-  }, [messages]);
+  }, [value]);
+  const fetchUsers = useCallback(
+    (e) => {
+      setValue(e.target.value);
+      fetch(`/api/getUsers?q=${value}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) {
+            setUsers(data);
+          }
+        });
+      if (e.target.value === "") {
+        setUsers([]);
+      }
+    },
+    [value]
+  );
+  const documentClickHandler = (e) => {
+    if (e.path.includes(formRef.current)) {
+    } else {
+      setShowUsers(false);
+    }
+  };
+  useEffect(() => {
+    document.addEventListener("click", documentClickHandler);
+    return () => {
+      document.removeEventListener("click", documentClickHandler);
+    };
+  }, []);
+  return (
+    <div className="search">
+      <form onSubmit={(e) => e.preventDefault()} ref={formRef}>
+        <section>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="17.9"
+            height="17.9"
+            viewBox="0 0 17.9 17.9"
+          >
+            <path
+              id="Path_208"
+              data-name="Path 208"
+              d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
+              transform="translate(0)"
+              fill="#b9b9b9"
+            />
+          </svg>
+          <input
+            label="search"
+            required={true}
+            placeholder="Search with Delivery pay ID or Phone Number"
+            onFocus={() => setShowUsers(true)}
+            onChange={fetchUsers}
+          />
+          <Link
+            className={`sendReq ${
+              users.length > 0 || !value ? "disabled" : ""
+            }`}
+            onClick={inviteUser}
+            to="#"
+          >
+            Invite
+          </Link>
+        </section>
+        {showUsers && users.length ? (
+          <ul className="searchResult">
+            {users.map((user, i) => (
+              <a
+                key={i}
+                onClick={() => {
+                  setUserCard(user);
+                  setContacts((prev) => [
+                    ...prev,
+                    { client: user, messages: [], status: "" },
+                  ]);
+                  history.push(`/account/deals/${user._id}`);
+                  setShowUsers(false);
+                }}
+              >
+                <li key={i}>
+                  <div className="profile">
+                    <img src={user.profileImg} />
+                    <p className="name">
+                      {user.firstName + " " + user.lastName}
+                      <span className="phone">{user.phone}</span>
+                    </p>
+                  </div>
+                </li>
+              </a>
+            ))}
+          </ul>
+        ) : null}
+      </form>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+    </div>
+  );
+};
+
+const Person = ({ client, messages, lastSeen, userCard, unread }) => {
+  const { setContacts } = useContext(ChatContext);
+  const history = useHistory();
   return (
     <li
       className={client._id === userCard?._id ? "active" : undefined}
       onClick={() => {
         history.push(`/account/deals/${client._id}`);
+        setContacts((prev) =>
+          prev.map((chat) => {
+            if (client?._id === chat.client?._id) {
+              return {
+                ...chat,
+                lastSeen: new Date().toISOString(),
+                unread: null,
+              };
+            }
+            return chat;
+          })
+        );
       }}
     >
       {
@@ -204,7 +324,7 @@ const Person = ({ client, messages, lastSeen, userCard }) => {
                 {messages[messages.length - 1].text}
               </p>
             )}
-            {unread && <p className="unread">{unread}</p>}
+            {unread ? <p className="unread">{unread}</p> : null}
           </div>
         </>
       }
@@ -223,8 +343,12 @@ const Chat = ({
 }) => {
   const { setUser } = useContext(SiteContext);
   const chatWrapper = useRef(null);
+  const loading = useRef(null);
   const history = useHistory();
   const [rooms, setRooms] = useState([]);
+  const [msgLoading, setMsgLoading] = useState(false);
+  const [allMessages, setAllMessages] = useState(false);
+  const [page, setPage] = useState(2);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
     socket.on("connectedToRoom", ({ rooms }) => {
@@ -247,11 +371,20 @@ const Chat = ({
           body: JSON.stringify({ rooms }),
         });
       }
+      // setContacts((prev) =>
+      //   prev.map((chat) => {
+      //     if (userCard?._id === chat.client?._id) {
+      //       return {
+      //         ...chat,
+      //         lastSeen: new Date().toISOString(),
+      //         unread: null,
+      //       };
+      //     }
+      //     return chat;
+      //   })
+      // );
     };
   }, [rooms]);
-  useEffect(() => {
-    chatWrapper.current?.scrollBy(0, chatWrapper.current.scrollHeight);
-  }, [chat]);
   return (
     <div className="chat">
       {chat ? (
@@ -286,9 +419,11 @@ const Chat = ({
                 {userCard.firstName
                   ? userCard.firstName + " " + userCard.lastName
                   : "Deleted user"}
-                <span className="lastSeen">
-                  <Moment format="hh:mma, MMM DD">{userCard.lastSeen}</Moment>
-                </span>
+                {userCard.lastSeen && (
+                  <span className="lastSeen">
+                    <Moment format="hh:mma, MMM DD">{userCard.lastSeen}</Moment>
+                  </span>
+                )}
               </p>
             </div>
             {(userCard.status === "" || userCard.status === "blocked") && (
@@ -396,45 +531,76 @@ const Chat = ({
               </Actions>
             )}
           </div>
-          <ul className="chats" ref={chatWrapper}>
-            {chat.map((msg, i) => {
-              if (!msg) {
-                return null;
+          <ul
+            className="chats"
+            ref={chatWrapper}
+            onScroll={(e) => {
+              const { y } = loading.current?.getBoundingClientRect() || {};
+              if (y > 0 && !msgLoading) {
+                setMsgLoading(true);
+                fetch(`/api/getMessages?client=${userCard._id}&page=${page}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    setMsgLoading(false);
+                    if (data.code === "ok") {
+                      setContacts((prev) =>
+                        prev.map((chat) => {
+                          if (chat._id === data.contact?._id) {
+                            return {
+                              ...chat,
+                              messages: data.contact.messages,
+                            };
+                          }
+                          return chat;
+                        })
+                      );
+                      setPage((prev) => prev + 1);
+                      if (data.contact.total === data.contact.messages.length) {
+                        setAllMessages(true);
+                      }
+                    }
+                  })
+                  .catch((err) => {
+                    setMsgLoading(false);
+                    console.log(err);
+                    setMsg(
+                      <>
+                        <button onClick={() => setMsg(null)}>Okay</button>
+                        <div>
+                          <Err_svg />
+                          <h4>
+                            Could not get messages. Make sure you're online.
+                          </h4>
+                        </div>
+                      </>
+                    );
+                  });
               }
-              const timestamp =
-                Math.abs(
-                  new Date(msg.createdAt).getTime() -
-                    new Date(chat[i + 1]?.createdAt).getTime()
-                ) > 120000;
-              const dateStamp =
-                moment(msg.createdAt).format("YYYY-MM-DD") !==
-                  moment(chat[i - 1]?.createdAt).format("YYYY-MM-DD") ||
-                i === 0;
-              return (
-                <li
-                  key={i}
-                  className={`bubble ${
-                    msg.from === user._id ? "user" : "client"
-                  }`}
-                >
-                  {dateStamp && (
-                    <Moment className="dateStamp" format="MMM DD, YYYY">
-                      {msg.createdAt}
-                    </Moment>
-                  )}
-                  {msg.text && <p className="text">{msg.text}</p>}
-                  {msg.media && <MediaBubble link={msg.media} />}
-                  {(timestamp || i === chat.length - 1) && (
-                    <Moment className="timestamp" format="hh:mm a">
-                      {msg.createdAt}
-                    </Moment>
-                  )}
-                </li>
-              );
-            })}
+            }}
+          >
+            {[
+              ...chat.map((msg, i) => (
+                <Bubble chat={chat} key={i} msg={msg} i={i} user={user} />
+              )),
+            ].reverse()}
+            {!allMessages && (
+              <li className="loading" ref={loading}>
+                Loading
+              </li>
+            )}
           </ul>
           {userCard.status === "" && (
-            <ChatForm rooms={rooms} user={userCard._id} />
+            <ChatForm
+              onSuccess={() => {
+                chatWrapper.current?.scrollBy(
+                  0,
+                  chatWrapper.current.scrollHeight * 2
+                );
+              }}
+              rooms={rooms}
+              user={userCard._id}
+              newChat={!userCard.lastSeen}
+            />
           )}
         </>
       ) : (
@@ -473,7 +639,7 @@ const Chat = ({
                 <button onClick={() => setMsg(null)}>Okay</button>
                 <div>
                   <Succ_svg />
-                  <h4 className="amount">₹{milestone?.amount}</h4>
+                  <h4 className="amount">₹{milestone.milestone?.amount}</h4>
                   <h4>Milestone has been created</h4>
                 </div>
                 <Link to="/account/hold" onClick={() => setMsg(null)}>
@@ -525,6 +691,64 @@ const Chat = ({
   );
 };
 
+const Bubble = ({ chat, msg, i, user }) => {
+  const history = useHistory();
+  const [milestone, setMilestone] = useState(null);
+  useEffect(() => {
+    if (msg.milestoneId) {
+      fetch(`/api/milestone?q=${msg.milestoneId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.milestones.length) {
+            setMilestone(data.milestones[0]);
+          }
+        });
+    }
+  }, []);
+  if (!msg) {
+    return null;
+  }
+  const timestamp =
+    Math.abs(
+      new Date(msg.createdAt).getTime() -
+        new Date(chat[i + 1]?.createdAt).getTime()
+    ) > 120000;
+  const dateStamp =
+    moment(msg.createdAt).format("YYYY-MM-DD") !==
+      moment(chat[i - 1]?.createdAt).format("YYYY-MM-DD") || i === 0;
+  return (
+    <li
+      className={`bubble ${msg.from === user._id ? "user" : "client"} ${
+        milestone ? "milestone" : ""
+      }`}
+    >
+      {dateStamp && (
+        <Moment className="dateStamp" format="MMM DD, YYYY">
+          {msg.createdAt}
+        </Moment>
+      )}
+      {msg.text && (
+        <p
+          className="text"
+          onClick={() => {
+            if (milestone) {
+              history.push(`/account/hold?q=${milestone._id}`);
+            }
+          }}
+        >
+          {milestone && <span className="amount">₹{milestone.amount}</span>}
+          {msg.text}
+        </p>
+      )}
+      {msg.media && <MediaBubble link={msg.media} />}
+      {(timestamp || i === chat.length - 1) && (
+        <Moment className="timestamp" format="hh:mm a">
+          {msg.createdAt}
+        </Moment>
+      )}
+    </li>
+  );
+};
 const MediaBubble = ({ link }) => {
   let view = null;
   let fullView = null;
@@ -562,7 +786,7 @@ const MediaBubble = ({ link }) => {
   );
 };
 
-const ChatForm = ({ rooms, user }) => {
+const ChatForm = ({ rooms, user, newChat }) => {
   const inputRef = useRef(null);
   const formRef = useRef(null);
   const [msg, setMsg] = useState(null);
@@ -594,6 +818,7 @@ const ChatForm = ({ rooms, user }) => {
       media.forEach((link, i) => {
         socket.emit("messageToServer", {
           rooms,
+          ...(newChat && { newChat }),
           message: {
             to: user,
             media: link,
@@ -605,6 +830,7 @@ const ChatForm = ({ rooms, user }) => {
     if (value && rooms.length) {
       socket.emit("messageToServer", {
         rooms,
+        ...(newChat && { newChat }),
         message: {
           to: user,
           text: value,
@@ -637,6 +863,7 @@ const ChatForm = ({ rooms, user }) => {
         <Preview files={files} setFiles={setFiles} />
         <section>
           <TextareaAutosize
+            autoFocus={true}
             ref={inputRef}
             type="text"
             value={value}

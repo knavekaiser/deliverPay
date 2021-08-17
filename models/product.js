@@ -16,6 +16,16 @@ const productModel = new Schema(
     gst: { type: Number },
     tags: [{ type: String }],
     popularity: { type: Number },
+    reviews: [
+      new Schema(
+        {
+          user: { type: Schema.Types.ObjectId, ref: "User", req: true },
+          rating: { type: Number, required: true },
+          review: { type: String },
+        },
+        { timestamps: true }
+      ),
+    ],
   },
   { timestamps: true }
 );
@@ -58,7 +68,7 @@ const orderModel = new Schema(
       landmark: { type: String },
       locality: { type: String },
       alternatePhone: { type: String },
-      deliveryTime: { type: Date },
+      deliveryWithin: { type: Number },
     },
     files: [{ type: String }],
     terms: [{ type: String }],

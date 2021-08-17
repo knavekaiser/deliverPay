@@ -81,7 +81,11 @@ function LandingPage({ history }) {
               someone you don't know.
             </p>
             <div className="clas">
-              <Link to="/marketplace">Delivery Pay Marketplace</Link>
+              {
+                //   <Link to="/marketplace" target="_blank">
+                //   Delivery Pay Marketplace
+                // </Link>
+              }
             </div>
           </div>
           <img

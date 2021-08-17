@@ -80,6 +80,39 @@ app.get(
             ],
           },
         },
+        { $unwind: { path: "$products" } },
+        {
+          $lookup: {
+            from: "products",
+            as: "currentProduct",
+            localField: "products.product._id",
+            foreignField: "_id",
+          },
+        },
+        {
+          $set: {
+            "products.available": {
+              $cond: {
+                if: { $gt: [{ $size: "$currentProduct" }, 0] },
+                then: { $first: "$currentProduct.available" },
+                else: null,
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            doc: { $first: "$$ROOT" },
+            products: { $push: "$products" },
+          },
+        },
+        {
+          $replaceRoot: {
+            newRoot: { $mergeObjects: ["$doc", { products: "$products" }] },
+          },
+        },
+        { $unset: "currentProduct" },
         {
           $lookup: {
             from: "milestones",
@@ -90,29 +123,26 @@ app.get(
         },
       ]).then(async ([order]) => {
         if (order) {
-          const products = await Product.find(
-            {
-              _id: {
-                $in: order.products.map(({ product, qty }) =>
-                  ObjectId(product._id)
-                ),
-              },
-            },
-            "available"
-          ).then((dbRes) =>
-            dbRes.map((pr) => ({
-              ...order.products.find(
-                (item) => item.product._id.toString() === pr._id.toString()
-              ),
-              available: +pr.available || pr.available,
-            }))
-          );
+          // const products = await Product.find(
+          //   {
+          //     _id: {
+          //       $in: order.products.map(({ product, qty }) =>
+          //         ObjectId(product._id)
+          //       ),
+          //     },
+          //   },
+          //   "available"
+          // ).then((dbRes) =>
+          //   dbRes.map((pr) => ({
+          //     ...order.products.find(
+          //       (item) => item.product._id.toString() === pr._id.toString()
+          //     ),
+          //     available: +pr.available || pr.available,
+          //   }))
+          // );
           res.json({
             code: "ok",
-            order: {
-              ...order,
-              products,
-            },
+            order,
           });
         } else {
           res.status(400).json({ code: 400, message: "Order does not exists" });
@@ -480,11 +510,9 @@ app.post(
       shippingCost,
     } = req.body;
     if (
-      ObjectId.isValid(_id) &&
-      products.length &&
-      total &&
-      terms &&
-      deliveryTime
+      ObjectId.isValid(_id)
+      //&& products.length &&
+      //total &&
     ) {
       Order.findOneAndUpdate(
         {
@@ -493,27 +521,26 @@ app.post(
           "seller._id": req.user._id,
         },
         {
-          products,
-          total,
-          shippingCost,
-          "deliveryDetail.deliveryTime": deliveryTime,
-          terms,
-          refundable,
+          // products,
+          // total,
+          // shippingCost,
+          // "deliveryDetail.deliveryTime": deliveryTime,
+          // terms,
+          // refundable,
           status: "approved",
         },
         { new: true }
       )
         .then(async (order) => {
           if (order) {
+            console.log();
             Promise.all([
               order.products.map(({ product, qty }) =>
                 Product.findOneAndUpdate(
                   { _id: product._id, available: { $gt: 0 } },
                   { $inc: { available: -qty } },
                   { new: true }
-                ).then((data) => {
-                  console.log(data);
-                })
+                ).then((data) => {})
               ),
             ]);
             notify(
@@ -555,17 +582,51 @@ app.patch(
         { status: "declined" },
         { new: true }
       )
-        .then((dbRes) => {
-          if (dbRes) {
+        .then((order) => {
+          if (order) {
+            Promise.all([
+              ...order.milestones.map((item) => {
+                return Milestone.findOneAndUpdate(
+                  { _id: item },
+                  { status: "cancelled" },
+                  { new: true }
+                ).then((milestone) => {
+                  if (milestone) {
+                    return new P2PTransaction({
+                      user: order.buyer._id,
+                      amount: milestone.amount,
+                      note: "Milestone Cancellation",
+                      milestoneId: milestone._id,
+                      client: milestone.seller,
+                      dscr: milestone.dscr,
+                    })
+                      .save()
+                      .then((transaction) => {
+                        return User.findOneAndUpdate(
+                          { _id: order.buyer._id },
+                          {
+                            $inc: { balance: transaction.amount },
+                            $addToSet: { transactions: transaction._id },
+                          },
+                          { new: true }
+                        ).then((user) => {});
+                      })
+                      .catch((err) => {
+                        console.log(err);
+                      });
+                  }
+                });
+              }),
+            ]).then((milestones) => {});
             notify(
-              dbRes.buyer._id,
+              order.buyer._id,
               JSON.stringify({
                 title: "Order Declined",
                 body: "Your order has been declined",
               }),
               "User"
             );
-            res.json({ code: "ok", order: dbRes });
+            res.json({ code: "ok", order });
           } else {
             res
               .status(400)

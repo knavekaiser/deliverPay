@@ -55,6 +55,10 @@ const userModel = new Schema(
           title: { type: String, required: true },
           body: { type: String, required: true },
           link: { type: String },
+          expireAt: {
+            type: Date,
+            default: new Date().getTime() + 1000 * 60 * 60 * 24 * 14,
+          },
         },
         { timestamps: true }
       ),
@@ -73,6 +77,20 @@ const userModel = new Schema(
         files: [{ type: String }],
       },
       amount: { type: Number },
+    },
+    shopInfo: {
+      shippingCost: { type: Number },
+      deliveryWithin: { type: Number },
+      refundable: { type: String },
+      terms: [{ type: String }],
+      paymentMethod: {
+        name: { type: String },
+        bank: { type: String },
+        city: { type: String },
+        accountType: { type: String },
+        accountNumber: { type: String },
+        ifsc: { type: String },
+      },
     },
   },
   { timestamps: true }

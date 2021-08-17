@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useCallback, useRef } from "react";
-import { SiteContext } from "../SiteContext";
-import { Route, Switch, useHistory, Link } from "react-router-dom";
+import { SiteContext, ChatContext } from "../SiteContext";
+import { Route, Switch, useHistory, Link, useLocation } from "react-router-dom";
 import { Modal } from "./Modal.js";
 import {
   Combobox,
@@ -12,6 +12,7 @@ import {
   Minus_svg,
   Footer,
   Actions,
+  Cart_svg,
   calculatePrice,
 } from "./Elements";
 import { AddressForm } from "./Forms";
@@ -211,124 +212,138 @@ const Home = () => {
           </div>
         </div>
       </div>
-      {userType === "buyer" && (
-        <div className="search">
-          <form onSubmit={(e) => e.preventDefault()}>
-            <label htmlFor="search">Start buying with Delivery pay</label>
-            <section>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="17.9"
-                height="17.9"
-                viewBox="0 0 17.9 17.9"
-              >
-                <path
-                  id="Path_208"
-                  data-name="Path 208"
-                  d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
-                  transform="translate(0)"
-                  fill="#b9b9b9"
-                />
-              </svg>
-              <input
-                label="search"
-                required={true}
-                placeholder="Search with Delivery pay ID or Phone Number"
-                onFocus={() => setShowUsers(true)}
-                onBlur={() => {
-                  setTimeout(() => setShowUsers(false), 500);
-                }}
-                onChange={fetchUsers}
+      {
+        //   userType === "buyer" && (
+        //   <div className="search">
+        //     <form onSubmit={(e) => e.preventDefault()}>
+        //       <label htmlFor="search">Start buying with Delivery pay</label>
+        //       <section>
+        //         <svg
+        //           xmlns="http://www.w3.org/2000/svg"
+        //           width="17.9"
+        //           height="17.9"
+        //           viewBox="0 0 17.9 17.9"
+        //         >
+        //           <path
+        //             id="Path_208"
+        //             data-name="Path 208"
+        //             d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
+        //             transform="translate(0)"
+        //             fill="#b9b9b9"
+        //           />
+        //         </svg>
+        //         <input
+        //           label="search"
+        //           required={true}
+        //           placeholder="Search with Delivery pay ID or Phone Number"
+        //           onFocus={() => setShowUsers(true)}
+        //           onBlur={() => {
+        //             setTimeout(() => setShowUsers(false), 500);
+        //           }}
+        //           onChange={fetchUsers}
+        //         />
+        //         <Link
+        //           className={`sendReq ${
+        //             users.length > 0 || !value ? "disabled" : ""
+        //           }`}
+        //           onClick={inviteUser}
+        //           to="#"
+        //         >
+        //           Invite
+        //         </Link>
+        //       </section>
+        //       {users.length && showUsers ? (
+        //         <ul className="searchResult">
+        //           {users.map((user, i) => (
+        //             <Link
+        //               key={i}
+        //               to={
+        //                 // `/account/marketplace?seller${user._id}`
+        //                 "/account/home/pay"
+        //               }
+        //             >
+        //               <li>
+        //                 <div className="profile">
+        //                   <img src={user.profileImg} />
+        //                   <p className="name">
+        //                     {user.firstName + " " + user.lastName}
+        //                     <span className="phone">{user.phone}</span>
+        //                   </p>
+        //                 </div>
+        //                 {
+        //                   //   <Link
+        //                   //   className="sendReq"
+        //                   //   to={{
+        //                   //     pathname: "/account/home/pay",
+        //                   //   }}
+        //                   //   onClick={() => setClient(user)}
+        //                   // >
+        //                   //   Create Milestone
+        //                   // </Link>
+        //                 }
+        //               </li>
+        //             </Link>
+        //           ))}
+        //         </ul>
+        //       ) : null}
+        //     </form>
+        //   </div>
+        // )
+      }
+      <div className="search">
+        <form onSubmit={(e) => e.preventDefault()}>
+          <label htmlFor="search">
+            Start {userType === "seller" ? "selling" : "buying"} with Delivery
+            pay
+          </label>
+          <section>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="17.9"
+              height="17.9"
+              viewBox="0 0 17.9 17.9"
+            >
+              <path
+                id="Path_208"
+                data-name="Path 208"
+                d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
+                transform="translate(0)"
+                fill="#b9b9b9"
               />
-              <Link
-                className={`sendReq ${
-                  users.length > 0 || !value ? "disabled" : ""
-                }`}
-                onClick={inviteUser}
-                to="#"
-              >
-                Invite
-              </Link>
-            </section>
-            {users.length && showUsers ? (
-              <ul className="searchResult">
-                {users.map((user, i) => (
-                  <Link
-                    key={i}
-                    to={
-                      // `/account/marketplace?seller${user._id}`
-                      "/account/home/pay"
-                    }
-                  >
-                    <li>
-                      <div className="profile">
-                        <img src={user.profileImg} />
-                        <p className="name">
-                          {user.firstName + " " + user.lastName}
-                          <span className="phone">{user.phone}</span>
-                        </p>
-                      </div>
-                      {
-                        //   <Link
-                        //   className="sendReq"
-                        //   to={{
-                        //     pathname: "/account/home/pay",
-                        //   }}
-                        //   onClick={() => setClient(user)}
-                        // >
-                        //   Create Milestone
-                        // </Link>
-                      }
-                    </li>
-                  </Link>
-                ))}
-              </ul>
-            ) : null}
-          </form>
-        </div>
-      )}
-      {userType === "seller" && (
-        <div className="search">
-          <form onSubmit={(e) => e.preventDefault()}>
-            <label htmlFor="search">Start selling with Delivery pay</label>
-            <section>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="17.9"
-                height="17.9"
-                viewBox="0 0 17.9 17.9"
-              >
-                <path
-                  id="Path_208"
-                  data-name="Path 208"
-                  d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
-                  transform="translate(0)"
-                  fill="#b9b9b9"
-                />
-              </svg>
-              <input
-                label="search"
-                required={true}
-                placeholder="Search with Delivery pay ID or Phone Number"
-                onFocus={() => setShowUsers(true)}
-                onBlur={() => {
-                  setTimeout(() => setShowUsers(false), 500);
-                }}
-                onChange={fetchUsers}
-              />
-              <Link
-                className={`sendReq ${
-                  users.length > 0 || !value ? "disabled" : ""
-                }`}
-                onClick={inviteUser}
-                to="#"
-              >
-                Invite
-              </Link>
-            </section>
-            {users.length && showUsers ? (
-              <ul className="searchResult">
-                {users.map((user, i) => (
+            </svg>
+            <input
+              label="search"
+              required={true}
+              placeholder="Search with Delivery pay ID or Phone Number"
+              onFocus={() => setShowUsers(true)}
+              onBlur={() => {
+                setTimeout(() => setShowUsers(false), 500);
+              }}
+              onChange={fetchUsers}
+            />
+            <Link
+              className={`sendReq ${
+                users.length > 0 || !value ? "disabled" : ""
+              }`}
+              onClick={inviteUser}
+              to="#"
+            >
+              Invite
+            </Link>
+          </section>
+          {users.length && showUsers ? (
+            <ul className="searchResult">
+              {users.map((user, i) => (
+                <Link
+                  target={userType === "buyer" ? "_blank" : ""}
+                  onClick={() => setClient(user)}
+                  to={{
+                    pathname:
+                      userType === "seller"
+                        ? "/account/home/createMilestone"
+                        : `/marketplace?seller=${user._id}`,
+                  }}
+                >
                   <li key={i}>
                     <div className="profile">
                       <img src={user.profileImg} />
@@ -337,24 +352,18 @@ const Home = () => {
                         <span className="phone">{user.phone}</span>
                       </p>
                     </div>
-                    <Link
-                      className="sendReq"
-                      onClick={() => setClient(user)}
-                      to={{
-                        pathname: "/account/home/pay",
-                      }}
-                    >
+                    <span className="sendReq">
                       {userType === "seller"
                         ? "Request milestone"
-                        : "Create milestone"}
-                    </Link>
+                        : "Show Products & Services"}
+                    </span>
                   </li>
-                ))}
-              </ul>
-            ) : null}
-          </form>
-        </div>
-      )}
+                </Link>
+              ))}
+            </ul>
+          ) : null}
+        </form>
+      </div>
       {recentPayments.length > 0 && userType && (
         <div className="recentPayments">
           <p className="label">Recent Payments</p>
@@ -362,10 +371,11 @@ const Home = () => {
             {recentPayments.map((user) => (
               <li key={user._id}>
                 <Link
+                  target={userType === "buyer" ? "_blank" : ""}
                   // to={`/account/marketplace?seller=${user._id}`}
                   to={
                     userType === "buyer"
-                      ? "/account/home/createMilestone"
+                      ? `/marketplace?seller=${user._id}`
                       : "/account/home/requestMilestone"
                   }
                   onClick={() => {
@@ -454,8 +464,10 @@ const Home = () => {
   );
 };
 
-function Account({ location }) {
+function Account() {
   const { user, userType } = useContext(SiteContext);
+  const { unread } = useContext(ChatContext);
+  const location = useLocation();
   return (
     <div
       className={`account ${
@@ -472,6 +484,9 @@ function Account({ location }) {
           />
         </Link>
         <div className="links">
+          <Link to="/" className="home">
+            Home
+          </Link>
           {userType === "buyer" && <Link to="/marketplace">Browse</Link>}
         </div>
         <ProfileAvatar />
@@ -594,6 +609,7 @@ function Account({ location }) {
               </div>
               Chat
             </Link>
+            {unread ? <span className="unred">{unread}</span> : null}
           </li>
           {userType === "buyer" && (
             <>
@@ -1306,107 +1322,304 @@ function Account({ location }) {
             Hold
           </Link>
         </li>
-        <li
-          className={`trans ${
-            location.pathname.startsWith("/account/transactions")
-              ? "active"
-              : undefined
-          }`}
-        >
-          <Link to="/account/transactions">
-            <div className="icon">
-              <svg
-                id="Group_283"
-                data-name="Group 283"
-                xmlns="http://www.w3.org/2000/svg"
-                width="28.407"
-                height="25.407"
-                viewBox="0 0 28.407 25.407"
-              >
-                <g
-                  id="Path_4"
-                  data-name="Path 4"
-                  transform="translate(3)"
-                  fill="none"
+        {userType === "seller" ? (
+          <li
+            className={`trans ${
+              location.pathname.startsWith("/account/myShop")
+                ? "active"
+                : undefined
+            }`}
+          >
+            <Link to="/account/myShop/products">
+              <div className="icon">
+                <svg
+                  id="Group_283"
+                  data-name="Group 283"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28.407"
+                  height="25.407"
+                  viewBox="0 0 28.407 25.407"
                 >
-                  <path
-                    d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
-                    stroke="none"
-                  />
-                  <path
-                    d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
-                    stroke="none"
+                  <g
+                    id="Path_4"
+                    data-name="Path 4"
+                    transform="translate(3)"
+                    fill="none"
+                  >
+                    <path
+                      d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
+                      stroke="none"
+                    />
+                    <path
+                      d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
+                      stroke="none"
+                      fill="#fff"
+                    />
+                  </g>
+                  <g
+                    id="Polygon_1"
+                    data-name="Polygon 1"
+                    transform="translate(6.001 12.353) rotate(-150)"
                     fill="#fff"
-                  />
-                </g>
-                <g
-                  id="Polygon_1"
-                  data-name="Polygon 1"
-                  transform="translate(6.001 12.353) rotate(-150)"
-                  fill="#fff"
+                  >
+                    <path
+                      d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
+                      stroke="none"
+                    />
+                    <path
+                      d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
+                      stroke="none"
+                      fill="#fff"
+                    />
+                  </g>
+                  <g
+                    id="Rectangle_4"
+                    data-name="Rectangle 4"
+                    transform="translate(0 11.86) rotate(-22)"
+                    fill="#336cf9"
+                    stroke="#336cf9"
+                    strokeWidth="1"
+                  >
+                    <rect width="6.929" height="4.619" stroke="none" />
+                    <rect
+                      x="0.5"
+                      y="0.5"
+                      width="5.929"
+                      height="3.619"
+                      fill="none"
+                    />
+                  </g>
+                  <g
+                    id="Group_5"
+                    data-name="Group 5"
+                    transform="translate(15.704 4.888)"
+                  >
+                    <line
+                      id="Line_3"
+                      data-name="Line 3"
+                      y2="9.239"
+                      transform="translate(0 0)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    />
+                    <line
+                      id="Line_4"
+                      data-name="Line 4"
+                      x2="6.929"
+                      y2="2.31"
+                      transform="translate(0 9.239)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    />
+                  </g>
+                </svg>
+              </div>
+              My Shop
+            </Link>
+          </li>
+        ) : (
+          <li
+            className={`trans ${
+              location.pathname.startsWith("/account/myShopping")
+                ? "active"
+                : undefined
+            }`}
+          >
+            <Link to="/account/myShopping/orders">
+              <div className="icon">
+                <svg
+                  id="Group_283"
+                  data-name="Group 283"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28.407"
+                  height="25.407"
+                  viewBox="0 0 28.407 25.407"
                 >
-                  <path
-                    d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
-                    stroke="none"
-                  />
-                  <path
-                    d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
-                    stroke="none"
+                  <g
+                    id="Path_4"
+                    data-name="Path 4"
+                    transform="translate(3)"
+                    fill="none"
+                  >
+                    <path
+                      d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
+                      stroke="none"
+                    />
+                    <path
+                      d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
+                      stroke="none"
+                      fill="#fff"
+                    />
+                  </g>
+                  <g
+                    id="Polygon_1"
+                    data-name="Polygon 1"
+                    transform="translate(6.001 12.353) rotate(-150)"
                     fill="#fff"
-                  />
-                </g>
-                <g
-                  id="Rectangle_4"
-                  data-name="Rectangle 4"
-                  transform="translate(0 11.86) rotate(-22)"
-                  fill="#336cf9"
-                  stroke="#336cf9"
-                  strokeWidth="1"
-                >
-                  <rect width="6.929" height="4.619" stroke="none" />
-                  <rect
-                    x="0.5"
-                    y="0.5"
-                    width="5.929"
-                    height="3.619"
-                    fill="none"
-                  />
-                </g>
-                <g
-                  id="Group_5"
-                  data-name="Group 5"
-                  transform="translate(15.704 4.888)"
-                >
-                  <line
-                    id="Line_3"
-                    data-name="Line 3"
-                    y2="9.239"
-                    transform="translate(0 0)"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="2"
-                  />
-                  <line
-                    id="Line_4"
-                    data-name="Line 4"
-                    x2="6.929"
-                    y2="2.31"
-                    transform="translate(0 9.239)"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="2"
-                  />
-                </g>
-              </svg>
-            </div>
-            Transactions
-          </Link>
-        </li>
+                  >
+                    <path
+                      d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
+                      stroke="none"
+                    />
+                    <path
+                      d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
+                      stroke="none"
+                      fill="#fff"
+                    />
+                  </g>
+                  <g
+                    id="Rectangle_4"
+                    data-name="Rectangle 4"
+                    transform="translate(0 11.86) rotate(-22)"
+                    fill="#336cf9"
+                    stroke="#336cf9"
+                    strokeWidth="1"
+                  >
+                    <rect width="6.929" height="4.619" stroke="none" />
+                    <rect
+                      x="0.5"
+                      y="0.5"
+                      width="5.929"
+                      height="3.619"
+                      fill="none"
+                    />
+                  </g>
+                  <g
+                    id="Group_5"
+                    data-name="Group 5"
+                    transform="translate(15.704 4.888)"
+                  >
+                    <line
+                      id="Line_3"
+                      data-name="Line 3"
+                      y2="9.239"
+                      transform="translate(0 0)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    />
+                    <line
+                      id="Line_4"
+                      data-name="Line 4"
+                      x2="6.929"
+                      y2="2.31"
+                      transform="translate(0 9.239)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    />
+                  </g>
+                </svg>
+              </div>
+              My Orders
+            </Link>
+          </li>
+        )}
+        {
+          //   <li
+          //   className={`trans ${
+          //     location.pathname.startsWith("/account/transactions")
+          //       ? "active"
+          //       : undefined
+          //   }`}
+          // >
+          //   <Link to="/account/transactions">
+          //     <div className="icon">
+          //       <svg
+          //         id="Group_283"
+          //         data-name="Group 283"
+          //         xmlns="http://www.w3.org/2000/svg"
+          //         width="28.407"
+          //         height="25.407"
+          //         viewBox="0 0 28.407 25.407"
+          //       >
+          //         <g
+          //           id="Path_4"
+          //           data-name="Path 4"
+          //           transform="translate(3)"
+          //           fill="none"
+          //         >
+          //           <path
+          //             d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
+          //             stroke="none"
+          //           />
+          //           <path
+          //             d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
+          //             stroke="none"
+          //             fill="#fff"
+          //           />
+          //         </g>
+          //         <g
+          //           id="Polygon_1"
+          //           data-name="Polygon 1"
+          //           transform="translate(6.001 12.353) rotate(-150)"
+          //           fill="#fff"
+          //         >
+          //           <path
+          //             d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
+          //             stroke="none"
+          //           />
+          //           <path
+          //             d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
+          //             stroke="none"
+          //             fill="#fff"
+          //           />
+          //         </g>
+          //         <g
+          //           id="Rectangle_4"
+          //           data-name="Rectangle 4"
+          //           transform="translate(0 11.86) rotate(-22)"
+          //           fill="#336cf9"
+          //           stroke="#336cf9"
+          //           strokeWidth="1"
+          //         >
+          //           <rect width="6.929" height="4.619" stroke="none" />
+          //           <rect
+          //             x="0.5"
+          //             y="0.5"
+          //             width="5.929"
+          //             height="3.619"
+          //             fill="none"
+          //           />
+          //         </g>
+          //         <g
+          //           id="Group_5"
+          //           data-name="Group 5"
+          //           transform="translate(15.704 4.888)"
+          //         >
+          //           <line
+          //             id="Line_3"
+          //             data-name="Line 3"
+          //             y2="9.239"
+          //             transform="translate(0 0)"
+          //             fill="none"
+          //             stroke="#fff"
+          //             strokeWidth="2"
+          //           />
+          //           <line
+          //             id="Line_4"
+          //             data-name="Line 4"
+          //             x2="6.929"
+          //             y2="2.31"
+          //             transform="translate(0 9.239)"
+          //             fill="none"
+          //             stroke="#fff"
+          //             strokeWidth="2"
+          //           />
+          //         </g>
+          //       </svg>
+          //     </div>
+          //     Transactions
+          //   </Link>
+          // </li>
+        }
       </ul>
     </div>
   );
 }
-const ProfileAvatar = () => {
+export const ProfileAvatar = () => {
   const { user, setUser, cart, setCart, userType } = useContext(SiteContext);
   const history = useHistory();
   const menuRef = useRef(null);
@@ -1472,7 +1685,7 @@ const ProfileAvatar = () => {
             className="cart"
             icon={
               <>
-                <img src="/cart.svg" />
+                <Cart_svg />
                 {cart.length > 0 && (
                   <span className="itemCount">
                     {cart.reduce((a, c) => a + c.qty, 0)}
@@ -1551,11 +1764,17 @@ const ProfileAvatar = () => {
             {user?.firstName + " " + user?.lastName || user.phone}
           </p>
           <UserTypeSwitch />
-          <Link className="link" to="/aboutUs">
-            More about us
+          <Link className="link" to="/account">
+            Dashboard
+          </Link>
+          <Link className="link trans" to="/account/transactions">
+            Transactions
           </Link>
           <Link className="link settings" to="/account/profile">
             Settings
+          </Link>
+          <Link className="link" to="/aboutUs">
+            More about us
           </Link>
           <div className="referral">
             <button
@@ -1699,6 +1918,18 @@ const UserTypeSwitch = () => {
           Seller
         </li>
       </ul>
+      <div className="break" />
+      {userType === "seller" ? (
+        <p className="note">
+          As a seller, you can manage your
+          <br /> product listing, order, refunds and general shop settings.
+        </p>
+      ) : (
+        <p className="note">
+          As a buyer, you can manage your
+          <br /> perchase orders, payments and deals.
+        </p>
+      )}
     </div>
   );
 };
@@ -1712,6 +1943,7 @@ export const MilestoneForm = ({
   definedAmount,
   order,
   refund,
+  strict,
 }) => {
   const { user, setUser } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
@@ -1810,7 +2042,7 @@ export const MilestoneForm = ({
       .then((data) => {
         setLoading(false);
         if (data.code === "ok") {
-          onSuccess?.(data.milestone);
+          onSuccess?.({ ...data });
         } else if (data.code === 403) {
           setMsg(
             <>
@@ -1818,6 +2050,7 @@ export const MilestoneForm = ({
               <div>
                 <Err_svg />
                 <h4>Insufficient fund</h4>
+                <Link to="/account/wallet">Add Money to your wallet now.</Link>
               </div>
             </>
           );
@@ -2016,6 +2249,7 @@ export const MilestoneForm = ({
           <section className="amount">
             <label>Amount</label>
             <NumberInput
+              readOnly={strict}
               min={10}
               defaultValue={definedAmount || 0}
               required={true}

@@ -37,6 +37,10 @@
         }
       }
     }
+    .err {
+      color: $red;
+      text-decoration: underline;
+    }
   }
   .filters {
     .category {
@@ -52,7 +56,7 @@
   }
   .products {
     tr {
-      grid-template-columns: 1.5rem 4.5rem 5rem 1fr 5rem 4.5rem 4rem 3rem 5rem 6rem 3rem 4rem;
+      grid-template-columns: 1.5rem 4.5rem 5rem 1fr 5rem 4.5rem 4rem 3rem 5rem 6rem 4rem;
       grid-gap: 1rem;
       td,
       th {
@@ -77,7 +81,9 @@
     }
   }
   td {
-    text-align: center;
+    &:not(.user) {
+      text-align: center;
+    }
   }
   tbody {
     tr {
@@ -160,16 +166,47 @@
 .settings {
   display: grid;
   grid-gap: 3.5rem;
+  & > div {
+    display: grid;
+    grid-gap: 1rem;
+  }
+  .caution {
+    position: fixed;
+    top: 9rem;
+    grid-gap: 0.3rem;
+    right: 3rem;
+    p {
+      padding: 1rem;
+    }
+    .err {
+      background: rgba($red, 0.04);
+      color: $red;
+      border: 1px solid $red;
+      border-radius: 0.5rem;
+    }
+  }
   .head {
     padding: 0.5rem 0;
-    margin-bottom: 1rem;
+    // margin-bottom: 1rem;
     font-size: 2rem;
     font-weight: 300;
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    grid-gap: 3rem;
+    // justify-content: space-between;
+    button {
+      cursor: pointer;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      color: $blue;
+      font-weight: 600;
+      background: none;
+    }
   }
   .categories {
     padding: 1rem;
-    margin-bottom: 1rem;
+    // margin-bottom: 1rem;
     border-radius: 0.5rem;
     border: 1px solid rgba(0, 0, 0, 0.14);
     display: flex;
@@ -217,27 +254,125 @@
       border-radius: 0.5rem;
       border: 1px solid rgba(0, 0, 0, 0.2);
     }
-    button {
+    & > button,
+    .btns button {
       border-radius: 0.5rem;
       color: white;
       background: $blue;
       border: 2px solid $blue;
       padding: 0.5rem 1.5rem;
+      &:hover {
+        background: white;
+        color: $blue;
+      }
+    }
+  }
+  .number {
+    .ticker {
+      display: none;
+    }
+  }
+  .gst,
+  .return,
+  .payment,
+  .shipping {
+    form {
+      display: grid;
+      width: 100%;
+      grid-gap: 2rem;
+      & > section {
+        display: grid;
+        align-items: center;
+        grid-gap: 0.5rem;
+      }
+      .btns {
+        justify-content: flex-end;
+        display: flex;
+      }
     }
   }
   .gst {
-    p {
-      margin-bottom: 1rem;
+    .thumbs {
+      // justify-content: flex-start !important;
+      margin-left: 0;
     }
+  }
+  .shipping {
     form {
-      .number {
-        .ticker {
-          display: none;
+      & > section {
+        display: flex;
+      }
+    }
+  }
+  .terms {
+    ul {
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      li {
+        list-style: initial;
+        display: flex;
+        align-items: center;
+        grid-gap: 1rem;
+        justify-content: space-between;
+        padding: 0.5rem;
+        &:hover {
+          background: rgba(0, 0, 0, 0.03);
+        }
+        button {
+          cursor: pointer;
+          display: grid;
+          border: none;
+          outline: none;
+          background: none;
+          svg {
+            path {
+              fill: $red;
+            }
+          }
+        }
+      }
+      display: grid;
+    }
+    .addTerm {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      grid-gap: 0.5rem;
+      textarea {
+        outline: none;
+        border-radius: 1.3rem;
+        width: 100%;
+        flex: 1;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        resize: none;
+      }
+      button {
+        white-space: nowrap;
+        padding: 0.5rem 1.5rem;
+        background: $blue;
+        border: 2px solid $blue;
+        color: white;
+        border-radius: 2rem;
+        cursor: pointer;
+        &:hover {
+          background: white;
+          color: $blue;
         }
       }
     }
   }
+  .note {
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.6);
+  }
   margin-bottom: 4rem;
+}
+.subtitle {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 0.5rem;
 }
 
 .orderAcceptForm {
@@ -253,5 +388,68 @@
   }
   .products {
     padding: 0.5rem 1.5rem;
+  }
+}
+
+.batchItemPreview {
+  table {
+    padding: 1.5rem !important;
+  }
+  tr {
+    &:not(.placeholder) {
+      grid-template-columns: 4rem 5rem 0.5fr 1fr 5rem 4rem 4rem 3rem !important;
+    }
+    td {
+      text-align: center;
+    }
+    .name,
+    .dscr {
+      text-align: left !important;
+    }
+    .remove {
+      margin: auto;
+      display: grid;
+      background: none;
+      outline: none;
+      border: none;
+      cursor: pointer;
+      svg {
+        path {
+          fill: rgba(0, 0, 0, 0.47);
+        }
+      }
+      &:hover {
+        svg {
+          path {
+            fill: $red;
+          }
+        }
+      }
+    }
+  }
+  .uploadFile {
+    margin: auto;
+    padding: 4rem;
+    text-align: center;
+    display: grid;
+    grid-gap: 1rem;
+    align-items: center;
+    a {
+      color: $blue;
+    }
+  }
+  .submit {
+    width: max-content;
+    padding: 0.5rem 1.5rem;
+    background: $blue;
+    border: 2px solid $blue;
+    color: white;
+    margin: 2rem auto;
+    margin-right: 2rem;
+    font-size: 1rem;
+    &:hover {
+      background: white;
+      color: $blue;
+    }
   }
 }

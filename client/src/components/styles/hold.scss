@@ -258,7 +258,8 @@
             }
           }
         }
-        &.declined {
+        &.declined,
+        &.cancelled {
           filter: grayscale(1);
           .pending,
           .onhold,
@@ -325,6 +326,7 @@
           grid-gap: 1rem;
         }
         a {
+          cursor: pointer;
           display: block;
           font-weight: 500;
           color: white;

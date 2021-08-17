@@ -88,7 +88,7 @@ const SingleTransaction = ({ transaction }) => {
       </ul>
       <ul className="amountDate">
         <li>
-          <p>Amount</p>-<p className="amount">{transaction.amount}</p>
+          <p>Amount</p>-<p className="amount">₹{transaction.amount.fix()}</p>
         </li>
         <li>
           <p>Hold Date</p>-

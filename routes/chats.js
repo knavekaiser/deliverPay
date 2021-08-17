@@ -59,9 +59,28 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
               email: 1,
               profileImg: 1,
               address: 1,
-              blockList: 1,
             },
           },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "chats",
+        as: "clientChat",
+        let: { client: "$client", user: "$user" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$$client", "$user"] },
+                  { $eq: ["$$user", "$client"] },
+                ],
+              },
+            },
+          },
+          { $project: { lastSeen: 1 } },
         ],
       },
     },
@@ -73,8 +92,12 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
       },
     },
     {
-      $unset: "clientProfile",
+      $set: {
+        "client.lastSeen": { $first: "$clientChat.lastSeen" },
+        messages: { $slice: ["$messages", -50, 50] },
+      },
     },
+    { $unset: ["clientProfile", "clientChat"] },
   ])
     .then((dbRes) => {
       const chats = dbRes.map((item) => ({
@@ -93,6 +116,38 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
       res.status(500).json({ message: "something went wrong" });
     });
 });
+
+app.get(
+  "/api/getMessages",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    Chat.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          client: ObjectId(req.query.client),
+        },
+      },
+      {
+        $project: {
+          messages: { $slice: ["$messages", -(50 * (+req.query.page || 2))] },
+          total: { $size: "$messages" },
+        },
+      },
+    ])
+      .then((contact) => {
+        if (contact.length) {
+          res.json({ code: "ok", contact: contact[0] });
+        } else {
+          res.status(400).json({ code: 400, message: "Chat does not exists." });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ code: 500, message: "Database error" });
+      });
+  }
+);
 
 app.post(
   "/api/sendContactRequest",
@@ -217,7 +272,7 @@ app.patch(
         { new: true }
       )
         .then((dbRes) => {
-          res.json({ code: "ok" });
+          res.json({ code: "ok", contact: dbRes });
         })
         .catch((err) => {
           console.log(err);
@@ -286,12 +341,18 @@ global.InitiateChat = async ({ user, client }) => {
   return Promise.all([
     new Chat({ user, client }).save().catch((err) => {
       if (err.code === 11000) {
-        return Chat.findOne({ user, client });
+        return Chat.findOne(
+          { user, client },
+          "createdAt updatedAt lastSeen user client _id"
+        );
       }
     }),
     new Chat({ user: client, client: user }).save().catch((err) => {
       if (err.code === 11000) {
-        return Chat.findOne({ user: client, client: user });
+        return Chat.findOne(
+          { user: client, client: user },
+          "createdAt updatedAt lastSeen user client _id"
+        );
       }
     }),
   ]);
@@ -302,6 +363,9 @@ global.SendMessage = async ({ rooms, message }) => {
     .emit("messageToUser", { ...message });
   return Chat.updateMany(
     { $or: rooms.map((room) => ({ _id: room })) },
-    { $push: { messages: message } }
-  );
+    { $push: { messages: message } },
+    { new: true }
+  ).then((data) => {
+    return data;
+  });
 };

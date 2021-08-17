@@ -4,17 +4,62 @@
   * {
     line-height: 1.5em;
   }
+  .benner {
+    margin: auto;
+    width: 100%;
+    max-width: 100rem;
+    padding: 1.5rem;
+    padding-bottom: 0.5rem;
+    height: min-content;
+    h1 {
+      font-weight: 300;
+      line-height: 1em;
+    }
+  }
+  grid-template-rows: min-content min-content 1fr min-content !important;
   .content {
     max-width: 100rem;
     display: grid;
+    grid-template-columns: 15rem 1fr;
     grid-gap: 1rem;
-    .benner {
-      h1 {
-        font-weight: 300;
-        line-height: 1em;
+    .sidebar {
+      .categories {
+        background: $lightGreen2;
+        // padding: 1rem;
+        .label {
+          background: $green;
+          padding: 1rem;
+          color: white;
+          font-weight: 500;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          .clear {
+            cursor: pointer;
+            display: grid;
+            background: none;
+            border: none;
+            outline: none;
+            svg {
+              path {
+                fill: rgba(255, 255, 255, 0.7);
+              }
+            }
+          }
+        }
+        ul {
+          li {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            &.active {
+              background: rgba(0, 0, 0, 0.04);
+            }
+          }
+        }
       }
     }
     .filters {
+      margin: 0.5rem 0;
       .sort {
         .combobox {
           input {
@@ -56,19 +101,21 @@
     .products {
       max-width: 100%;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      // grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       grid-gap: 0.5rem;
     }
     .product {
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      padding: 0.5rem;
-      background: rgba(0, 0, 0, 0.01);
+      padding: 1rem;
+      background: $lightGreen2;
       border-radius: 0.7rem;
-      display: grid;
-      grid-gap: 0.7rem;
+      display: flex;
+      align-items: center;
+      grid-gap: 1.25rem;
+      grid-auto-rows: min-content 1fr min-content;
+      position: relative;
       .thumb {
-        width: 100%;
-        padding-bottom: 100%;
+        width: 10rem;
+        height: 10rem;
         position: relative;
         display: grid;
         place-items: center;
@@ -91,9 +138,19 @@
         }
       }
       .detail {
+        display: grid;
+        grid-gap: 0.5rem;
         h3 {
           font-weight: 400;
           font-size: 1.1rem;
+        }
+        .dscr {
+          font-size: 0.85rem;
+          color: rgba(0, 0, 0, 0.75);
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 3;
+          overflow: hidden;
         }
         .price {
           font-size: 1.3rem;
@@ -105,20 +162,48 @@
         }
       }
       .actions {
+        position: absolute;
+        right: 1rem;
+        bottom: 1rem;
         display: flex;
+        flex-wrap: wrap;
         button {
           cursor: pointer;
           flex: 1;
-          border: 2px solid $blue;
-          border-radius: 8px;
-          padding: 0.7rem 1rem;
-          background: $blue;
+          border: 1px solid $green;
+          border-radius: 4px;
+          padding: 0.3rem;
+          background: white;
           color: white;
           font-weight: 600;
+          height: 2.2rem;
+          width: 2.2rem;
+          svg {
+            height: 100%;
+            width: 100%;
+            path {
+              fill: $green;
+            }
+          }
           &:hover {
-            background: white;
+            background: $green;
+            svg {
+              path {
+                fill: white;
+              }
+            }
             color: $blue;
           }
+          &:disabled {
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 0, 0, 0.1);
+          }
+        }
+        .note {
+          flex-basis: 100%;
+          font-size: 0.8rem;
+          color: rgba(0, 0, 0, 0.6);
         }
       }
     }
@@ -146,8 +231,7 @@
     grid-template-columns: 1fr 1fr;
     grid-gap: 2.5rem;
     .gallery {
-      min-width: 30rem;
-      max-width: 50rem;
+      width: clamp(30rem, 40rem, 50rem);
       display: grid;
       grid-gap: 1rem;
       .mainView {
@@ -230,6 +314,16 @@
             background: white;
             color: $blue;
           }
+          &:disabled {
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 0, 0, 0.1);
+          }
+        }
+        .note {
+          margin-top: 1rem;
+          font-size: 0.8rem;
+          color: rgba(0, 0, 0, 0.6);
         }
       }
     }
@@ -270,6 +364,7 @@
     display: flex;
     grid-gap: 1rem;
     align-items: center;
+    position: relative;
     &:not(:last-child) {
       border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
@@ -341,6 +436,11 @@
         // width: 3rem;
       }
     }
+    .tip {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
   }
 }
 .fullCart {
@@ -377,24 +477,39 @@
           border-top: 1px solid rgba(0, 0, 0, 0.3);
           text-align: right;
           font-weight: 400;
-          font-size: 1.7rem;
+          font-size: 1.6rem;
           margin: auto;
           margin-right: 0;
           display: grid;
-          max-width: 15rem;
+          max-width: 18rem;
           grid-gap: 0.5rem;
           padding-top: 0.75rem;
           p {
             align-items: center;
             label {
-              font-size: 0.7em;
+              font-size: 0.6em;
             }
             display: flex;
             justify-content: space-between;
           }
+          .grandTotal {
+            border-top: 1px solid rgba(0, 0, 0, 0.3);
+          }
           .note {
             font-size: 0.8rem;
             color: rgba(0, 0, 0, 0.5);
+          }
+        }
+        .terms {
+          margin: 1rem 0;
+          display: grid;
+          grid-gap: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid rgba(0, 0, 0, 0.3);
+          .btn {
+            cursor: pointer;
+            text-decoration: underline;
+            color: $blue;
           }
         }
         .devider {
@@ -428,8 +543,11 @@
               padding: 0.5rem 0;
               align-items: center;
               display: flex;
+              grid-gap: 1rem;
+              text-align: right;
               justify-content: space-between;
               label {
+                text-align: left;
                 text-transform: capitalize;
                 font-size: 0.8rem;
                 color: rgba(0, 0, 0, 0.7);
@@ -478,6 +596,16 @@
       display: block;
       color: rgba(0, 0, 0, 0.6);
     }
+  }
+}
+.shopTerms {
+  max-width: 40rem;
+  ul {
+    padding: 2rem 1.5rem;
+    display: grid;
+    grid-gap: 1rem;
+    list-style: initial;
+    margin-left: 1rem;
   }
 }
 
@@ -787,6 +915,86 @@
       &:hover {
         background: white;
         color: $blue;
+      }
+    }
+  }
+  .benner {
+    justify-content: flex-end;
+    grid-gap: 0.5rem;
+    p {
+      margin: auto;
+      margin-left: 0;
+    }
+    .batchUpload {
+      position: relative;
+      overflow: hidden;
+      input {
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-size: 2rem;
+        opacity: 0;
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .generic.marketplace {
+    .content {
+      grid-template-columns: 1fr;
+      .filters {
+        flex-direction: column;
+        align-items: flex-start;
+        & > section {
+          display: flex;
+          width: 100%;
+        }
+      }
+      .product {
+        .thumb {
+          height: 5.5rem;
+          width: 5.5rem;
+        }
+      }
+    }
+  }
+  .generic.singleProduct {
+    .content {
+      grid-template-columns: 1fr;
+      .gallery {
+        width: 100%;
+      }
+    }
+  }
+  .fullCart {
+    padding: 1rem;
+    .allCarts {
+      .shop {
+        .cart {
+          padding: 0.5rem;
+          grid-template-columns: 1fr;
+          .items {
+            .item {
+              img {
+                display: none;
+                max-width: 5rem;
+                flex-basis: 100%;
+              }
+              flex-wrap: wrap;
+            }
+          }
+          .total {
+            max-width: 100%;
+            p {
+              font-size: 1.4rem;
+            }
+          }
+          .devider {
+            height: 1px;
+            width: 100%;
+          }
+        }
       }
     }
   }

@@ -6,7 +6,7 @@ import {
   useContext,
 } from "react";
 import { SiteContext } from "../SiteContext";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { Modal, Confirm } from "./Modal";
 import {
   Err_svg,
@@ -40,7 +40,7 @@ const Hold = ({ history, location, match }) => {
     queryString.parse(location.search).perPage || 20
   );
   const [search, setSearch] = useState(
-    queryString.parse(location.search).q || ""
+    queryString.parse(location.search).q?.replace(/\/(?!.*\/).*/, "") || ""
   );
   const [status, setStatus] = useState(
     queryString.parse(location.search).status || ""
@@ -374,6 +374,7 @@ const CommonMilestoneElement = ({ milestone }) => {
 };
 
 const SellerMilestone = ({ milestone, setMilestones }) => {
+  const history = useHistory();
   const [releaseForm, setReleaseForm] = useState(false);
   const [disputeForm, setDisputeForm] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -453,8 +454,7 @@ const SellerMilestone = ({ milestone, setMilestones }) => {
           <h4>₹{milestone.amount}</h4>
           <div className="btns">
             {milestone.status === "pending" && (
-              <Link
-                to={`/account/hold/${milestone._id}/approve`}
+              <a
                 onClick={() =>
                   Confirm({
                     label: "Milestone Approval",
@@ -464,60 +464,42 @@ const SellerMilestone = ({ milestone, setMilestones }) => {
                 }
               >
                 Approve
-              </Link>
+              </a>
             )}
             {milestone.status === "inProgress" && (
-              <Link
-                onClick={() => setReleaseForm(true)}
-                to={`/account/hold/${milestone._id}/release`}
-              >
-                Release
-              </Link>
+              <a onClick={() => setReleaseForm(true)}>Release</a>
             )}
             {
               //   (milestone.status === "pending" ||
               //   milestone.status === "inProgress") && (
-              //   <Link
+              //   <a
               //     className="disputeRes"
               //     onClick={() =>
               //       console.log(
               //         "buyers are not allowed to cancel milestone after 30 seconds."
               //       )
               //     }
-              //     to="#"
               //   >
               //     Cancel
-              //   </Link>
+              //   </a>
               // )
             }
             {milestone.status === "released" && (
-              <Link
-                className="dispute"
-                to={`#`}
-                onClick={() => setDisputeForm(true)}
-              >
+              <a className="dispute" onClick={() => setDisputeForm(true)}>
                 Raise Dispute
-              </Link>
+              </a>
             )}
             {((disputeFiledBy === "client" && myCase) ||
               disputeFiledBy === "self") && (
-              <Link className="disputed" to={`#`}>
-                Dispute {milestone.dispute?.status}
-              </Link>
+              <a className="disputed">Dispute {milestone.dispute?.status}</a>
             )}
             {disputeFiledBy === "client" && !myCase && (
-              <Link
-                className="disputeRes"
-                to={"#"}
-                onClick={() => setDisputeForm(true)}
-              >
+              <a className="disputeRes" onClick={() => setDisputeForm(true)}>
                 Approve Dispute
-              </Link>
+              </a>
             )}
             {milestone.status === "declined" && (
-              <Link className="disputed" to={`#`}>
-                Declined
-              </Link>
+              <a className="disputed">Declined</a>
             )}
             <Modal open={msg} className="msg">
               {msg}
@@ -549,6 +531,16 @@ const SellerMilestone = ({ milestone, setMilestones }) => {
                 })
               );
               setReleaseForm(false);
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Succ_svg />
+                    <h4 className="amount">₹{milestone.amount}</h4>
+                    <h4>Milestone has been released.</h4>
+                  </div>
+                </>
+              );
             }}
           />
         </Modal>
@@ -727,18 +719,13 @@ const BuyerMilestone = ({ milestone, setMilestones }) => {
           <div className="btns">
             {(milestone.status === "pending" ||
               milestone.status === "inProgress") && (
-              <Link
-                className="dispute"
-                to={`#`}
-                onClick={() => setDisputeForm(true)}
-              >
+              <a className="dispute" onClick={() => setDisputeForm(true)}>
                 Raise Dispute
-              </Link>
+              </a>
             )}
             {milestone.status === "pending" && (
-              <Link
+              <a
                 className="disputeRes"
-                to={`#`}
                 onClick={() =>
                   Confirm({
                     label: "Cancel Milestone request",
@@ -748,32 +735,23 @@ const BuyerMilestone = ({ milestone, setMilestones }) => {
                 }
               >
                 Cancel Request
-              </Link>
+              </a>
             )}
             {milestone.status === "released" && (
-              <Link className="released" to={`#`}>
-                Released
-              </Link>
+              <a className="released">Released</a>
             )}
             {((disputeFiledBy === "client" && myCase) ||
               disputeFiledBy === "self") && (
-              <Link className="disputed" to={`#`}>
-                Dispute {milestone.dispute?.status}
-              </Link>
+              <a className="disputed">Dispute {milestone.dispute?.status}</a>
             )}
             {disputeFiledBy === "client" && !myCase && (
-              <Link
-                className="disputeRes"
-                to={"#"}
-                onClick={() => setDisputeForm(true)}
-              >
+              <a className="disputeRes" onClick={() => setDisputeForm(true)}>
                 Approve Dispute
-              </Link>
+              </a>
             )}
             {milestone.status === "inProgress" && (
-              <Link
+              <a
                 className="disputeRes"
-                to={`#`}
                 onClick={() =>
                   Confirm({
                     label: "Decline Milestone",
@@ -783,12 +761,10 @@ const BuyerMilestone = ({ milestone, setMilestones }) => {
                 }
               >
                 Decline
-              </Link>
+              </a>
             )}
             {milestone.status === "declined" && (
-              <Link className="disputed" to={`#`}>
-                Declined
-              </Link>
+              <a className="disputed">Declined</a>
             )}
           </div>
         </div>

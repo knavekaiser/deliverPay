@@ -320,7 +320,7 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
   const [edit, setEdit] = useState(false);
   const [msg, setMsg] = useState(false);
   const cancelOrder = () => {
-    fetch("/api/cancelOrder", {
+    fetch("/api/declineOrder", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ _id: order._id }),
@@ -360,6 +360,52 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
             <div>
               <Err_svg />
               <h4>Could not cancel order. Make sure you're online</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  const acceptOrder = () => {
+    fetch("/api/acceptOrder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id: order._id }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setOrders((prev) =>
+            prev.map((item) => {
+              if (item._id === order._id) {
+                return {
+                  ...item,
+                  status: data.order?.status,
+                };
+              } else {
+                return item;
+              }
+            })
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Orders does not exist.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not accept order. Make sure you're online.</h4>
             </div>
           </>
         );
@@ -450,7 +496,7 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
         <td className="date">
           <Moment format="DD MMM YYYY, hh:mm a">{order.createdAt}</Moment>
         </td>
-        <td>
+        <td className="user">
           <User user={order.buyer} />
         </td>
         <td>{order.products.reduce((a, c) => a + c.qty, 0)}</td>
@@ -465,18 +511,32 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
                 View Detail
               </Link>
               {order.status === "pending" && (
-                <Link
-                  to="#"
-                  onClick={(e) => {
-                    Confirm({
-                      label: "Order Cancellation",
-                      question: "You sure want to cancel this order?",
-                      callback: cancelOrder,
-                    });
-                  }}
-                >
-                  Cancel order
-                </Link>
+                <>
+                  <Link
+                    to="#"
+                    onClick={(e) => {
+                      Confirm({
+                        label: "Accept Order",
+                        question: "You sure want to accept this order?",
+                        callback: acceptOrder,
+                      });
+                    }}
+                  >
+                    Accept order
+                  </Link>
+                  <Link
+                    to="#"
+                    onClick={(e) => {
+                      Confirm({
+                        label: "Order Cancellation",
+                        question: "You sure want to cancel this order?",
+                        callback: cancelOrder,
+                      });
+                    }}
+                  >
+                    Cancel order
+                  </Link>
+                </>
               )}
               {order.status === "approved" && (
                 <Link
@@ -504,20 +564,12 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
   );
 };
 
-export const FullOrder = ({ match }) => {
-  const { userType } = useContext(SiteContext);
+export const FullOrder = ({ history, match }) => {
+  const { user, userType } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [order, setOrder] = useState(null);
-  const [shipping, setShipping] = useState(0);
+  const [shipping, setShipping] = useState(user.shopInfo?.shippingCost || 0);
   const [refundable, setRefundable] = useState(null);
-  const [terms, setTerms] = useState([
-    "Buyer will be responsible for paying for shipping costs & for returning the item.",
-    "Shipping costs are nonrefundable.",
-    "Orders must be returned with Original Packaging & Securely.",
-    "Orders must be Returned Via Trackable / Traceable Courier Services Only.",
-    "Proof of Return via Photo of Tracking Number & Dispatch Ticket is Required",
-    "Refund is Only Issued Upon Delivery of Return Package.",
-  ]);
   const [deliveryTime, setDeliveryTime] = useState(
     moment(order?.deliveryTime).format("YYYY-MM-DDThh:mm")
   );
@@ -525,23 +577,18 @@ export const FullOrder = ({ match }) => {
   const [milestoneForm, setMilestoneForm] = useState(false);
   const [fileUpload, setFileUpload] = useState(false);
   const milestoneTimeout = useRef();
-  const total =
-    order?.products.reduce(
-      (a, c) => a + calculatePrice({ product: c.product, gst: true }) * c.qty,
-      0
-    ) + (+shipping || 0);
   const acceptOrder = () => {
     fetch("/api/acceptOrder", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         _id: order._id,
-        products: order.products,
-        shippingCost: shipping,
-        refundable,
-        terms,
-        deliveryTime,
-        total,
+        // products: order.products,
+        // shippingCost: shipping,
+        // refundable,
+        // terms,
+        // deliveryTime,
+        // total,
       }),
     })
       .then((res) => res.json())
@@ -597,7 +644,7 @@ export const FullOrder = ({ match }) => {
               <button onClick={() => setMsg(null)}>Okay</button>
               <div>
                 <Succ_svg />
-                <h4>Order approved.</h4>
+                <h4>Order declined.</h4>
               </div>
             </>
           );
@@ -797,6 +844,44 @@ export const FullOrder = ({ match }) => {
               Mark as Delivered
             </button>
           )}
+          {order.status === "pending" && (
+            <>
+              <button
+                onClick={() => {
+                  if (!deliveryTime) {
+                    setMsg(
+                      <>
+                        <button onClick={() => setMsg(null)}>Okay</button>
+                        <div>
+                          <Err_svg />
+                          <h4>Add a delivery time</h4>
+                        </div>
+                      </>
+                    );
+                    return;
+                  }
+                  Confirm({
+                    lable: "Accept Order",
+                    question: <>You sure want to accept this order?</>,
+                    callback: acceptOrder,
+                  });
+                }}
+              >
+                Accept
+              </button>
+              <button
+                onClick={() =>
+                  Confirm({
+                    label: "Decline Order",
+                    question: "You sure want to decline this order?",
+                    callback: declineOrder,
+                  })
+                }
+              >
+                Decline
+              </button>
+            </>
+          )}
         </div>
         <div className="singleOrder">
           <div className="summery">
@@ -824,16 +909,10 @@ export const FullOrder = ({ match }) => {
                 <span />
               </li>
               {Object.entries(order.deliveryDetail).map(([key, value], i) =>
-                key === "deliveryTime" ? (
+                key === "deliveryWithin" ? (
                   <li key={i}>
-                    <label>Delivery date</label>
-                    {order.deliveryDetail.deliveryTime ? (
-                      <Moment format="DD MMM, YYYY hh:mma">
-                        {order.deliveryDetail.deliveryTime}
-                      </Moment>
-                    ) : (
-                      "N/A"
-                    )}
+                    <label>Delivery within</label>
+                    {order.deliveryDetail.deliveryWithin} days
                   </li>
                 ) : (
                   <li key={i}>
@@ -863,25 +942,27 @@ export const FullOrder = ({ match }) => {
                     <span>
                       {calculatePrice({ product, gst: true })} x {qty}
                     </span>
-                    ₹{calculatePrice({ product, gst: true }) * qty}
+                    ₹{(calculatePrice({ product, gst: true }) * qty).fix()}
                   </div>
-                  {order.status === "pending" && (
-                    <div className="remove">
-                      <button
-                        onClick={() => {
-                          setOrder((prev) => ({
-                            ...prev,
-                            products: prev.products.filter((cartProduct) => {
-                              console.log(cartProduct, product);
-                              return cartProduct.product._id !== product._id;
-                            }),
-                          }));
-                        }}
-                      >
-                        <X_svg />
-                      </button>
-                    </div>
-                  )}
+                  {
+                    //   order.status === "pending" && (
+                    //   <div className="remove">
+                    //     <button
+                    //       onClick={() => {
+                    //         setOrder((prev) => ({
+                    //           ...prev,
+                    //           products: prev.products.filter((cartProduct) => {
+                    //             console.log(cartProduct, product);
+                    //             return cartProduct.product._id !== product._id;
+                    //           }),
+                    //         }));
+                    //       }}
+                    //     >
+                    //       <X_svg />
+                    //     </button>
+                    //   </div>
+                    // )
+                  }
                 </li>
               ))}
             </ul>
@@ -890,116 +971,145 @@ export const FullOrder = ({ match }) => {
                 <label>Total</label>₹
                 {order.products.reduce(
                   (a, c) =>
-                    a +
-                    calculatePrice({ product: c.product, gst: true }) * c.qty,
+                    (
+                      a +
+                      calculatePrice({ product: c.product, gst: true }) * c.qty
+                    ).fix(),
                   0
                 )}
               </div>
+              <hr />
               <div className="data">
                 <label>Shipping</label>₹
-                {order.status === "pending" ? (
-                  <NumberInput
-                    value={shipping}
-                    onChange={(e) => setShipping(e.target.value)}
-                  />
-                ) : (
-                  <>{shipping || 0}</>
-                )}
+                {
+                  //   order.status === "pending" ? (
+                  //   <NumberInput
+                  //     value={shipping}
+                  //     onChange={(e) => setShipping(e.target.value)}
+                  //   />
+                  // ) : (
+                  //   <>{shipping || 0}</>
+                  // )
+                  order.shippingCost
+                }
               </div>
               <div className="data">
-                <label>Grand Total</label>₹{total}
+                <label>Delivery Pay fee 10%</label>₹{(order.total * 0.1).fix()}
+              </div>
+              <hr />
+              <div className="data">
+                <label>Grand Total</label>₹{order.total.fix()}
+              </div>
+              <hr />
+              <div className="data">
+                <label>You'll recieve</label>₹
+                {((order.total / 110) * 100).fix()}
               </div>
             </div>
-            <div className="deliveryInfo">
-              <section>
-                <label>Delivery Time</label>
-                {order.status === "pending" ? (
-                  <input
-                    type="datetime-local"
-                    value={deliveryTime}
-                    onChange={(e) => setDeliveryTime(e.target.value)}
-                  />
-                ) : order.deliveryDetail?.deliveryTime ? (
-                  <Moment format="DD MMM YYYY hh:mma">
-                    order.deliveryDetail?.deliveryTime
-                  </Moment>
-                ) : (
-                  <>N/A</>
-                )}
-              </section>
-              <section>
-                <label>Refundable</label>
-                {order.status === "pending" ? (
-                  <Combobox
-                    required={true}
-                    defaultValue={0}
-                    onChange={(e) => setRefundable(e.value)}
-                    options={[
-                      { label: "No", value: null },
-                      {
-                        label: "Upto 24 Hours After Delivery",
-                        value: "Upto 24 Hours After Delivery",
-                      },
-                      {
-                        label: "Upto 7 Days After Delivery",
-                        value: "Upto 7 Days After Delivery",
-                      },
-                      {
-                        label: "Upto 15 Days After Delivery",
-                        value: "Upto 15 Days After Delivery",
-                      },
-                    ]}
-                  />
-                ) : (
-                  <>{order.refundable || "N/A"}</>
-                )}
-              </section>
-            </div>
+            {
+              //   <div className="deliveryInfo">
+              //   <section>
+              //     <label>Delivery Time</label>
+              //     {order.status === "pending" ? (
+              //       <input
+              //         type="datetime-local"
+              //         value={deliveryTime}
+              //         onChange={(e) => setDeliveryTime(e.target.value)}
+              //       />
+              //     ) : order.deliveryDetail?.deliveryTime ? (
+              //       <Moment format="DD MMM YYYY hh:mma">
+              //         order.deliveryDetail?.deliveryTime
+              //       </Moment>
+              //     ) : (
+              //       <>N/A</>
+              //     )}
+              //   </section>
+              //   <section>
+              //     <label>Refundable</label>
+              //     {order.status === "pending" ? (
+              //       <Combobox
+              //         required={true}
+              //         defaultValue={0}
+              //         onChange={(e) => setRefundable(e.value)}
+              //         options={[
+              //           { label: "No", value: null },
+              //           {
+              //             label: "Upto 24 Hours After Delivery",
+              //             value: "Upto 24 Hours After Delivery",
+              //           },
+              //           {
+              //             label: "Upto 7 Days After Delivery",
+              //             value: "Upto 7 Days After Delivery",
+              //           },
+              //           {
+              //             label: "Upto 15 Days After Delivery",
+              //             value: "Upto 15 Days After Delivery",
+              //           },
+              //         ]}
+              //       />
+              //     ) : (
+              //       <>{order.refundable || "N/A"}</>
+              //     )}
+              //   </section>
+              // </div>
+            }
           </div>
           <div className="milestones">
             <h3>
               Milestones
-              {(order.status === "approved" ||
-                order.status === "shipped" ||
-                order.status === "delivered") && (
-                <button onClick={() => setMilestoneForm(true)}>
-                  Request Milestone
-                </button>
-              )}
+              {
+                //   (order.status === "approved" ||
+                //   order.status === "shipped" ||
+                //   order.status === "delivered") && (
+                //   <button onClick={() => setMilestoneForm(true)}>
+                //     Request Milestone
+                //   </button>
+                // )
+              }
             </h3>
-            {order.status === "pending" ? (
-              <p>Buyer can create milestones after you accept the order.</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <td>Date</td>
-                    <td>Descrption</td>
-                    <td>Amount</td>
-                    <td>Status</td>
+            <p className="subtitle">Click to view milestone detail.</p>
+            {
+              // {order.status === "pending" ? (
+              //   <p>Buyer can create milestones after you accept the order.</p>
+              // ) : (
+            }
+            <table>
+              <thead>
+                <tr>
+                  <td>Date</td>
+                  <td>Descrption</td>
+                  <td>Amount</td>
+                  <td>Status</td>
+                </tr>
+              </thead>
+              <tbody>
+                {order.milestones.map((milestone) => (
+                  <tr
+                    key={milestone._id}
+                    onClick={() =>
+                      history.push(`/account/hold?q=${milestone._id}`)
+                    }
+                  >
+                    <td>
+                      <Moment format="DD MMM YYYY, hh:mma">
+                        {milestone.createdAt}
+                      </Moment>
+                    </td>
+                    <td>{milestone.dscr}</td>
+                    <td>₹{milestone.amount}</td>
+                    <td>{milestone.status}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {order.milestones.map((milestone) => (
-                    <tr key={milestone._id}>
-                      <td>
-                        <Moment format="DD MMM YYYY, hh:mma">
-                          {milestone.createdAt}
-                        </Moment>
-                      </td>
-                      <td>{milestone.dscr}</td>
-                      <td>₹{milestone.amount}</td>
-                      <td>{milestone.status}</td>
-                    </tr>
-                  ))}
-                  {order.milestones.length === 0 && (
-                    <tr className="placeholdert">
-                      <td>Nothing yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+                ))}
+                {order.milestones.length === 0 && (
+                  <tr className="placeholdert">
+                    <td>Nothing yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {
+              // )}
+            }
           </div>
           <div className="delivery">
             <h3>
@@ -1021,96 +1131,52 @@ export const FullOrder = ({ match }) => {
           <section className="terms">
             <h3>Return Policy Terms</h3>
             <ul>
-              {terms.map((item, i) => (
+              {order.terms?.map((item, i) => (
                 <li key={i}>
                   {item}{" "}
-                  {order.status === "pending" && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTerms((prev) => prev.filter((term) => term !== item))
-                      }
-                    >
-                      <X_svg />
-                    </button>
-                  )}
+                  {
+                    //   order.status === "pending" && (
+                    //   <button
+                    //     type="button"
+                    //     onClick={() =>
+                    //       setTerms((prev) => prev.filter((term) => term !== item))
+                    //     }
+                    //   >
+                    //     <X_svg />
+                    //   </button>
+                    // )
+                  }
                 </li>
               ))}
-              {order.status === "pending" && (
-                <section className="addTerm">
-                  <TextareaAutosize
-                    value={addTerm}
-                    placeholder="Add auditional term"
-                    onChange={(e) => setAddTerm(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTerms((prev) =>
-                        addTerm
-                          ? [
-                              ...prev.filter((term) => term !== addTerm),
-                              addTerm,
-                            ]
-                          : prev
-                      );
-                      setAddTerm("");
-                    }}
-                  >
-                    Add Term
-                  </button>
-                </section>
-              )}
+              {
+                //   order.status === "pending" && (
+                //   <section className="addTerm">
+                //     <TextareaAutosize
+                //       value={addTerm}
+                //       placeholder="Add auditional term"
+                //       onChange={(e) => setAddTerm(e.target.value)}
+                //     />
+                //     <button
+                //       type="button"
+                //       onClick={() => {
+                //         setTerms((prev) =>
+                //           addTerm
+                //             ? [
+                //                 ...prev.filter((term) => term !== addTerm),
+                //                 addTerm,
+                //               ]
+                //             : prev
+                //         );
+                //         setAddTerm("");
+                //       }}
+                //     >
+                //       Add Term
+                //     </button>
+                //   </section>
+                // )
+              }
             </ul>
           </section>
-          <div className="actions">
-            {order.status === "pending" && (
-              <>
-                <button
-                  onClick={() => {
-                    if (!deliveryTime) {
-                      setMsg(
-                        <>
-                          <button onClick={() => setMsg(null)}>Okay</button>
-                          <div>
-                            <Err_svg />
-                            <h4>Add a delivery time</h4>
-                          </div>
-                        </>
-                      );
-                      return;
-                    }
-                    Confirm({
-                      lable: "Accept Order",
-                      question: (
-                        <>
-                          You sure want to accept this order.
-                          <span className="note">
-                            Note: Make sure you assign Shipping cost, refund
-                            policy, and delivery date carefully.
-                          </span>
-                        </>
-                      ),
-                      callback: acceptOrder,
-                    });
-                  }}
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={() =>
-                    Confirm({
-                      label: "Decline Order",
-                      question: "You sure want to decline this order?",
-                      callback: declineOrder,
-                    })
-                  }
-                >
-                  Decline
-                </button>
-              </>
-            )}
-          </div>
         </div>
         <Modal
           head={true}

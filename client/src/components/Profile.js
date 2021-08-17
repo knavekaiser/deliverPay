@@ -6,7 +6,7 @@ import { Err_svg, Succ_svg, FileInput, Media, UploadFiles } from "./Elements";
 import GoogleLogin from "react-google-login";
 require("./styles/profile.scss");
 
-async function updateProfileInfo(newData) {
+export async function updateProfileInfo(newData) {
   return fetch("/api/editUserProfile", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -376,47 +376,49 @@ const Profile = ({ history, match, location }) => {
               </>
             }
           />
-          <DataEdit
-            label="GST Information"
-            setMsg={setMsg}
-            formData={gstFiles}
-            fields={
-              <>
-                <section>
-                  <input
-                    required={true}
-                    type="text"
-                    defaultValue={user.gst?.detail.reg}
-                    placeholder="GST Registration number"
-                    name="gst.detail.reg"
-                  />
-                </section>
-                <section>
-                  <label>Upload files for verification</label>
-                  <FileInput
-                    multiple={true}
-                    prefill={user.gst?.detail?.files}
-                    name="gst.detail.files"
-                    onChange={(files) => setGstFiles(files)}
-                  />
-                </section>
-              </>
-            }
-            value={
-              <>
-                <label>
-                  GST Registration number: {user.gst?.detail?.reg || "N/A"}
-                </label>
-                <label>Files for verification:</label>
-                <ul className="thumbs">
-                  <Media links={user.gst?.detail?.files} />
-                </ul>
-                <p>
-                  Verified: {user.gst?.detail?.verified?.toString() || "False"}
-                </p>
-              </>
-            }
-          />
+          {
+            //   <DataEdit
+            //   label="GST Information"
+            //   setMsg={setMsg}
+            //   formData={gstFiles}
+            //   fields={
+            //     <>
+            //       <section>
+            //         <input
+            //           required={true}
+            //           type="text"
+            //           defaultValue={user.gst?.detail.reg}
+            //           placeholder="GST Registration number"
+            //           name="gst.detail.reg"
+            //         />
+            //       </section>
+            //       <section>
+            //         <label>Upload files for verification</label>
+            //         <FileInput
+            //           multiple={true}
+            //           prefill={user.gst?.detail?.files}
+            //           name="gst.detail.files"
+            //           onChange={(files) => setGstFiles(files)}
+            //         />
+            //       </section>
+            //     </>
+            //   }
+            //   value={
+            //     <>
+            //       <label>
+            //         GST Registration number: {user.gst?.detail?.reg || "N/A"}
+            //       </label>
+            //       <label>Files for verification:</label>
+            //       <ul className="thumbs">
+            //         <Media links={user.gst?.detail?.files} />
+            //       </ul>
+            //       <p>
+            //         Verified: {user.gst?.detail?.verified?.toString() || "False"}
+            //       </p>
+            //     </>
+            //   }
+            // />
+          }
         </ul>
       </div>
       <div className="paymentMethods">

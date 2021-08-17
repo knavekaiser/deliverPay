@@ -10,6 +10,7 @@ import { Modal } from "./Modal";
 import { Link, useHistory } from "react-router-dom";
 import { CartItem } from "./Marketplace";
 import Moment from "react-moment";
+import { ProfileAvatar } from "./Account";
 require("./styles/elements.scss");
 
 export const Err_svg = () => {
@@ -711,6 +712,22 @@ export const Tick = () => {
     </svg>
   );
 };
+export const Cart_svg = () => {
+  return (
+    <svg
+      version="1.1"
+      id="Layer_1"
+      xmlns="http://www.w3.org/2000/svg"
+      x="0px"
+      y="0px"
+      viewBox="0 0 122.9 107.5"
+    >
+      <g>
+        <path d="M3.9,7.9C1.8,7.9,0,6.1,0,3.9C0,1.8,1.8,0,3.9,0h10.2c0.1,0,0.3,0,0.4,0c3.6,0.1,6.8,0.8,9.5,2.5c3,1.9,5.2,4.8,6.4,9.1 c0,0.1,0,0.2,0.1,0.3l1,4H119c2.2,0,3.9,1.8,3.9,3.9c0,0.4-0.1,0.8-0.2,1.2l-10.2,41.1c-0.4,1.8-2,3-3.8,3v0H44.7 c1.4,5.2,2.8,8,4.7,9.3c2.3,1.5,6.3,1.6,13,1.5h0.1v0h45.2c2.2,0,3.9,1.8,3.9,3.9c0,2.2-1.8,3.9-3.9,3.9H62.5v0 c-8.3,0.1-13.4-0.1-17.5-2.8c-4.2-2.8-6.4-7.6-8.6-16.3l0,0L23,13.9c0-0.1,0-0.1-0.1-0.2c-0.6-2.2-1.6-3.7-3-4.5 c-1.4-0.9-3.3-1.3-5.5-1.3c-0.1,0-0.2,0-0.3,0H3.9L3.9,7.9z M96,88.3c5.3,0,9.6,4.3,9.6,9.6c0,5.3-4.3,9.6-9.6,9.6 c-5.3,0-9.6-4.3-9.6-9.6C86.4,92.6,90.7,88.3,96,88.3L96,88.3z M53.9,88.3c5.3,0,9.6,4.3,9.6,9.6c0,5.3-4.3,9.6-9.6,9.6 c-5.3,0-9.6-4.3-9.6-9.6C44.3,92.6,48.6,88.3,53.9,88.3L53.9,88.3z M33.7,23.7l8.9,33.5h63.1l8.3-33.5H33.7L33.7,23.7z" />
+      </g>
+    </svg>
+  );
+};
 
 export const Checkbox = ({ defaultValue, value, required, onChange }) => {
   const [checked, setChecked] = useState(!!defaultValue);
@@ -871,20 +888,30 @@ export const Combobox = ({
     </section>
   );
 };
-export const NumberInput = ({ defaultValue, min, max, required, onChange }) => {
+export const NumberInput = ({
+  defaultValue,
+  min,
+  max,
+  required,
+  onChange,
+  step,
+  placeholder,
+  readOnly,
+}) => {
   const [value, setValue] = useState(defaultValue || 0);
   return (
     <section className="number">
       <input
         type="number"
-        step="0.01"
+        step={step || "0.01"}
         required={required}
         value={value}
+        readOnly={readOnly}
         onChange={(e) => {
           setValue((+e.target.value).toString());
           onChange?.(e);
         }}
-        placeholder="0.00"
+        placeholder={placeholder || "0.00"}
         min={min}
         max={max}
       />
@@ -1098,80 +1125,24 @@ export const Header = () => {
       });
   }, []);
   return (
-    <header>
+    <header className="genericHeader">
       <Link className="logoLink" to="/">
         <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
+        <img
+          className="logo_small"
+          src="/logo_sqr.jpg"
+          alt="Delivery pay logo"
+        />
       </Link>
       <div className="links">
+        <Link to="/" className="home">
+          Home
+        </Link>
         <Link to="/marketplace">Browse</Link>
       </div>
       <div className="clas">
-        {userType === "buyer" && (
-          <Actions
-            className="cart"
-            icon={
-              <>
-                <img src="/cart.svg" />
-                {cart.length > 0 && (
-                  <span className="itemCount">
-                    {cart.reduce((a, c) => a + c.qty, 0)}
-                  </span>
-                )}
-              </>
-            }
-            clickable={true}
-            wrapperClassName="popupCart"
-          >
-            {cart.map(({ product, qty }, i) => (
-              <CartItem key={i} product={product} qty={qty} />
-            ))}
-            {cart.length > 0 && (
-              <li className="actions">
-                <Link to="/account/cart">View Cart</Link>
-                {
-                  // <Link to="/account/checkout">Place order</Link>
-                }
-              </li>
-            )}
-            {cart.length === 0 && <p className="placeholder">cart is empty</p>}
-          </Actions>
-        )}
-        {user && (
-          <Actions
-            icon={
-              <svg
-                id="bell"
-                xmlns="http://www.w3.org/2000/svg"
-                width="15.918"
-                height="16"
-                viewBox="0 0 15.918 16"
-              >
-                <path
-                  id="Path_1"
-                  data-name="Path 1"
-                  d="M15,14H10a2,2,0,0,1-4,0H1a.961.961,0,0,1-.9-.7,1.068,1.068,0,0,1,.3-1.1A4.026,4.026,0,0,0,2,9V6A6,6,0,0,1,14,6V9a4.026,4.026,0,0,0,1.6,3.2.947.947,0,0,1,.3,1.1A.961.961,0,0,1,15,14Z"
-                  transform="translate(-0.063)"
-                  fill="#fff"
-                  fillRule="evenodd"
-                />
-              </svg>
-            }
-            wrapperClassName="notiWrapper"
-            onClick={() => setNoti(true)}
-          >
-            {[...user.notifications].reverse().map((item, i) => {
-              return (
-                <li key={i}>
-                  <Moment format="hh:mm">{item.createdAt}</Moment>
-                  <p className="title">{item.title}</p>
-                  <p className="body">{item.body}</p>
-                </li>
-              );
-            })}
-          </Actions>
-        )}
         {user ? (
-          <Link to="/account/home">Dashboard</Link>
+          <ProfileAvatar key="genericHeader" />
         ) : (
           <>
             {history.location.pathname === "/u/login" ? (
@@ -1262,7 +1233,10 @@ export const Media = ({ links }) => {
         setMedia(view);
         setIndex(i);
       };
-      if (item.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/)) {
+      if (
+        item.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/) ||
+        item.startsWith("https://image")
+      ) {
         thumb = (
           <img
             className={index === i ? "active" : ""}
@@ -1336,7 +1310,7 @@ export const Actions = ({
       top: height + y + 4,
       right: window.innerWidth - x - width,
     });
-  }, []);
+  }, [open]);
   return (
     <div className={`actions ${className || ""}`}>
       <button
@@ -1410,13 +1384,6 @@ export const User = ({ user }) => {
 
 export const calculatePrice = ({ product, gst, discount }) => {
   let finalPrice = product.price;
-  if (gst?.verified) {
-    finalPrice += product.price * ((product.gst || gst.amount) / 100);
-  }
-  if (gst === true) {
-    finalPrice += product.price * (product.gst / 100);
-  }
-  finalPrice *= 1.1;
   if (discount !== false && product.discount?.amount) {
     const { type, amount } = product.discount;
     if (type === "flat") {
@@ -1425,15 +1392,22 @@ export const calculatePrice = ({ product, gst, discount }) => {
       finalPrice *= amount / 100;
     }
   }
-  return +finalPrice.toFixed(2);
+  if (gst?.verified) {
+    finalPrice += product.price * ((product.gst || gst.amount) / 100);
+  }
+  if (gst === true) {
+    finalPrice += product.price * (product.gst / 100);
+  }
+  // finalPrice *= 1.1;
+  return finalPrice.fix();
 };
 export const calculateDiscount = (product) => {
   const { discount, price } = product;
   if (discount?.amount) {
     if (discount.type === "flat") {
-      return +(+discount.amount).toFixed(2);
+      return (+discount.amount).fix();
     } else if (discount.type === "percent") {
-      return +((+price / 100) * discount.amount).toFixed(2);
+      return ((+price / 100) * discount.amount).fix();
     } else {
       return 0;
     }

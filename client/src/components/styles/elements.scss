@@ -95,6 +95,11 @@
     width: 8rem;
     font-size: 1rem;
     padding: 0.5rem;
+    &:read-only {
+      & + .ticker {
+        display: none;
+      }
+    }
   }
   position: relative;
   .ticker {
@@ -572,6 +577,16 @@
       .actions {
         margin-right: 0;
       }
+      display: -webkit-box;
+      text-overflow: ellipsis;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      &.thumbs {
+        img:not(:first-child) {
+          display: none;
+        }
+      }
     }
   }
 }
@@ -598,12 +613,15 @@
 
 div {
   form,
+  .batchItemPreview,
   .shop {
     & + .spinnerContainer {
       z-index: 15;
       position: absolute;
-      height: 100%;
-      width: 100%;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
       background: rgba(0, 0, 0, 0.19);
       display: grid;
       place-items: center;

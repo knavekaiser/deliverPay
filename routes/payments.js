@@ -600,6 +600,7 @@ app.post(
         return null;
       });
     if (razorPayContactId && razorPayFundAccount) {
+      console.log(razorPayFundAccount);
       fetch("https://api.razorpay.com/v1/payouts", {
         method: "POST",
         headers: razorHeaders,
@@ -668,6 +669,8 @@ app.post(
       bank,
       ifsc,
       accountNumber,
+      accountType,
+      city,
     } = req.body;
     const Model = global[type];
     if (type === "BankCard") {
@@ -711,8 +714,9 @@ app.post(
         });
       }
     } else if (type === "BankAccount") {
-      if (name && bank && ifsc && accountNumber) {
-        new Model({ name, bank, ifsc, accountNumber })
+      if (name && bank && ifsc && accountNumber && accountType && city) {
+        console.log(accountType);
+        new Model({ name, bank, ifsc, accountNumber, city, type: accountType })
           .save()
           .then((method) => {
             if (method) {
@@ -754,10 +758,17 @@ app.patch(
   "/api/editPaymentMethod",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    const { type } = req.body;
+    const { type, accountType } = req.body;
     if (global[type]) {
       global[type]
-        .findOneAndUpdate({ _id: req.body._id }, { ...req.body }, { new: true })
+        .findOneAndUpdate(
+          { _id: req.body._id },
+          {
+            ...req.body,
+            ...(type === "BankAccount" && accountType && { type: accountType }),
+          },
+          { new: true }
+        )
         .then((paymentMethod) => {
           if (paymentMethod) {
             res.json({ code: "ok", paymentMethod });
@@ -859,7 +870,8 @@ app.post(
                     type: "milestone",
                     from: req.user._id,
                     to: buyer._id,
-                    text: `${req.user.firstName} requested a milestone.`,
+                    text: `${req.user.firstName} requested a milestone for ₹${milestone.amount}.`,
+                    milestoneId: milestone._id,
                   },
                 });
               })
@@ -873,7 +885,7 @@ app.post(
                   buyer._id,
                   JSON.stringify({
                     title: "New Milestone request",
-                    body: `${req.user.firstName} requested a milestone`,
+                    body: `${req.user.firstName} requested a milestone for ₹${milestone.amount}`,
                   }),
                   "User"
                 );
@@ -916,7 +928,8 @@ app.patch(
                   type: "milestone",
                   from: milestone.seller._id,
                   to: milestone.buyer._id,
-                  text: `${req.user.firstName} requested release of a milestone.`,
+                  text: `${req.user.firstName} requested release of a milestone`,
+                  milestoneId: milestone._id,
                 },
               });
             })
@@ -986,6 +999,7 @@ app.patch(
                           from: req.user._id,
                           to: milestone.buyer._id,
                           text: `${req.user.firstName} declined a milestones`,
+                          milestoneId: milestone._id,
                         },
                       });
                     })
@@ -1104,6 +1118,7 @@ app.patch(
                         from: req.user._id,
                         to: milestone.seller._id,
                         text: `${req.user.firstName} approved a milestones`,
+                        milestoneId: milestone._id,
                       },
                     });
                   })
@@ -1148,7 +1163,7 @@ app.post(
   "/api/createMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { amount, seller, dscr, deliveryDetail, order, refund } = req.body;
+    const { amount, seller, dscr, order, refund } = req.body;
     if (seller?.toString() === req.user._id.toString()) {
       res
         .status(403)
@@ -1159,22 +1174,62 @@ app.post(
       res.status(403).json({ code: 403, message: "insufficient fund" });
       return;
     }
+    if (
+      order &&
+      (!order?.products?.length || !order?.deliveryDetail || !order?.total)
+    ) {
+      res.status(400).json({
+        code: 400,
+        message: "order with products, deliveryDetail, total is required",
+      });
+      return;
+    }
+    const newOrder = order
+      ? await new Order({
+          ...order,
+          buyer: req.user,
+          seller: seller,
+          products: order.products.map(({ product, qty }) => ({
+            product: { ...product, _id: ObjectId(product._id) },
+            qty,
+          })),
+          deliveryDetail: order.deliveryDetail,
+          total: order.total,
+        })
+          .save()
+          .catch((err) => {
+            console.log(err);
+          })
+      : null;
+    if (order && !newOrder) {
+      res.status(500).json({ code: 500, message: "Internal server error" });
+      return;
+    }
     if (+amount && seller && dscr) {
       new Milestone({
         ...req.body,
         status: "inProgress",
         buyer: req.user._doc,
         seller,
+        ...(newOrder && { order: newOrder._id }),
       })
         .save()
         .then((milestone) => {
           if (milestone) {
-            if (ObjectId.isValid(order)) {
+            if (newOrder) {
               Order.findOneAndUpdate(
-                { _id: order, "buyer._id": req.user._id },
+                { _id: newOrder._id, "buyer._id": req.user._id },
                 { $addToSet: { milestones: milestone._id } },
                 { new: true }
               ).then((value) => {});
+              notify(
+                newOrder.seller._id,
+                JSON.stringify({
+                  title: "New order in Delivery Pay!",
+                  body: "You have a new order",
+                }),
+                "User"
+              );
             }
             if (ObjectId.isValid(refund)) {
               Refund.findOneAndUpdate(
@@ -1222,7 +1277,8 @@ app.post(
                       type: "milestone",
                       from: user._id,
                       to: seller._id,
-                      text: `${req.user.firstName} created a milestone.`,
+                      text: `${req.user.firstName} created a milestone for ₹${milestone.amount}`,
+                      milestoneId: milestone._id,
                     },
                   });
                 });
@@ -1232,6 +1288,7 @@ app.post(
                   code: "ok",
                   message: "milestone created",
                   milestone: milestone,
+                  ...(newOrder && { order: newOrder }),
                 });
                 notify(
                   milestone.seller._id,
@@ -1284,7 +1341,7 @@ app.patch(
         }
         Promise.all([
           new P2PTransaction({
-            amount: -Math.abs(+amount - milestone.amount),
+            amount: -Math.abs(amount - milestone.amount),
             milestoneId: milestone._id,
             user: req.user._id,
             client: milestone.client,
@@ -1292,7 +1349,7 @@ app.patch(
             dscr: milestone.dscr,
           }).save(),
           new P2PTransaction({
-            amount,
+            amount: +((amount / 110) * 100).toFixed(2),
             milestoneId: milestone._id,
             user: milestone.seller._id,
             client: req.user,
@@ -1310,7 +1367,7 @@ app.patch(
               User.findOneAndUpdate(
                 { _id: milestone.buyer._id },
                 {
-                  $inc: { balance: -Math.abs(amount - milestone.amount) },
+                  $inc: { balance: -Math.abs(amount - buyerTrans.amount) },
                   $addToSet: { transactions: buyerTrans._id },
                 },
                 { new: true }
@@ -1318,7 +1375,7 @@ app.patch(
               User.findOneAndUpdate(
                 { _id: milestone.seller._id },
                 {
-                  $inc: { balance: amount },
+                  $inc: { balance: sellerTrans.amount },
                   $addToSet: { transactions: sellerTrans._id },
                 },
                 { new: true }
@@ -1334,7 +1391,8 @@ app.patch(
                     type: "milestone",
                     from: buyer._id,
                     to: seller._id,
-                    text: `${req.user.firstName} released a milestone.`,
+                    text: `${req.user.firstName} released a milestone of ₹${newMilestone.amount}`,
+                    milestoneId: milestone._id,
                   },
                 })
               );
@@ -1358,7 +1416,7 @@ app.patch(
       } else if (+amount < milestone.amount) {
         Promise.all([
           new P2PTransaction({
-            amount: milestone.amount - +amount,
+            amount: milestone.amount - amount,
             milestoneId: milestone._id,
             user: req.user._id,
             client: milestone.seller,
@@ -1366,7 +1424,7 @@ app.patch(
             dscr: milestone.dscr,
           }).save(),
           new P2PTransaction({
-            amount,
+            amount: +((amount / 110) * 100).toFixed(2),
             milestoneId: milestone._id,
             user: milestone.seller._id,
             client: milestone.buyer,
@@ -1408,7 +1466,8 @@ app.patch(
                     type: "milestone",
                     from: buyer._id,
                     to: seller._id,
-                    text: `${req.user.firstName} released a milestone.`,
+                    text: `${req.user.firstName} released a milestone of ₹${newMilestone.amount}`,
+                    milestoneId: newMilestone._id,
                   },
                 })
               );
@@ -1430,7 +1489,7 @@ app.patch(
       } else {
         Promise.all([
           new P2PTransaction({
-            amount,
+            amount: +((amount / 110) * 100).toFixed(2),
             milestoneId: milestone._id,
             user: milestone.seller._id,
             client: req.user,
@@ -1447,7 +1506,7 @@ app.patch(
             User.findOneAndUpdate(
               { _id: milestone.seller._id },
               {
-                $inc: { balance: amount },
+                $inc: { balance: sellerTrans.amount },
                 $addToSet: { transactions: sellerTrans._id },
               },
               { new: true }
@@ -1462,7 +1521,8 @@ app.patch(
                     type: "milestone",
                     from: milestone.buyer._id,
                     to: milestone.seller._id,
-                    text: `${req.user.firstName} released a milestone.`,
+                    text: `${req.user.firstName} released a milestone of ₹${milestone.amount}`,
+                    milestoneId: milestone._id,
                   },
                 })
               );

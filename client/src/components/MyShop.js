@@ -23,6 +23,7 @@ import {
   calculateDiscount,
   calculatePrice,
   Tip,
+  Media,
 } from "./Elements";
 import { Modal, Confirm } from "./Modal";
 import { Link, Route, Switch, Redirect } from "react-router-dom";
@@ -31,14 +32,14 @@ import Moment from "react-moment";
 import TextareaAutosize from "react-textarea-autosize";
 import OrderManagement, { FullOrder } from "./OrderManagement";
 import RefundManagement, { FullRefund } from "./RefundManagement";
+import { updateProfileInfo } from "./Profile";
 import moment from "moment";
 import XLSX from "xlsx";
 require("./styles/products.scss");
 
-const parseXLSXtoJSON = (file) => {
+const parseXLSXtoJSON = (file, cb) => {
   var name = file.name;
   const reader = new FileReader();
-  let items = [];
   reader.onload = (evt) => {
     const bstr = evt.target.result;
     const wb = XLSX.read(bstr, { type: "binary" });
@@ -54,16 +55,16 @@ const parseXLSXtoJSON = (file) => {
       });
       arr.push(item);
     });
-    items = arr;
+    cb(arr);
   };
   reader.readAsBinaryString(file);
-  return items;
 };
 
 const MyShop = ({ history, location, match }) => {
-  const { userType } = useContext(SiteContext);
+  const { user, userType } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [shopSetupComplete, setShopSetupComplete] = useState(false);
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -71,6 +72,22 @@ const MyShop = ({ history, location, match }) => {
         setCategories(data.categories);
       });
   }, []);
+  useEffect(() => {
+    if (
+      !categories?.length ||
+      !user.shopInfo?.terms?.length ||
+      user.shopInfo?.shippingCost === undefined ||
+      user.shopInfo?.shippingCost === null ||
+      user.shopInfo?.deliveryWithin === undefined ||
+      user.shopInfo?.deliveryWithin === null ||
+      user.shopInfo?.refundable === undefined ||
+      Object.values(user.shopInfo?.paymentMethod || {}).length < 6
+    ) {
+      setShopSetupComplete(false);
+    } else {
+      setShopSetupComplete(true);
+    }
+  }, [categories, user]);
   return (
     <>
       {userType === "buyer" && <Redirect to="/account/myShopping/orders" />}
@@ -89,7 +106,10 @@ const MyShop = ({ history, location, match }) => {
         />
         <Switch>
           <Route path="/account/myShop/products">
-            <Products categories={categories} />
+            <Products
+              categories={categories}
+              shopSetupComplete={shopSetupComplete}
+            />
           </Route>
           <Route path="/account/myShop/orders/:_id" component={FullOrder} />
           <Route path="/account/myShop/orders">
@@ -338,36 +358,35 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
             </p>
             {+gst > 0 && (
               <p className="gst">
-                <label>GST {gst}%</label>+{+((+price / 100) * +gst).toFixed(2)}
+                <label>GST {gst}%</label>+{((+price / 100) * +gst).fix()}
               </p>
             )}
             <p>
               <label>Delivery Pay fee 10%</label>+
-              {+((+price + (+price / 100) * +gst) * 0.1).toFixed(2)}
+              {((+price + (+price / 100) * +gst) * 0.1).fix(2)}
             </p>
             {discount.amount > 0 && discount.type === "flat" && (
               <p>
-                <label>Discount flat</label>- ₹{+(+discount.amount).toFixed(2)}
+                <label>Discount flat</label>- ₹{(+discount.amount).fix()}
               </p>
             )}
             {discount.amount > 0 && discount.type === "percent" && (
               <p>
                 <label>Discount {discount.amount}%</label>- ₹
-                {+((+price / 100) * discount.amount).toFixed(2)}
+                {((+price / 100) * discount.amount).fix()}
               </p>
             )}
             <p className="final">
               <label>Listing Price</label>₹
-              {
-                +(
-                  +price +
+              {(
+                (+price +
                   (+price / 100) * +gst -
                   (discount.type === "percent"
                     ? (+price / 100) * discount.amount
                     : 0) -
-                  (discount.type === "flat" ? discount.amount : 0) * 1.1
-                ).toFixed(2)
-              }
+                  (discount.type === "flat" ? discount.amount : 0)) *
+                1.1
+              ).fix()}
             </p>
           </section>
         )}
@@ -390,7 +409,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
   );
 };
 
-const Products = ({ categories }) => {
+const Products = ({ categories, shopSetupComplete }) => {
   const dateFilterRef = useRef();
   const [productForm, setProductForm] = useState(false);
   const [total, setTotal] = useState(0);
@@ -413,6 +432,7 @@ const Products = ({ categories }) => {
   const [products, setProducts] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [batch, setBatch] = useState([]);
+  const [addMany, setAddMany] = useState(false);
   const [msg, setMsg] = useState(null);
   const deleteItems = (items) => {
     if (items.length) {
@@ -527,22 +547,20 @@ const Products = ({ categories }) => {
     <>
       <div className="benner">
         <p>Product Management</p>
-        <button onClick={() => setProductForm(true)}>
-          <Plus_svg /> Add Product
-        </button>
-        {
-          //   <button>
-          //   <input
-          //     type="file"
-          //     accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          //     onChange={(e) => {
-          //       const items = parseXLSXtoJSON(e.target.files[0]);
-          //       console.log(items);
-          //     }}
-          //   />
-          //   <Plus_svg /> Add Batch Products
-          // </button>
-        }
+        {shopSetupComplete ? (
+          <>
+            <button onClick={() => setProductForm(true)}>
+              <Plus_svg /> Add Product
+            </button>
+            <button className="batchUpload" onClick={() => setAddMany(true)}>
+              <Plus_svg /> Batch Upload
+            </button>
+          </>
+        ) : (
+          <Link to="/account/myShop/settings" className="err">
+            <p>Please complete your shop information to add product.</p>
+          </Link>
+        )}
       </div>
       <div className="filters">
         <section>
@@ -703,7 +721,9 @@ const Products = ({ categories }) => {
               <th>GST</th>
               <th>Discount</th>
               <th>Listing Price</th>
-              <th>Sold</th>
+              {
+                // <th>Sold</th>
+              }
               <th>Actions</th>
             </tr>
           )}
@@ -781,6 +801,21 @@ const Products = ({ categories }) => {
           }}
         />
       </Modal>
+      <Modal
+        open={addMany}
+        head={true}
+        label="Batch product upload"
+        setOpen={setAddMany}
+        className="batchItemPreview"
+      >
+        <BatchUpload
+          onSuccess={(products) => {
+            setProducts((prev) => [...products, ...prev]);
+            setTotal((prev) => prev + products.length);
+            setAddMany(false);
+          }}
+        />
+      </Modal>
     </>
   );
 };
@@ -797,43 +832,6 @@ const SingleProduct = ({
   const [selected, setSelected] = useState(selectAll || false);
   const [edit, setEdit] = useState(false);
   const [msg, setMsg] = useState(false);
-  // const removeProduct = () => {
-  //   fetch("/api/removeProduct", {
-  //     method: "DELETE",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ _id: product._id }),
-  //   })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if (data.code === "ok") {
-  //         setProducts((prev) =>
-  //           prev.filter((item) => item._id !== product._id)
-  //         );
-  //       } else {
-  //         setMsg(
-  //           <>
-  //             <button onClick={() => setMsg(null)}>Okay</button>
-  //             <div>
-  //               <Err_svg />
-  //               <h4>Product could not be removed. Please try again.</h4>
-  //             </div>
-  //           </>
-  //         );
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //       setMsg(
-  //         <>
-  //           <button onClick={() => setMsg(null)}>Okay</button>
-  //           <div>
-  //             <Err_svg />
-  //             <h4>Product could not be removed. Make sure you're online</h4>
-  //           </div>
-  //         </>
-  //       );
-  //     });
-  // };
   useEffect(() => {
     setSelected(selectAll);
   }, [selectAll]);
@@ -858,8 +856,8 @@ const SingleProduct = ({
       <td className="date">
         <Moment format="DD-MM-YY">{product.createdAt}</Moment>
       </td>
-      <td>
-        <img src={product.images[0]} />
+      <td className="thumbs">
+        <Media links={product.images} />
       </td>
       <td className="name">{product.name}</td>
       <td>{product.type}</td>
@@ -875,10 +873,15 @@ const SingleProduct = ({
       </td>
       <td>₹{calculateDiscount(product) || 0}</td>
       <td>₹{calculatePrice({ product, gst: user.gst }) || 0}</td>
-      <td>{product.popularity || 0}</td>
+      {
+        // <td>{product.popularity || 0}</td>
+      }
       <td>
         {batch.length === 0 && (
           <Actions icon={<Chev_down_svg />}>
+            <Link to={`/marketplace/${product._id}`} target="_blank">
+              View
+            </Link>
             <Link to="#" className="edit" onClick={() => setEdit(true)}>
               Edit
             </Link>
@@ -938,11 +941,211 @@ const SingleProduct = ({
   );
 };
 
+const BatchUpload = ({ onSuccess }) => {
+  const [loading, setLoading] = useState(false);
+  const [batchItems, setBatchItems] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const addBatchProducts = () => {
+    setLoading(true);
+    fetch("/api/addManyProducts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: batchItems }),
+    })
+      .then((res) => res.json())
+      .then(({ code, products }) => {
+        setLoading(false);
+        if (code === "ok") {
+          setBatchItems((prev) =>
+            prev.filter((item) => {
+              return !products.some(
+                (product) =>
+                  product.name + product.dscr + product.price + product.type ===
+                  item.name + item.dscr + item.price + item.type
+              );
+            })
+          );
+          onSuccess?.(products);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not add products. Try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not add products. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <>
+      {!!batchItems?.length && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Images</th>
+              <th className="name">Name</th>
+              <th className="dscr">Description</th>
+              <th>Available</th>
+              <th>Price</th>
+              <th>GST</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {batchItems?.map((item, i) => (
+              <tr key={i}>
+                <td>{item.type}</td>
+                <td className="thumbs">
+                  <Media links={item.images} />
+                </td>
+                <td className="name">{item.name}</td>
+                <td className="dscr">{item.dscr}</td>
+                <td>
+                  {item.available}
+                  {item.available === true && "Available"}
+                  {item.available === false && "Unavailable"}
+                </td>
+                <td>{item.price}</td>
+                <td>{item.gst}</td>
+                <td>
+                  <button
+                    className="remove"
+                    onClick={() =>
+                      setBatchItems((prev) => {
+                        const newItems = [...prev];
+                        newItems.splice(i, 1);
+                        return newItems;
+                      })
+                    }
+                  >
+                    <X_svg />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {!batchItems?.length && (
+        <div className="uploadFile">
+          <p>
+            You can upload xlsx file in supported format. See the example file{" "}
+            <a
+              href="/batch_product_upload_xlsx_file_example.xlsx"
+              target="_blank"
+            >
+              here
+            </a>
+            .
+          </p>
+          <input
+            type="file"
+            accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            onChange={(e) => {
+              if (e.target.files[0]) {
+                parseXLSXtoJSON(e.target.files[0], (result) => {
+                  if (result?.length) {
+                    setBatchItems(
+                      result
+                        .filter(
+                          (item) =>
+                            item.type &&
+                            item.category &&
+                            item.name &&
+                            item.dscr &&
+                            item.price
+                        )
+                        .map((item) => ({
+                          ...item,
+                          images: item.images
+                            .split(/,( |\n)/)
+                            .filter((item) => item.trim()),
+                        }))
+                    );
+                  }
+                });
+              }
+              e.target.value = null;
+            }}
+          />
+        </div>
+      )}
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
+      {!!batchItems?.length && (
+        <button
+          className="submit"
+          onClick={() =>
+            Confirm({
+              label: "Adding Batch products",
+              question: "You sure want to add all these items?",
+              callback: addBatchProducts,
+            })
+          }
+        >
+          Add
+        </button>
+      )}
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+    </>
+  );
+};
+
+const defaultTerms = [
+  "Buyer will be responsible for paying for shipping costs & for returning the item.",
+  "Shipping costs are nonrefundable.",
+  "Orders must be returned with Original Packaging & Securely.",
+  "Orders must be Returned Via Trackable / Traceable Courier Services Only.",
+  "Proof of Return via Photo of Tracking Number & Dispatch Ticket is Required.",
+  "Refund is Only Issued Upon Delivery of Return Package.",
+];
 const Settings = ({ categories, setCategories }) => {
   const { user, setUser } = useContext(SiteContext);
+  const [gstEdit, setGstEdit] = useState(false);
+  const [shippingEdit, setShippingEdit] = useState(false);
+  const [termsEdit, setTermsEdit] = useState();
+  const [editPayment, setEditPayment] = useState(false);
   const [msg, setMsg] = useState(null);
   return (
     <div className="settings">
+      <div className="caution">
+        {!categories?.length && <p className="err">Add at least 1 category.</p>}
+        {!user.shopInfo?.terms?.length && (
+          <p className="err">Add Return policy terms</p>
+        )}
+        {(user.shopInfo?.shippingCost === undefined ||
+          user.shopInfo?.shippingCost === null ||
+          user.shopInfo?.deliveryWithin === undefined ||
+          user.shopInfo?.deliveryWithin === null ||
+          user.shopInfo?.refundable === undefined) && (
+          <p className="err">Add Shipping & Delivery detail</p>
+        )}
+        {Object.values(user.shopInfo?.paymentMethod || {}).length < 6 && (
+          <p className="err">Add valid payment method</p>
+        )}
+      </div>
       <div className="cat">
         <h2 className="head">Categories</h2>
         <ul className="categories">
@@ -1051,120 +1254,514 @@ const Settings = ({ categories, setCategories }) => {
               });
           }}
         >
-          <input type="text" required={true} placeholder="New Category" />
+          <input
+            type="text"
+            required={true}
+            placeholder="New Category. ie Mobile"
+          />
           <button>Add category</button>
         </form>
       </div>
       <div className="gst">
-        <h2 className="head">GST</h2>
-        {user.gst?.verified ? (
-          <>
-            <p>
-              Set baseline GST to all your product. this GST will be calculated
-              when a customer places order unless there's GST defiened on the
-              product.
-            </p>
-            <p>Current GST {user.gst?.amount || 0}%</p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const input = e.target.querySelector("input");
-                fetch("/api/editUserProfile", {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ "gst.amount": input.value }),
-                })
-                  .then((res) => res.json())
-                  .then((data) => {
-                    console.log(data);
-                    if (data.code === "ok") {
-                      input.value = "";
-                      setUser((prev) => ({ ...prev, gst: data.user.gst }));
-                      setMsg(
-                        <>
-                          <button onClick={() => setMsg(null)}>Okay</button>
-                          <div>
-                            <Succ_svg />
-                            <h4>GST has been updated.</h4>
-                          </div>
-                        </>
-                      );
-                    } else {
-                      setMsg(
-                        <>
-                          <button onClick={() => setMsg(null)}>Okay</button>
-                          <div>
-                            <Err_svg />
-                            <h4>GST could not be updated. Try again.</h4>
-                          </div>
-                        </>
-                      );
-                    }
-                  })
-                  .catch((err) => {
-                    console.log(err);
-                    setMsg(
-                      <>
-                        <button onClick={() => setMsg(null)}>Okay</button>
-                        <div>
-                          <Err_svg />
-                          <h4>
-                            GST could not be updated. Make sure you're online.
-                          </h4>
-                        </div>
-                      </>
-                    );
-                  });
-              }}
-            >
-              <NumberInput required={true} />%<button>Update GST</button>
-            </form>
-          </>
+        <h2 className="head">
+          GST{" "}
+          {!gstEdit && <button onClick={() => setGstEdit(true)}>Edit</button>}
+        </h2>
+        <p className="status">
+          Status:{" "}
+          <strong>{user.gst?.verified ? "Verified" : "Unverified"}</strong>
+        </p>
+        {gstEdit ? (
+          <GstEditForm setOpen={setGstEdit} setMsg={setMsg} />
         ) : (
-          <p>
-            You have not verified you GST status. Verify your GST{" "}
-            <Link to="/account/profile">here</Link>.
+          <>
+            <p>GST Registration number: {user.gst?.detail?.reg || "N/A"}</p>
+            <p>
+              GST amount: {user.gst?.amount ? user.gst.amount + "%" : "N/A"}
+            </p>
+            <p>
+              Files for verification:{" "}
+              {!user.gst?.detail?.files?.length && "N/A"}
+            </p>
+            {user.gst?.detail?.files?.length && (
+              <ul className="thumbs">
+                <Media links={user.gst?.detail?.files} />
+              </ul>
+            )}
+          </>
+        )}
+        {!user.gst?.verified && (
+          <p className="note">
+            *GST will apply once we review and verify your GST registraion.
           </p>
         )}
       </div>
+      <div className="payment">
+        <h2 className="head">
+          Payment Method{" "}
+          {!editPayment && (
+            <button onClick={() => setEditPayment(true)}>Edit</button>
+          )}
+        </h2>
+        {editPayment ? (
+          <PaymentMethodForm
+            prefill={user.shopInfo?.paymentMethod}
+            setOpen={setEditPayment}
+            setMsg={setMsg}
+          />
+        ) : (
+          <>
+            <p>Name: {user.shopInfo?.paymentMethod?.name || "--"}</p>
+            <p>Bank: {user.shopInfo?.paymentMethod?.bank || "--"}</p>
+            <p>City: {user.shopInfo?.paymentMethod?.city || "--"}</p>
+            <p>
+              Account type: {user.shopInfo?.paymentMethod?.accountType || "--"}
+            </p>
+            <p>
+              Account Number:{" "}
+              {user.shopInfo?.paymentMethod?.accountNumber || "--"}
+            </p>
+            <p>ifsc: {user.shopInfo?.paymentMethod?.ifsc || "--"}</p>
+          </>
+        )}
+      </div>
       <div className="terms shipping">
-        <h2 className="head">Shipping Terms</h2>
-        <ul>
-          <li>Buyer will bare the shipping cost.</li>
-        </ul>
+        <h2 className="head">
+          Shipping & Delivery{" "}
+          {!shippingEdit && (
+            <button onClick={() => setShippingEdit(true)}>Edit</button>
+          )}
+        </h2>
+        {shippingEdit ? (
+          <ShippingEditForm setOpen={setShippingEdit} setMsg={setMsg} />
+        ) : (
+          <>
+            <p>
+              Shipping cost:{" "}
+              {user.shopInfo?.shippingCost
+                ? "₹" + user.shopInfo?.shippingCost
+                : "N/A"}
+            </p>
+            <p>
+              Delivery within (days): {user.shopInfo?.deliveryWithin || "N/A"}
+            </p>
+            <p>Refundable: {user.shopInfo?.refundable?.toString() || "N/A"}</p>
+          </>
+        )}
       </div>
-      <div className="terms payment">
-        <h2 className="head">Deposit & Payment Terms</h2>
-        <p>
-          Refundable [ I will accept Returns ] / Non Refundable [ I will not
-          accept returns , My payment should be released as soon as my Order is
-          Delivered ] as Options before Requesting for a Payment.
-        </p>
-      </div>
+      {
+        //   <div className="terms payment">
+        //   <h2 className="head">Deposit & Payment Terms</h2>
+        //   <p>
+        //     Refundable [ I will accept Returns ] / Non Refundable [ I will not
+        //     accept returns , My payment should be released as soon as my Order is
+        //     Delivered ] as Options before Requesting for a Payment.
+        //   </p>
+        // </div>
+      }
       <div className="terms return">
-        <h2 className="head">Return Policy Terms</h2>
-        <ul>
-          <li>
-            Buyer will be responsible for paying for shipping costs & for
-            returning the item.
-          </li>
-          <li>Shipping costs are nonrefundable.</li>
-          <li>Orders must be returned with Original Packaging & Securely.</li>
-          <li>
-            Orders must be Returned Via Trackable / Traceable Courier Services
-            Only.
-          </li>
-          <li>
-            Proof of Return via Photo of Tracking Number & Dispatch Ticket is
-            Required.
-          </li>
-          <li>Refund is Only Issued Upon Delivery of Return Package.</li>
-        </ul>
+        <h2 className="head">
+          Return Policy Terms{" "}
+          {!termsEdit && (
+            <button onClick={() => setTermsEdit(true)}>Edit</button>
+          )}
+        </h2>
+        <TermsEditForm
+          setOpen={setTermsEdit}
+          termsEdit={termsEdit}
+          setMsg={setMsg}
+        />
       </div>
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>
     </div>
+  );
+};
+
+const GstEditForm = ({ setOpen, setMsg }) => {
+  const { user, setUser } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
+  const [gstFiles, setGstFiles] = useState([]);
+  const [gstReg, setGstReg] = useState(user.gst?.detail?.reg);
+  const [amount, setAmount] = useState(user.gst?.amount);
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const fileLinks = (await UploadFiles({ files: gstFiles, setMsg })) || [];
+    updateProfileInfo({
+      "gst.detail.files": fileLinks,
+      "gst.detail.reg": gstReg,
+      "gst.amount": amount,
+    })
+      .then(({ user: newUser }) => {
+        setLoading(false);
+        if (newUser) {
+          setUser((prev) => ({ ...prev, gst: newUser.gst }));
+          setOpen(false);
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not upadte GST Information. Make sure you're online</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <form onSubmit={submit}>
+      <section>
+        <label>GST Registration Nubmer</label>
+        <input
+          required={true}
+          type="text"
+          defaultValue={user.gst?.detail.reg}
+          name="gst.detail.reg"
+          onChange={(e) => setGstReg(e.target.value)}
+        />
+      </section>
+      <section>
+        <label>GST percentage (%)</label>
+        <NumberInput
+          required={true}
+          defaultValue={user.gst?.amount}
+          name="gst.detail.reg"
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </section>
+      <section>
+        <label>Upload files for verification</label>
+        <FileInput
+          multiple={true}
+          prefill={user.gst?.detail?.files}
+          name="gst.detail.files"
+          onChange={(files) => setGstFiles(files)}
+        />
+      </section>
+      <section className="btns">
+        <button>Save Changes</button>
+        <button type="button" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </section>
+    </form>
+  );
+};
+const ShippingEditForm = ({ setOpen, setMsg }) => {
+  const { user, setUser } = useContext(SiteContext);
+  const [shippingCost, setShippingCost] = useState(
+    user.shopInfo?.shippingCost || 0
+  );
+  const [deliveryWithin, setDeliveryWithin] = useState(
+    user.shopInfo?.deliveryWithin
+  );
+  const [refundable, setRefundable] = useState(
+    user.shopInfo?.refundable || null
+  );
+  const submit = (e) => {
+    e.preventDefault();
+    updateProfileInfo({
+      "shopInfo.shippingCost": shippingCost,
+      "shopInfo.deliveryWithin": deliveryWithin,
+      "shopInfo.refundable": refundable,
+    })
+      .then(({ user: newUser }) => {
+        if (newUser) {
+          setUser((prev) => ({ ...prev, shopInfo: newUser.shopInfo }));
+          setOpen(false);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not upadte Terms. Make sure you're online</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <form onSubmit={submit}>
+      <section>
+        <label>Shipping Cost ₹</label>
+        <NumberInput
+          required={true}
+          defaultValue={shippingCost}
+          name="shippingCost"
+          onChange={(e) => setShippingCost(e.target.value)}
+        />
+      </section>
+      <section>
+        <label>Delivery Within (days)</label>
+        <NumberInput
+          required={true}
+          defaultValue={deliveryWithin}
+          name="deliveryWithin"
+          min={1}
+          step="0"
+          placeholder="ie. 4 Days"
+          onChange={(e) => setDeliveryWithin(e.target.value)}
+        />
+      </section>
+      <section>
+        <label>Refundable</label>
+        <Combobox
+          required={true}
+          defaultValue={0}
+          onChange={(e) => setRefundable(e.value)}
+          options={[
+            { label: "No", value: null },
+            {
+              label: "Upto 24 Hours After Delivery",
+              value: "Upto 24 Hours After Delivery",
+            },
+            {
+              label: "Upto 7 Days After Delivery",
+              value: "Upto 7 Days After Delivery",
+            },
+            {
+              label: "Upto 15 Days After Delivery",
+              value: "Upto 15 Days After Delivery",
+            },
+          ]}
+        />
+      </section>
+      <section className="btns">
+        <button>Save Changes</button>
+        <button type="button" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </section>
+    </form>
+  );
+};
+const TermsEditForm = ({ setOpen, termsEdit, setMsg }) => {
+  const { user, setUser } = useContext(SiteContext);
+  const [terms, setTerms] = useState(user.shopInfo?.terms || []);
+  const [addTerm, setAddTerm] = useState("");
+  const submit = (e) => {
+    e.preventDefault();
+    updateProfileInfo({
+      "shopInfo.terms": terms,
+    })
+      .then(({ user: newUser }) => {
+        if (newUser) {
+          setUser((prev) => ({ ...prev, shopInfo: newUser.shopInfo }));
+          setOpen(false);
+          setTerms(newUser.shopInfo?.terms);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not upadte Terms. Make sure you're online</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  useEffect(() => {
+    if (termsEdit) {
+      if (terms.length === 0) {
+        setTerms(defaultTerms);
+      }
+    } else {
+      setTerms(user.shopInfo?.terms || []);
+    }
+  }, [termsEdit]);
+  return (
+    <form onSubmit={submit}>
+      <ul>
+        {terms.map((item, i) => (
+          <li key={i}>
+            {item}{" "}
+            {termsEdit && (
+              <button
+                type="button"
+                onClick={() =>
+                  setTerms((prev) => prev.filter((term) => term !== item))
+                }
+              >
+                <X_svg />
+              </button>
+            )}
+          </li>
+        ))}
+        {terms.length === 0 && <li>No terms has been added.</li>}
+      </ul>
+      {termsEdit && (
+        <>
+          <section className="addTerm">
+            <TextareaAutosize
+              value={addTerm}
+              placeholder="Add auditional term"
+              onChange={(e) => setAddTerm(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setTerms((prev) =>
+                  addTerm
+                    ? [...prev.filter((term) => term !== addTerm), addTerm]
+                    : prev
+                );
+                setAddTerm("");
+              }}
+            >
+              Add Term
+            </button>
+          </section>
+          <section className="btns">
+            <button>Save Changes</button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setTerms(
+                  user.shopInfo?.terms?.length
+                    ? user.shopInfo.terms
+                    : defaultTerms
+                );
+              }}
+            >
+              Cancel
+            </button>
+          </section>
+        </>
+      )}
+    </form>
+  );
+};
+const PaymentMethodForm = ({ prefill, onSuccess, setMsg, setOpen }) => {
+  const { setUser } = useContext(SiteContext);
+  const [bank, setBank] = useState(prefill?.bank || "");
+  const [name, setName] = useState(prefill?.name || "");
+  const [ifsc, setIfsc] = useState(prefill?.ifsc || "");
+  const [city, setCity] = useState(prefill?.city || "");
+  const [type, setType] = useState(prefill?.accountType || "");
+  const [accountNumber, setAccountNumber] = useState(
+    prefill?.accountNumber || ""
+  );
+  const submit = (e) => {
+    e.preventDefault();
+    updateProfileInfo({
+      "shopInfo.paymentMethod": {
+        name,
+        bank,
+        city,
+        accountType: type,
+        ifsc,
+        accountNumber,
+      },
+    })
+      .then(({ user: newUser }) => {
+        if (newUser) {
+          setUser((prev) => ({
+            ...prev,
+            shopInfo: newUser.shopInfo,
+          }));
+          setOpen(false);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not update payment method. Please try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>
+                Could not updated payment method. Make sure you're online.
+              </h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <form className="paymentMethodForm netBanking" onSubmit={submit}>
+      <section className="inputs">
+        <input
+          type="text"
+          name="name"
+          placeholder="Full name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="bank"
+          placeholder="Bank"
+          value={bank}
+          onChange={(e) => setBank(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="city"
+          placeholder="City"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="type"
+          placeholder="Account type ie. Savings / Current"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="accountNumber"
+          placeholder="Account Number"
+          value={accountNumber}
+          onChange={(e) => setAccountNumber(e.target.value)}
+          required={true}
+        />
+        <input
+          type="text"
+          name="ifsc"
+          placeholder="IFSC"
+          value={ifsc}
+          onChange={(e) => setIfsc(e.target.value)}
+          required={true}
+        />
+      </section>
+      <section className="btns">
+        <button type="submit">Save Changes</button>
+        <button type="button" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </section>
+    </form>
   );
 };
 
