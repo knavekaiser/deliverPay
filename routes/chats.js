@@ -7,28 +7,51 @@ app.get("/api/inviteUser", passport.authenticate("userPrivate"), (req, res) => {
 
 app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
   const { q } = req.query;
-  User.find(
+  const query = {
+    _id: { $ne: req.user._id },
+    $and: [
+      ...req.user.blockList?.map((_id) => ({
+        _id: { $not: { $eq: _id } },
+      })),
+      { _id: { $not: { $eq: req.user._id } } },
+    ],
+    blockList: { $not: { $in: [ObjectId(req.user._id)] } },
+    ...(q && {
+      $expr: {
+        $regexMatch: {
+          input: {
+            $concat: [
+              "$firstName",
+              " ",
+              "$lastName",
+              " ",
+              "$phone",
+              " ",
+              "$email",
+              " ",
+              "userId",
+            ],
+          },
+          regex: new RegExp(q.replace(/[#-.]|[[-^]|[?|{}]/g, "\\$&")),
+          options: "i",
+        },
+      },
+    }),
+  };
+  User.aggregate([
+    { $match: query },
+    { $limit: 20 },
     {
-      _id: { $ne: req.user._id },
-      $and: [
-        ...req.user.blockList?.map((_id) => ({
-          _id: { $not: { $eq: _id } },
-        })),
-        { _id: { $not: { $eq: req.user._id } } },
-      ],
-      blockList: { $not: { $in: [ObjectId(req.user._id)] } },
-      ...(q && {
-        $or: [
-          { firstName: new RegExp(q, "gi") },
-          { lastName: new RegExp(q, "gi") },
-          { phone: new RegExp(q, "gi") },
-          { email: new RegExp(q, "gi") },
-        ],
-      }),
+      $project: {
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        phone: 1,
+        profileImg: 1,
+        address: 1,
+      },
     },
-    "firstName lastName email phone profileImg address"
-  )
-    .limit(20)
+  ])
     .then((users) => {
       res.json(users);
     })

@@ -118,7 +118,7 @@ const Deals = ({ history, location, match }) => {
 const UserSearch = ({ setUserCard, setContacts }) => {
   const history = useHistory();
   const [msg, setMsg] = useState(null);
-  const [users, setUsers] = useState(false);
+  const [users, setUsers] = useState([]);
   const [value, setValue] = useState("");
   const [showUsers, setShowUsers] = useState(false);
   const formRef = useRef();
@@ -189,22 +189,18 @@ const UserSearch = ({ setUserCard, setContacts }) => {
       );
     }
   }, [value]);
-  const fetchUsers = useCallback(
-    (e) => {
-      setValue(e.target.value);
-      fetch(`/api/getUsers?q=${value}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data) {
-            setUsers(data);
-          }
-        });
-      if (e.target.value === "") {
-        setUsers([]);
-      }
-    },
-    [value]
-  );
+  const fetchUsers = () => {
+    fetch(`/api/getUsers?q=${encodeURIComponent(value)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setUsers(data);
+        }
+      });
+    if (value === "") {
+      setUsers([]);
+    }
+  };
   const documentClickHandler = (e) => {
     if (e.path.includes(formRef.current)) {
     } else {
@@ -217,6 +213,13 @@ const UserSearch = ({ setUserCard, setContacts }) => {
       document.removeEventListener("click", documentClickHandler);
     };
   }, []);
+  useEffect(() => {
+    if (value) {
+      fetchUsers();
+    } else {
+      setUsers([]);
+    }
+  }, [value]);
   return (
     <div className="search">
       <form onSubmit={(e) => e.preventDefault()} ref={formRef}>
@@ -240,7 +243,8 @@ const UserSearch = ({ setUserCard, setContacts }) => {
             required={true}
             placeholder="Search with Delivery pay ID or Phone Number"
             onFocus={() => setShowUsers(true)}
-            onChange={fetchUsers}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
           />
           <Link
             className={`sendReq ${
@@ -814,6 +818,9 @@ const ChatForm = ({ rooms, user, newChat }) => {
           setMsg,
         })
       : [];
+    if (files && !media) {
+      return;
+    }
     if (media.length) {
       media.forEach((link, i) => {
         socket.emit("messageToServer", {

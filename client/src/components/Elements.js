@@ -1188,18 +1188,17 @@ export const UploadFiles = ({ files, setMsg }) => {
     }
   }
   return fetch(`${cdn}/upload`, {
-    mode: "no-cors",
+    // mode: "no-cors",
     method: "POST",
     body: formData,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-    },
+    // headers: { "Access-Control-Allow-Origin": "*" },
   })
     .then((res) => res.json())
     .then((data) => {
       if (data.code === "ok") {
         return [...uploaded, ...data.files.map((link) => cdn + "/" + link)];
       } else {
+        return null;
         setMsg(
           <>
             <button onClick={() => setMsg(null)}>Okay</button>
