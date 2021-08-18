@@ -351,7 +351,9 @@ const Chat = ({
   const history = useHistory();
   const [rooms, setRooms] = useState([]);
   const [msgLoading, setMsgLoading] = useState(false);
-  const [allMessages, setAllMessages] = useState(false);
+  const [allMessages, setAllMessages] = useState(
+    chat?.length >= 50 ? false : true
+  );
   const [page, setPage] = useState(2);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
@@ -389,6 +391,50 @@ const Chat = ({
       // );
     };
   }, [rooms]);
+  const loadChat = () => {
+    fetch(`/api/getMessages?client=${userCard._id}&page=${page}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setMsgLoading(false);
+        if (data.code === "ok") {
+          setContacts((prev) =>
+            prev.map((chat) => {
+              if (chat._id === data.contact?._id) {
+                return {
+                  ...chat,
+                  messages: data.contact.messages,
+                };
+              }
+              return chat;
+            })
+          );
+          setPage((prev) => prev + 1);
+          if (data.contact.total === data.contact.messages.length) {
+            setAllMessages(true);
+          }
+        }
+      })
+      .catch((err) => {
+        setMsgLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get messages. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  useEffect(() => {
+    if (chat?.length >= 50) {
+      setAllMessages(false);
+    } else {
+      setAllMessages(true);
+    }
+  }, [chat]);
   return (
     <div className="chat">
       {chat ? (
@@ -542,43 +588,7 @@ const Chat = ({
               const { y } = loading.current?.getBoundingClientRect() || {};
               if (y > 0 && !msgLoading) {
                 setMsgLoading(true);
-                fetch(`/api/getMessages?client=${userCard._id}&page=${page}`)
-                  .then((res) => res.json())
-                  .then((data) => {
-                    setMsgLoading(false);
-                    if (data.code === "ok") {
-                      setContacts((prev) =>
-                        prev.map((chat) => {
-                          if (chat._id === data.contact?._id) {
-                            return {
-                              ...chat,
-                              messages: data.contact.messages,
-                            };
-                          }
-                          return chat;
-                        })
-                      );
-                      setPage((prev) => prev + 1);
-                      if (data.contact.total === data.contact.messages.length) {
-                        setAllMessages(true);
-                      }
-                    }
-                  })
-                  .catch((err) => {
-                    setMsgLoading(false);
-                    console.log(err);
-                    setMsg(
-                      <>
-                        <button onClick={() => setMsg(null)}>Okay</button>
-                        <div>
-                          <Err_svg />
-                          <h4>
-                            Could not get messages. Make sure you're online.
-                          </h4>
-                        </div>
-                      </>
-                    );
-                  });
+                loadChat();
               }
             }}
           >
