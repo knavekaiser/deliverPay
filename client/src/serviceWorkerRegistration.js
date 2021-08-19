@@ -23,30 +23,30 @@ function urlBase64ToUint8Array(base64String) {
 
 export function register(config) {
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      const swUrl = `/service-worker.js`;
-      if (isLocalhost) {
-        checkValidServiceWorker(swUrl, config);
-        navigator.serviceWorker.ready.then(async (serviceWorker) => {
-          return await serviceWorker.pushManager
-            .subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(
-                "BOAary6p08dAK6T2GSg0zRGrWKk5qs-sz_-f62My0JXMPG52fqQfzzJlePyF0snUvrdeEg4RSWOVGhrtVc1v3Lo"
-              ),
-            })
-            .then((subscription) => {
-              fetch("/api/subscribe", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(subscription),
-              });
+    const swUrl = `/service-worker.js`;
+    if (isLocalhost) {
+      checkValidServiceWorker(swUrl, config);
+      navigator.serviceWorker.ready.then(async (serviceWorker) => {
+        return await serviceWorker.pushManager
+          .subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              "BOAary6p08dAK6T2GSg0zRGrWKk5qs-sz_-f62My0JXMPG52fqQfzzJlePyF0snUvrdeEg4RSWOVGhrtVc1v3Lo"
+            ),
+          })
+          .then((subscription) => {
+            fetch("/api/subscribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(subscription),
             });
-        });
-      } else {
-        registerValidSW(swUrl, config);
-      }
-    });
+          });
+      });
+    } else {
+      registerValidSW(swUrl, config);
+    }
+  } else {
+    console.log("serviceWorker is no supported");
   }
 }
 
@@ -76,6 +76,7 @@ function registerValidSW(swUrl, config) {
               }
             }
             navigator.serviceWorker.ready.then(async (serviceWorker) => {
+              alert("sreviceworker registered");
               return await serviceWorker.pushManager
                 .subscribe({
                   userVisibleOnly: true,
@@ -137,5 +138,7 @@ export function unregister() {
       .catch((error) => {
         console.error(error.message);
       });
+  } else {
+    console.log("does not support serviceWorker");
   }
 }

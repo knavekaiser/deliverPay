@@ -19,6 +19,7 @@ import {
   Footer,
   Tip,
   Cart_svg,
+  Img,
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import { SiteContext } from "../SiteContext";
@@ -157,7 +158,7 @@ const Marketplace = ({ history, location, match }) => {
             <div className="sellerDetail">
               Products from{" "}
               <div className="profile">
-                <img src={sellerDetail.profileImg || "/profile-user.jpg"} />
+                <Img src={sellerDetail.profileImg || "/profile-user.jpg"} />
                 <p className="name">
                   {sellerDetail.firstName} {sellerDetail.lastName}
                   <span className="contact">{sellerDetail.phone}</span>
@@ -259,7 +260,7 @@ const Marketplace = ({ history, location, match }) => {
             ))}
             {products.length === 0 && (
               <div className="placeholder">
-                <img src="/open_box.png" />
+                <Img src="/open_box.png" />
                 <p>No Product Found</p>
               </div>
             )}
@@ -281,7 +282,7 @@ const Product = ({ data }) => {
     <div className="product">
       <Link to={`/marketplace/${data._id}`}>
         <div className={`thumb ${data.images[0] ? "" : "noThumb"}`}>
-          <img src={data.images[0] || "/open_box.png"} />
+          <Img src={data.images[0] || "/open_box.png"} />
         </div>
       </Link>
       <div className="detail">
@@ -413,7 +414,7 @@ export const SingleProduct = ({ match }) => {
               <label>Being sold by:</label>
               <Link to={`/marketplace?seller=${product.user._id}`}>
                 <div className="profile">
-                  <img src={product.user.profileImg || "/profile-user.jpg"} />
+                  <Img src={product.user.profileImg || "/profile-user.jpg"} />
                   <p className="name">
                     {product.user.firstName} {product.user.lastName}{" "}
                     <span className="contact">{product.user.phone}</span>
@@ -471,7 +472,7 @@ const Gallery = ({ images }) => {
       <ImageView img={view} />
       <div className="thumbs">
         {images.map((item, i) => (
-          <img key={i} src={item} onClick={() => setView(item)} />
+          <Img key={i} src={item} onClick={() => setView(item)} />
         ))}
         {images.length === 0 && <p>No image was provided by the seller.</p>}
       </div>
@@ -545,7 +546,7 @@ const ImageView = ({ img }) => {
       onMouseEnter={() => setApplyStyle(true)}
       onMouseLeave={() => setApplyStyle(false)}
     >
-      <img
+      <Img
         className={applyStyle ? "scale" : ""}
         style={applyStyle ? style : {}}
         src={img || "/open_box.png"}
@@ -714,7 +715,7 @@ const Shop = ({ seller, products, loading }) => {
       <div className="shop">
         <div className="seller">
           <div className="profile">
-            <img src={seller.profileImg || "/profile-user.jpg"} />
+            <Img src={seller.profileImg || "/profile-user.jpg"} />
             <p className="name">
               {seller.firstName} {seller.lastName} •{" "}
               <span className="role">Seller</span>
@@ -877,7 +878,7 @@ export const CartItem = ({ product, gst, qty }) => {
   const price = calculatePrice({ product, gst: gst || product.user?.gst });
   return (
     <li className={`item ${!product.images.length && "noImg"}`}>
-      <img src={product.images[0] || "/open_box.png"} />
+      <Img src={product.images[0] || "/open_box.png"} />
       <div className="detail">
         <p className="name">{product.name}</p>
         <div className="qty">

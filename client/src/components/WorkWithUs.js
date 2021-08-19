@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header, Footer } from "./Elements";
+import { Header, Footer, Img } from "./Elements";
 import { Link } from "react-router-dom";
 require("./styles/WorkWithUs.scss");
 
@@ -13,7 +13,7 @@ const WorkWithUs = () => {
           <p className="subtitle">Never Pay Without Using Delivery pay</p>
         </div>
         <div className="hero">
-          <img src="https://static.wixstatic.com/media/11062b_010acefdfeb1461f8a79a7b3640e5685~mv2.jpg/v1/fill/w_671,h_650,al_c,q_85,usm_0.66_1.00_0.01/11062b_010acefdfeb1461f8a79a7b3640e5685~mv2.webp" />
+          <Img src="https://static.wixstatic.com/media/11062b_010acefdfeb1461f8a79a7b3640e5685~mv2.jpg/v1/fill/w_671,h_650,al_c,q_85,usm_0.66_1.00_0.01/11062b_010acefdfeb1461f8a79a7b3640e5685~mv2.webp" />
           <div className="detail">
             <div>
               <h2>

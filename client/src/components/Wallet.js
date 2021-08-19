@@ -18,6 +18,7 @@ import {
   Minus_svg,
   Arrow_up_svg,
   Arrow_down_svg,
+  Img,
 } from "./Elements";
 import Moment from "react-moment";
 import moment from "moment";
@@ -377,7 +378,7 @@ const Wallet = ({ history, location, match }) => {
               <li key={i}>
                 <p className="rewardName">{item.name}</p>
                 <div>
-                  {item.img && <img src={item.img} />}
+                  {item.img && <Img src={item.img} />}
                   {item.amount && <p className="amount">₹{item.amount}</p>}
                   <p className="rewardDscr">{item.dscr}</p>
                 </div>
@@ -741,7 +742,7 @@ const PaymentMethodForm = ({ onSuccess }) => {
         //       <div className="fill" />
         //     </div>
         //     <label>
-        //       UPI <img src="/payment_upi.png" />
+        //       UPI <Img src="/payment_upi.png" />
         //     </label>
         //   </div>
         //   {type === "upi" && <UpiForm />}
@@ -754,8 +755,8 @@ const PaymentMethodForm = ({ onSuccess }) => {
         //       <div className="fill" />
         //     </div>
         //     <label>
-        //       Add Debit/Credit Card <img src="/payment_visa.png" />{" "}
-        //       <img src="/payment_mc.png" />
+        //       Add Debit/Credit Card <Img src="/payment_visa.png" />{" "}
+        //       <Img src="/payment_mc.png" />
         //     </label>
         //   </div>
         //   {type === "bankCard" && <BankCardForm onSuccess={onSuccess} />}
@@ -1112,7 +1113,7 @@ export const NetBankingForm = ({ prefill, onSuccess }) => {
 export const BankCard = ({ card, onClick }) => {
   return (
     <div className="paymentMethod card" onClick={() => onClick?.(card)}>
-      <img
+      <Img
         className="logo"
         src={card.brand === "visa" ? "/payment_visa.png" : "/payment_mc.png"}
       />

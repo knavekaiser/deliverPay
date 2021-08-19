@@ -27,6 +27,7 @@ import Marketplace, { SingleProduct } from "./components/Marketplace";
 import WorkWithUs from "./components/WorkWithUs";
 import Apply from "./components/Apply";
 import { ToastContainer } from "react-toastify";
+import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
 Number.prototype.fix = function (p) {
   return +this.toFixed(p || 2);
@@ -62,6 +63,7 @@ function App() {
   useEffect(() => {
     window.addEventListener("resize", () => resizeWindow());
     resizeWindow();
+    serviceWorkerRegistration.register();
   }, []);
   return (
     <div className="App">

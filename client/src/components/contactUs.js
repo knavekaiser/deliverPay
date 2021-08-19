@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Header, Footer } from "./Elements";
 import { useHistory } from "react-router-dom";
-import { Succ_svg, Err_svg } from "./Elements";
+import { Succ_svg, Err_svg, Img } from "./Elements";
 import { Modal } from "./Modal";
 import TextareaAutosize from "react-textarea-autosize";
 require("./styles/contactUs.scss");
@@ -217,13 +217,13 @@ const ContactUs = () => {
               <label>Social Media</label>
               <div className="socials">
                 <a href="#">
-                  <img src="/fb_icon.webp" />
+                  <Img src="/fb_icon.webp" />
                 </a>
                 <a href="#">
-                  <img src="/in_icon.webp" />
+                  <Img src="/in_icon.webp" />
                 </a>
                 <a href="#">
-                  <img src="/insta_icon.webp" />
+                  <Img src="/insta_icon.webp" />
                 </a>
               </div>
             </div>

@@ -27,9 +27,7 @@ app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
               " ",
               "$phone",
               " ",
-              "$email",
-              " ",
-              "userId",
+              "$userId",
             ],
           },
           regex: new RegExp(q.replace(/[#-.]|[[-^]|[?|{}]/g, "\\$&")),
@@ -38,6 +36,7 @@ app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
       },
     }),
   };
+  console.log(query);
   User.aggregate([
     { $match: query },
     { $limit: 20 },
@@ -53,6 +52,7 @@ app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
     },
   ])
     .then((users) => {
+      console.log(users);
       res.json(users);
     })
     .catch((err) => {
@@ -138,6 +138,24 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
       console.log(err);
       res.status(500).json({ message: "something went wrong" });
     });
+});
+
+app.post("/sendMessage", passport.authenticate("userPrivate"), (req, res) => {
+  const { to } = req.body;
+  if (ObjectId.isValid(to)) {
+    Chat.updateMany(
+      {
+        user: req.user._id,
+        client: to,
+      },
+      { $push: { messages: req.body } }
+    ).then((dbRes) => {
+      console.log(dbRes);
+      res.json({ code: "ok", message: req.body });
+    });
+  } else {
+    res.status(400).json({ code: 400, message: "to is required" });
+  }
 });
 
 app.get(

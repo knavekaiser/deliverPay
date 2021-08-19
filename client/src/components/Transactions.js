@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { SiteContext } from "../SiteContext";
-import { Err_svg } from "./Elements";
+import { Err_svg, Img } from "./Elements";
 import { Modal } from "./Modal";
 import Moment from "react-moment";
 
@@ -57,7 +57,7 @@ const SingleTransaction = ({ transaction }) => {
         <div className="profile">
           {transaction.client ? (
             <>
-              <img
+              <Img
                 src={transaction.client._id?.profileImg || "/profile-user.jpg"}
               />
               <p className="name">
@@ -68,7 +68,7 @@ const SingleTransaction = ({ transaction }) => {
             </>
           ) : (
             <>
-              <img src={user.profileImg || "/profile-user.jpg"} />
+              <Img src={user.profileImg || "/profile-user.jpg"} />
               <p className="name">{user.firstName + " " + user.lastName}</p>
             </>
           )}

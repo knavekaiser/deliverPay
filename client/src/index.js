@@ -57,12 +57,25 @@ ReactDOM.render(
     <ErrorBoundary>
       <Provider>
         <App />
+        {
+          //   <button
+          //   style={{ padding: "2rem" }}
+          //   onClick={() => serviceWorkerRegistration.register()}
+          // >
+          //   Register service worker
+          // </button>
+          // <button
+          //   style={{ padding: "2rem" }}
+          //   onClick={() => serviceWorkerRegistration.unregister()}
+          // >
+          //   Unregister service worker
+          // </button>
+        }
       </Provider>
     </ErrorBoundary>
   </React.StrictMode>,
   document.getElementById("root")
 );
-serviceWorkerRegistration.register();
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

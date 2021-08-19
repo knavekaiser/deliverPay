@@ -1,7 +1,7 @@
 import { useContext, useEffect } from "react";
 import { SiteContext } from "../SiteContext";
 import { Link } from "react-router-dom";
-import { Footer } from "./Elements";
+import { Footer, Img } from "./Elements";
 require("./styles/landingPage.scss");
 
 function LandingPage({ history }) {
@@ -21,7 +21,7 @@ function LandingPage({ history }) {
         <div className="innerWrapper">
           <div className="links">
             <Link className="logoLink" to="/">
-              <img
+              <Img
                 className="logo"
                 src="/logo_land.jpg"
                 alt="Delivery pay logo"

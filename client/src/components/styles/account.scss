@@ -437,6 +437,11 @@
     .label {
       font-size: 1.25rem;
       margin-bottom: 1rem;
+      .note {
+        display: block;
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.6);
+      }
     }
     .payments {
       display: flex;
@@ -1091,6 +1096,7 @@
 .milestonesForm {
   padding: 2rem;
   display: flex;
+  flex-wrap: wrap;
   grid-gap: 2rem;
   .transactionDetail {
     flex: 1;
@@ -2472,6 +2478,7 @@
     border-radius: 0.5rem;
   }
   .milestonesForm {
+    padding: 1.5rem;
     .transactionDetail {
       order: 2;
       margin-bottom: 2rem;

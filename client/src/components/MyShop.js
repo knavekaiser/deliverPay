@@ -32,6 +32,7 @@ import Moment from "react-moment";
 import TextareaAutosize from "react-textarea-autosize";
 import OrderManagement, { FullOrder } from "./OrderManagement";
 import RefundManagement, { FullRefund } from "./RefundManagement";
+import FBMarket from "./fbMarketplace";
 import { updateProfileInfo } from "./Profile";
 import moment from "moment";
 import XLSX from "xlsx";
@@ -91,7 +92,7 @@ const MyShop = ({ history, location, match }) => {
   return (
     <>
       {userType === "buyer" && <Redirect to="/account/myShopping/orders" />}
-      <div className="productContainer">
+      <div className="myShop">
         <div style={{ display: "none" }}>
           <X_svg />
         </div>
@@ -101,6 +102,7 @@ const MyShop = ({ history, location, match }) => {
             { label: "Products & Services", path: "products" },
             { label: "Orders", path: "orders" },
             { label: "Refunds", path: "refunds" },
+            { label: "FB Marketplace", path: "fbMarketplace" },
             { label: "Settings", path: "settings" },
           ]}
         />
@@ -117,6 +119,7 @@ const MyShop = ({ history, location, match }) => {
           </Route>
           <Route path="/account/myShop/refunds/:_id" component={FullRefund} />
           <Route path="/account/myShop/refunds" component={RefundManagement} />
+          <Route path="/account/myShop/fbMarketplace" component={FBMarket} />
           <Route path="/account/myShop/settings">
             <Settings categories={categories} setCategories={setCategories} />
           </Route>

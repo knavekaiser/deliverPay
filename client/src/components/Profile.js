@@ -2,7 +2,14 @@ import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { SiteContext } from "../SiteContext";
 import { BankCard, BankAccount, BankCardForm, NetBankingForm } from "./Wallet";
 import { Modal, Confirm } from "./Modal";
-import { Err_svg, Succ_svg, FileInput, Media, UploadFiles } from "./Elements";
+import {
+  Err_svg,
+  Succ_svg,
+  FileInput,
+  Media,
+  UploadFiles,
+  Img,
+} from "./Elements";
 import GoogleLogin from "react-google-login";
 require("./styles/profile.scss");
 
@@ -92,7 +99,7 @@ const Profile = ({ history, match, location }) => {
     <div className="profileContainer">
       <div className="benner">
         <div className="profileImg">
-          <img src={user.profileImg || "/profile-user.jpg"} />
+          <Img src={user.profileImg || "/profile-user.jpg"} />
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="91.832"

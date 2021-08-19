@@ -14,6 +14,7 @@ import {
   Actions,
   Cart_svg,
   calculatePrice,
+  Img,
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import Hold from "./Hold.js";
@@ -23,7 +24,7 @@ import MyShop from "./MyShop";
 import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
 import Marketplace, { SingleProduct, Cart, CartItem } from "./Marketplace";
-import Deals from "./Deals";
+import Deals, { socket } from "./Deals";
 import MyShopping from "./myShopping";
 import QRCode from "qrcode.react";
 import OrderManagement from "./OrderManagement";
@@ -86,90 +87,6 @@ const Home = () => {
   const [recentPayments, setRecentPayments] = useState([]);
   const [client, setClient] = useState(null);
   const [msg, setMsg] = useState(null);
-  const [showUsers, setShowUsers] = useState(false);
-  const fetchUsers = useCallback(
-    (e) => {
-      setValue(e.target.value);
-      fetch(`/api/getUsers?q=${value}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data) {
-            setUsers(data);
-          }
-        });
-      if (e.target.value === "") {
-        setUsers([]);
-      }
-    },
-    [value]
-  );
-  const inviteUser = useCallback(() => {
-    const phoneReg = new RegExp(
-      /^(\+91|91|1|)(?=\d{10}$)/gi
-      // /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
-    );
-    if (phoneReg.test(value.toLowerCase())) {
-      fetch(
-        `/api/inviteUser?q=+91${value.replace(
-          /^(\+91|91|1|)(?=\d{10}$)/g,
-          ""
-        )}origin=${window.location.origin}`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.code === "ok") {
-            setMsg(
-              <>
-                <button onClick={() => setMsg(null)}>Okay</button>
-                <div>
-                  <Succ_svg />
-                  {
-                    // <h4>Invitation sent.</h4>
-                  }
-                  <h4>
-                    An sms will be sent to{" "}
-                    {"+91" + value.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")},
-                    when the sms API is ready.
-                  </h4>
-                </div>
-              </>
-            );
-          } else {
-            setMsg(
-              <>
-                <button onClick={() => setMsg(null)}>Okay</button>
-                <div>
-                  <Err_svg />
-                  <h4>Invitation could not be sent. Please try again.</h4>
-                </div>
-              </>
-            );
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Invitation could not be sent. Make sure you're online.</h4>
-              </div>
-            </>
-          );
-        });
-    } else {
-      setMsg(
-        <>
-          <button onClick={() => setMsg(null)}>Okay</button>
-          <div>
-            <Err_svg />
-            <h4>Enter a valid phone number to send invitation.</h4>
-          </div>
-        </>
-      );
-    }
-  }, [value]);
   const milestoneTimeout = useRef();
   useEffect(() => {
     fetch("/api/recentPayments")
@@ -190,11 +107,14 @@ const Home = () => {
     <div className="homeContainer">
       <div className="benner">
         <h4>Start transactions with Delivery pay</h4>
-        <p>Let us help you make the safest transaction</p>
+        <p>Connect with new buyers/sellers.</p>
+        {
+          // <p>Let us help you make the safest transaction</p>
+        }
       </div>
       <div className="userType">
         <div className={`option buyer ${userType === "buyer" && "active"}`}>
-          <img src="/buyer.png" />
+          <Img src="/buyer.png" />
           <div className="btn" onClick={(e) => setUserType("buyer")}>
             <p>I am a Buyer </p>
             <div className="radial">
@@ -203,7 +123,7 @@ const Home = () => {
           </div>
         </div>
         <div className={`option seller ${userType === "seller" && "active"}`}>
-          <img src="/seller.png" />
+          <Img src="/seller.png" />
           <div className="btn" onClick={(e) => setUserType("seller")}>
             <p>I am a Seller </p>
             <div className="radial">
@@ -212,161 +132,17 @@ const Home = () => {
           </div>
         </div>
       </div>
-      {
-        //   userType === "buyer" && (
-        //   <div className="search">
-        //     <form onSubmit={(e) => e.preventDefault()}>
-        //       <label htmlFor="search">Start buying with Delivery pay</label>
-        //       <section>
-        //         <svg
-        //           xmlns="http://www.w3.org/2000/svg"
-        //           width="17.9"
-        //           height="17.9"
-        //           viewBox="0 0 17.9 17.9"
-        //         >
-        //           <path
-        //             id="Path_208"
-        //             data-name="Path 208"
-        //             d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
-        //             transform="translate(0)"
-        //             fill="#b9b9b9"
-        //           />
-        //         </svg>
-        //         <input
-        //           label="search"
-        //           required={true}
-        //           placeholder="Search with Delivery pay ID or Phone Number"
-        //           onFocus={() => setShowUsers(true)}
-        //           onBlur={() => {
-        //             setTimeout(() => setShowUsers(false), 500);
-        //           }}
-        //           onChange={fetchUsers}
-        //         />
-        //         <Link
-        //           className={`sendReq ${
-        //             users.length > 0 || !value ? "disabled" : ""
-        //           }`}
-        //           onClick={inviteUser}
-        //           to="#"
-        //         >
-        //           Invite
-        //         </Link>
-        //       </section>
-        //       {users.length && showUsers ? (
-        //         <ul className="searchResult">
-        //           {users.map((user, i) => (
-        //             <Link
-        //               key={i}
-        //               to={
-        //                 // `/account/marketplace?seller${user._id}`
-        //                 "/account/home/pay"
-        //               }
-        //             >
-        //               <li>
-        //                 <div className="profile">
-        //                   <img src={user.profileImg} />
-        //                   <p className="name">
-        //                     {user.firstName + " " + user.lastName}
-        //                     <span className="phone">{user.phone}</span>
-        //                   </p>
-        //                 </div>
-        //                 {
-        //                   //   <Link
-        //                   //   className="sendReq"
-        //                   //   to={{
-        //                   //     pathname: "/account/home/pay",
-        //                   //   }}
-        //                   //   onClick={() => setClient(user)}
-        //                   // >
-        //                   //   Create Milestone
-        //                   // </Link>
-        //                 }
-        //               </li>
-        //             </Link>
-        //           ))}
-        //         </ul>
-        //       ) : null}
-        //     </form>
-        //   </div>
-        // )
-      }
-      <div className="search">
-        <form onSubmit={(e) => e.preventDefault()}>
-          <label htmlFor="search">
-            Start {userType === "seller" ? "selling" : "buying"} with Delivery
-            pay
-          </label>
-          <section>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="17.9"
-              height="17.9"
-              viewBox="0 0 17.9 17.9"
-            >
-              <path
-                id="Path_208"
-                data-name="Path 208"
-                d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
-                transform="translate(0)"
-                fill="#b9b9b9"
-              />
-            </svg>
-            <input
-              label="search"
-              required={true}
-              placeholder="Search with Delivery pay ID or Phone Number"
-              onFocus={() => setShowUsers(true)}
-              onBlur={() => {
-                setTimeout(() => setShowUsers(false), 500);
-              }}
-              onChange={fetchUsers}
-            />
-            <Link
-              className={`sendReq ${
-                users.length > 0 || !value ? "disabled" : ""
-              }`}
-              onClick={inviteUser}
-              to="#"
-            >
-              Invite
-            </Link>
-          </section>
-          {users.length && showUsers ? (
-            <ul className="searchResult">
-              {users.map((user, i) => (
-                <Link
-                  target={userType === "buyer" ? "_blank" : ""}
-                  onClick={() => setClient(user)}
-                  to={{
-                    pathname:
-                      userType === "seller"
-                        ? "/account/home/createMilestone"
-                        : `/marketplace?seller=${user._id}`,
-                  }}
-                >
-                  <li key={i}>
-                    <div className="profile">
-                      <img src={user.profileImg} />
-                      <p className="name">
-                        {user.firstName + " " + user.lastName}
-                        <span className="phone">{user.phone}</span>
-                      </p>
-                    </div>
-                    <span className="sendReq">
-                      {userType === "seller"
-                        ? "Request milestone"
-                        : "Show Products & Services"}
-                    </span>
-                  </li>
-                </Link>
-              ))}
-            </ul>
-          ) : null}
-        </form>
-      </div>
+      <UserSearch setClient={setClient} />
       {recentPayments.length > 0 && userType && (
         <div className="recentPayments">
-          <p className="label">Recent Payments</p>
+          <p className="label">
+            Recent Payments
+            <span className="note">
+              {userType === "buyer"
+                ? "Click to view all their products."
+                : "Click to request a milestone."}
+            </span>
+          </p>
           <ul className="payments">
             {recentPayments.map((user) => (
               <li key={user._id}>
@@ -382,7 +158,7 @@ const Home = () => {
                     setClient(user);
                   }}
                 >
-                  <img src={user.profileImg} />
+                  <Img src={user.profileImg} />
                   <p className="name">{user.firstName + " " + user.lastName}</p>
                 </Link>
               </li>
@@ -464,10 +240,194 @@ const Home = () => {
   );
 };
 
+const UserSearch = ({ setClient }) => {
+  const { userType } = useContext(SiteContext);
+  const history = useHistory();
+  const [msg, setMsg] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [value, setValue] = useState("");
+  const [showUsers, setShowUsers] = useState(false);
+  const formRef = useRef();
+  const inviteUser = useCallback(() => {
+    const phoneReg = new RegExp(/^(\+91|91|1|)(?=\d{10}$)/gi);
+    if (phoneReg.test(value.toLowerCase())) {
+      fetch(
+        `/api/inviteUser?q=+91${value.replace(
+          /^(\+91|91|1|)(?=\d{10}$)/g,
+          ""
+        )}origin=${window.location.origin}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.code === "ok") {
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Succ_svg />
+                  {
+                    // <h4>Invitation sent.</h4>
+                  }
+                  <h4>
+                    An sms will be sent to{" "}
+                    {"+91" + value.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")},
+                    when the sms API is ready.
+                  </h4>
+                </div>
+              </>
+            );
+          } else {
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Err_svg />
+                  <h4>Invitation could not be sent. Please try again.</h4>
+                </div>
+              </>
+            );
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Invitation could not be sent. Make sure you're online.</h4>
+              </div>
+            </>
+          );
+        });
+    } else {
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>Enter a valid phone number to send invitation.</h4>
+          </div>
+        </>
+      );
+    }
+  }, [value]);
+  const fetchUsers = () => {
+    fetch(`/api/getUsers?q=${encodeURIComponent(value)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setUsers(data);
+        }
+      });
+    if (value === "") {
+      setUsers([]);
+    }
+  };
+  const documentClickHandler = (e) => {
+    if (e.path.includes(formRef.current)) {
+    } else {
+      setShowUsers(false);
+    }
+  };
+  useEffect(() => {
+    document.addEventListener("click", documentClickHandler);
+    return () => {
+      document.removeEventListener("click", documentClickHandler);
+    };
+  }, []);
+  useEffect(() => {
+    if (value) {
+      fetchUsers();
+    } else {
+      setUsers([]);
+    }
+  }, [value]);
+  return (
+    <div className="search">
+      <form onSubmit={(e) => e.preventDefault()} ref={formRef}>
+        <section>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="17.9"
+            height="17.9"
+            viewBox="0 0 17.9 17.9"
+          >
+            <path
+              id="Path_208"
+              data-name="Path 208"
+              d="M17.9,16.324l-3.715-3.715a7.708,7.708,0,0,0,1.576-4.728A7.832,7.832,0,0,0,7.881,0,7.832,7.832,0,0,0,0,7.881a7.832,7.832,0,0,0,7.881,7.881,7.708,7.708,0,0,0,4.728-1.576L16.324,17.9ZM2.252,7.881A5.574,5.574,0,0,1,7.881,2.252a5.574,5.574,0,0,1,5.629,5.629,5.574,5.574,0,0,1-5.629,5.629A5.574,5.574,0,0,1,2.252,7.881Z"
+              transform="translate(0)"
+              fill="#b9b9b9"
+            />
+          </svg>
+          <input
+            label="search"
+            required={true}
+            placeholder="Search with Delivery pay ID or Phone Number"
+            onFocus={() => setShowUsers(true)}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <Link
+            className={`sendReq ${
+              users.length > 0 || !value ? "disabled" : ""
+            }`}
+            onClick={inviteUser}
+            to="#"
+          >
+            Invite
+          </Link>
+        </section>
+        {showUsers && users.length ? (
+          <ul className="searchResult">
+            {users.map((user, i) => (
+              <Link
+                key={i}
+                target={userType === "buyer" ? "_blank" : ""}
+                onClick={() => setClient(user)}
+                to={{
+                  pathname:
+                    userType === "seller"
+                      ? "/account/home/createMilestone"
+                      : `/marketplace?seller=${user._id}`,
+                }}
+              >
+                <li key={i}>
+                  <div className="profile">
+                    <Img src={user.profileImg} />
+                    <p className="name">
+                      {user.firstName + " " + user.lastName}
+                      <span className="phone">{user.phone}</span>
+                    </p>
+                  </div>
+                  <span className="sendReq">
+                    {userType === "seller"
+                      ? "Request milestone"
+                      : "Show Products & Services"}
+                  </span>
+                </li>
+              </Link>
+            ))}
+          </ul>
+        ) : null}
+      </form>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+    </div>
+  );
+};
+
 function Account() {
   const { user, userType } = useContext(SiteContext);
   const { unread } = useContext(ChatContext);
   const location = useLocation();
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+  }, []);
   return (
     <div
       className={`account ${
@@ -476,8 +436,8 @@ function Account() {
     >
       <header>
         <Link to="/">
-          <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
-          <img
+          <Img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
+          <Img
             className="logo_small"
             src="/logo_sqr.jpg"
             alt="Delivery pay logo"
@@ -1099,7 +1059,7 @@ function Account() {
           >
             <Link to="/account/profile">
               <div className="icon acc">
-                <img src={user?.profileImg || "/profile-user.jpg"} />
+                <Img src={user?.profileImg || "/profile-user.jpg"} />
               </div>
               Account
             </Link>
@@ -1752,7 +1712,7 @@ export const ProfileAvatar = () => {
           className="avatar"
           icon={
             <>
-              <img
+              <Img
                 src={user?.profileImg || "/profile-user.jpg"}
                 onClick={() => setMenu(!menu)}
               />
@@ -2184,7 +2144,7 @@ export const MilestoneForm = ({
             //         <ul>
             //           {products.map((product) => (
             //             <li key={product._id}>
-            //               <img src={product.images[0]} />
+            //               <Img src={product.images[0]} />
             //               <div className="productDetail">
             //                 <p className="name">{product.name}</p>
             //                 <p className="price">₹ {product.price}</p>
@@ -2217,7 +2177,7 @@ export const MilestoneForm = ({
             //         <ul className="productSearchList">
             //           {productResult.map((product) => (
             //             <li key={product._id}>
-            //               <img src={product.images[0]} />
+            //               <Img src={product.images[0]} />
             //               <div className="productDetail">
             //                 <p className="name">{product.name}</p>
             //                 <p className="price">₹ {product.price}</p>
@@ -2271,7 +2231,7 @@ export const MilestoneForm = ({
         <section className="clientDetail">
           {action === "request" && (
             <>
-              <img src={client?.profileImg || "/profile-user.jpg"} />
+              <Img src={client?.profileImg || "/profile-user.jpg"} />
               <label>Buyer Information</label>
               <div
                 className="detail"
@@ -2302,7 +2262,7 @@ export const MilestoneForm = ({
           )}
           {action === "request" ? null : (
             <div className="sellerInfo">
-              <img src={clientDetail?.profileImg || "/profile-user.jpg"} />
+              <Img src={clientDetail?.profileImg || "/profile-user.jpg"} />
               <label>Seller Information</label>
               <div className="detail">
                 <section className="profileDetail">

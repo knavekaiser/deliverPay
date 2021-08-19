@@ -20,6 +20,7 @@ import {
   User,
   Arrow_left_svg,
   Media,
+  Img,
 } from "./Elements";
 import { Link, useHistory } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
@@ -787,7 +788,7 @@ export const FullRefund = ({ history, match }) => {
             <ul>
               {order.products.map(({ product, qty }, i) => (
                 <li key={i}>
-                  <img src={product.images[0] || "/open_box.png"} />
+                  <Img src={product.images[0] || "/open_box.png"} />
                   <div className="detail">
                     <p>{product.name}</p>
                     <p className="qty">QTY: {qty}</p>

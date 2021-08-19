@@ -20,6 +20,7 @@ import {
   X_svg,
   Combobox,
   Paginaiton,
+  Img,
 } from "./Elements";
 import { MilestoneReleaseForm, DisputeForm } from "./Forms";
 import { DateRange } from "react-date-range";
@@ -303,7 +304,7 @@ const CommonMilestoneElement = ({ milestone }) => {
     <>
       <div className="clientDetail">
         <div className="profile">
-          <img src={milestone.client.profileImg || "/profile-user.jpg"} />
+          <Img src={milestone.client.profileImg || "/profile-user.jpg"} />
           <p className="name">
             {milestone.client.firstName + " " + milestone.client.lastName}
           </p>

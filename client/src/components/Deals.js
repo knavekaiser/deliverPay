@@ -11,7 +11,14 @@ import { SiteContext, ChatContext } from "../SiteContext";
 import Moment from "react-moment";
 import { Modal, Confirm } from "./Modal";
 import moment from "moment";
-import { Succ_svg, Err_svg, X_svg, UploadFiles, Actions } from "./Elements";
+import {
+  Succ_svg,
+  Err_svg,
+  X_svg,
+  UploadFiles,
+  Actions,
+  Img,
+} from "./Elements";
 import { io } from "socket.io-client";
 import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
@@ -49,20 +56,14 @@ const Deals = ({ history, location, match }) => {
           {userCard ? (
             <>
               <div className="profile">
-                <img src={userCard.profileImg || "/profile-user.jpg"} />
+                <Img src={userCard.profileImg || "/profile-user.jpg"} />
                 <div className="details">
                   <p className="name">
                     {userCard.firstName
                       ? userCard.firstName + " " + userCard.lastName
                       : "Deleted user"}
                   </p>
-                  <a
-                    className="phone"
-                    href={`tel:${userCard.phone}`}
-                    className="phone"
-                  >
-                    {userCard.phone}
-                  </a>
+                  <a className="phone">{userCard.phone}</a>
                   <a href={`mailto:${userCard.email}`} className="email">
                     {userCard.email}
                   </a>
@@ -273,7 +274,7 @@ const UserSearch = ({ setUserCard, setContacts }) => {
               >
                 <li key={i}>
                   <div className="profile">
-                    <img src={user.profileImg} />
+                    <Img src={user.profileImg} />
                     <p className="name">
                       {user.firstName + " " + user.lastName}
                       <span className="phone">{user.phone}</span>
@@ -316,7 +317,7 @@ const Person = ({ client, messages, lastSeen, userCard, unread }) => {
     >
       {
         <>
-          <img src={client.profileImg || "/profile-user.jpg"} />
+          <Img src={client.profileImg || "/profile-user.jpg"} />
           <div>
             <p className="name">
               {client.firstName
@@ -464,7 +465,7 @@ const Chat = ({
                   />
                 </svg>
               </button>
-              <img src={userCard.profileImg || "/profile-user.jpg"} />
+              <Img src={userCard.profileImg || "/profile-user.jpg"} />
               <p className="name">
                 {userCard.firstName
                   ? userCard.firstName + " " + userCard.lastName
@@ -767,22 +768,22 @@ const MediaBubble = ({ link }) => {
   let view = null;
   let fullView = null;
   const [open, setOpen] = useState(false);
-  if (link.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/)) {
-    view = <img src={link} onClick={() => setOpen(true)} />;
-  } else if (link.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/)) {
+  if (link.match(/(\.gif|\.png|\.jpg|\.jpeg|\.webp)$/i)) {
+    view = <Img src={link} onClick={() => setOpen(true)} />;
+  } else if (link.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/i)) {
     view = <audio src={link} controls="on" />;
-  } else if (link.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/)) {
+  } else if (link.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/i)) {
     view = (
       <div className={`videoThumb`}>
         <video src={link} onClick={() => setOpen(true)} />
-        <img src="/play_btn.png" />
+        <Img src="/play_btn.png" />
       </div>
     );
     fullView = <video src={link} controls="on" autoPlay="on" />;
   } else {
     view = (
       <a href={link} target="_blank" className="link">
-        <img src="/file_icon.png" />
+        <Img src="/file_icon.png" />
         {link}
       </a>
     );
@@ -870,6 +871,11 @@ const ChatForm = ({ rooms, user, newChat }) => {
       );
     });
   }, []);
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+  }, [value, files]);
   return (
     <>
       <form
@@ -907,7 +913,7 @@ const ChatForm = ({ rooms, user, newChat }) => {
                 ]);
               }}
             />
-            <img src="/paperclip.svg" />
+            <Img src="/paperclip.svg" />
           </div>
         </section>
         <button type="submit" disabled={loading}>
@@ -1029,7 +1035,7 @@ const Preview = ({ files, setFiles }) => {
             >
               <X_svg />
             </button>
-            <img
+            <Img
               className={img ? "thumb" : ""}
               src={img ? file.url : "/file_icon.png"}
             />

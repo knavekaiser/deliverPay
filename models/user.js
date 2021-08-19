@@ -78,6 +78,14 @@ const userModel = new Schema(
       },
       amount: { type: Number },
     },
+    fbMarket: {
+      user: {},
+      businessManager: {},
+      facebookPage: {},
+      dataSharing: { type: String, default: null },
+      commerceAccount: {},
+      userAggrement: { type: Boolean, default: false },
+    },
     shopInfo: {
       shippingCost: { type: Number },
       deliveryWithin: { type: Number },

@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { SiteContext } from "../SiteContext";
 import { Header, Footer } from "./Elements";
 import { Route, Switch, useHistory, useLocation, Link } from "react-router-dom";
-import { Checkbox, Arrow_left_svg } from "./Elements";
+import { Checkbox, Arrow_left_svg, Img } from "./Elements";
 import { GoogleLogin } from "react-google-login";
 require("../components/styles/userStart.scss");
 
@@ -58,7 +58,7 @@ const RegisterForm = () => {
   }, [confirm_pass]);
   return (
     <div className="formWrapper register">
-      <img
+      <Img
         className="logo"
         onClick={() => history.push("/")}
         src="/logo_benner.jpg"
@@ -199,7 +199,7 @@ const LoginForm = () => {
       .then((data) => {
         if (data.user) {
           setUser(data.user);
-          history.replace("/account/home");
+          history.replace(history.location.state?.from || "/account/home");
         } else if (data.code === 401) {
           setErrMsg("Invalid credential!");
         }
@@ -226,7 +226,7 @@ const LoginForm = () => {
   };
   return (
     <div className="formWrapper login">
-      <img
+      <Img
         className="logo"
         onClick={() => history.push("/")}
         src="/logo_benner.jpg"
@@ -404,7 +404,7 @@ const PasswordReset = () => {
   }, [code]);
   return (
     <div className="formWrapper resetPass">
-      <img className="logo" src="/logo_benner.jpg" alt="Delivery pay logo" />
+      <Img className="logo" src="/logo_benner.jpg" alt="Delivery pay logo" />
       <p className="title">Password reset</p>
       {step === 2 && (
         <a className="back" onClick={() => setStep(1)}>
@@ -619,7 +619,7 @@ function UserStart() {
             <h3>Experience the best and secure Transactions</h3>
             <p>We ensure buyer and seller happiness</p>
           </div>
-          <img
+          <Img
             className="illustration"
             src="/landingPage_illustration.png"
             alt="illustration"

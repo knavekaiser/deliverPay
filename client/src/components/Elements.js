@@ -675,9 +675,10 @@ export const Arrow_left_svg = () => {
     </svg>
   );
 };
-export const Chev_down_svg = () => {
+export const Chev_down_svg = ({ className }) => {
   return (
     <svg
+      className={className || ""}
       xmlns="http://www.w3.org/2000/svg"
       width="23.616"
       height="13.503"
@@ -691,6 +692,21 @@ export const Chev_down_svg = () => {
         fill="#53aefc"
       />
     </svg>
+  );
+};
+
+export const External_link_icon = () => {
+  return (
+    <span class="externalLinkIcon" aria-label="(opens a new window)">
+      <svg
+        viewBox="0 0 20 20"
+        class="Polaris-Icon__Svg_375hu"
+        focusable="false"
+        aria-hidden="true"
+      >
+        <path d="M14 13v1a1 1 0 0 1-1 1H6c-.575 0-1-.484-1-1V7a1 1 0 0 1 1-1h1c1.037 0 1.04 1.5 0 1.5-.178.005-.353 0-.5 0v6h6V13c0-1 1.5-1 1.5 0zm-3.75-7.25A.75.75 0 0 1 11 5h4v4a.75.75 0 0 1-1.5 0V7.56l-3.22 3.22a.75.75 0 1 1-1.06-1.06l3.22-3.22H11a.75.75 0 0 1-.75-.75z"></path>
+      </svg>
+    </span>
   );
 };
 
@@ -726,6 +742,19 @@ export const Cart_svg = () => {
         <path d="M3.9,7.9C1.8,7.9,0,6.1,0,3.9C0,1.8,1.8,0,3.9,0h10.2c0.1,0,0.3,0,0.4,0c3.6,0.1,6.8,0.8,9.5,2.5c3,1.9,5.2,4.8,6.4,9.1 c0,0.1,0,0.2,0.1,0.3l1,4H119c2.2,0,3.9,1.8,3.9,3.9c0,0.4-0.1,0.8-0.2,1.2l-10.2,41.1c-0.4,1.8-2,3-3.8,3v0H44.7 c1.4,5.2,2.8,8,4.7,9.3c2.3,1.5,6.3,1.6,13,1.5h0.1v0h45.2c2.2,0,3.9,1.8,3.9,3.9c0,2.2-1.8,3.9-3.9,3.9H62.5v0 c-8.3,0.1-13.4-0.1-17.5-2.8c-4.2-2.8-6.4-7.6-8.6-16.3l0,0L23,13.9c0-0.1,0-0.1-0.1-0.2c-0.6-2.2-1.6-3.7-3-4.5 c-1.4-0.9-3.3-1.3-5.5-1.3c-0.1,0-0.2,0-0.3,0H3.9L3.9,7.9z M96,88.3c5.3,0,9.6,4.3,9.6,9.6c0,5.3-4.3,9.6-9.6,9.6 c-5.3,0-9.6-4.3-9.6-9.6C86.4,92.6,90.7,88.3,96,88.3L96,88.3z M53.9,88.3c5.3,0,9.6,4.3,9.6,9.6c0,5.3-4.3,9.6-9.6,9.6 c-5.3,0-9.6-4.3-9.6-9.6C44.3,92.6,48.6,88.3,53.9,88.3L53.9,88.3z M33.7,23.7l8.9,33.5h63.1l8.3-33.5H33.7L33.7,23.7z" />
       </g>
     </svg>
+  );
+};
+
+export const Img = ({ src: defaultSrc, onClick, alt, className }) => {
+  const [src, setSrc] = useState(defaultSrc);
+  return (
+    <img
+      src={src}
+      onClick={onClick}
+      onError={() => setSrc("/img_err.png")}
+      alt={alt}
+      className={className || ""}
+    />
   );
 };
 
@@ -1017,7 +1046,7 @@ export const FileInput = ({
             >
               <X_svg />
             </button>
-            <img
+            <Img
               className={img ? "thumb" : ""}
               src={img ? file.url : "/file_icon.png"}
             />
@@ -1127,8 +1156,8 @@ export const Header = () => {
   return (
     <header className="genericHeader">
       <Link className="logoLink" to="/">
-        <img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
-        <img
+        <Img className="logo" src="/logo_land.jpg" alt="Delivery pay logo" />
+        <Img
           className="logo_small"
           src="/logo_sqr.jpg"
           alt="Delivery pay logo"
@@ -1241,30 +1270,30 @@ export const Media = ({ links }) => {
         item.startsWith("https://image")
       ) {
         thumb = (
-          <img
+          <Img
             className={index === i ? "active" : ""}
             key={i}
             src={item}
             onClick={handleClick}
           />
         );
-        view = <img key={i} src={item} />;
-      } else if (item.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/)) {
+        view = <Img key={i} src={item} />;
+      } else if (item.match(/(\.mp3|\.ogg|\.amr|\.m4a|\.flac|\.wav|\.aac)$/i)) {
         thumb = (
           <div
             key={i}
             className={`audioThumb ${index === i ? "active" : ""}`}
             onClick={handleClick}
           >
-            <img src="/play_btn.png" />
+            <Img src="/play_btn.png" />
           </div>
         );
         view = <audio key={i} src={item} controls="on" autoPlay="on" />;
-      } else if (item.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/)) {
+      } else if (item.match(/(\.mp4|\.mov|\.avi|\.flv|\.wmv|\.webm)$/i)) {
         thumb = (
           <div key={i} className={`videoThumb ${index === i ? "active" : ""}`}>
             <video src={item} onClick={handleClick} />
-            <img src="/play_btn.png" />
+            <Img src="/play_btn.png" />
           </div>
         );
         view = <video key={i} src={item} controls="on" autoPlay="on" />;
@@ -1326,7 +1355,7 @@ export const Actions = ({
           onClick?.();
         }}
       >
-        {icon || <img src="/menu_dot.png" />}
+        {icon || <Img src="/menu_dot.png" />}
       </button>
       <Modal
         className="actions"
@@ -1376,7 +1405,7 @@ export const Tabs = ({ basepath, tabs }) => {
 export const User = ({ user }) => {
   return (
     <div className="profile">
-      <img src={user.profileImg || "/profile-user.jpg"} />
+      <Img src={user.profileImg || "/profile-user.jpg"} />
       <p className="name">
         {user.name || user.firstName + " " + user.lastName}
         <span className="contact">{user.phone}</span>
@@ -1450,7 +1479,7 @@ export const Tip = ({ className, children }) => {
     <Actions
       className={`${className || ""} tip`}
       wrapperClassName="tipWrapper"
-      icon={<img src="/help.png" />}
+      icon={<Img src="/help.png" />}
     >
       {children}
     </Actions>

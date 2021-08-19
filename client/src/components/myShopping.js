@@ -23,6 +23,7 @@ import {
   User,
   FileInput,
   UploadFiles,
+  Img,
 } from "./Elements";
 import { Link, Route, useHistory, Switch, Redirect } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
@@ -689,7 +690,7 @@ const FullOrder = ({ history, match }) => {
             <ul>
               {order.products.map(({ product, qty }, i) => (
                 <li key={i}>
-                  <img src={product.images[0] || "/open_box.png"} />
+                  <Img src={product.images[0] || "/open_box.png"} />
                   <div className="detail">
                     <p>{product.name}</p>
                     <p className="qty">QTY: {qty}</p>
@@ -1608,7 +1609,7 @@ const FullRefund = ({ history, match }) => {
             <ul>
               {order.products.map(({ product, qty }, i) => (
                 <li key={i}>
-                  <img src={product.images[0] || "/open_box.png"} />
+                  <Img src={product.images[0] || "/open_box.png"} />
                   <div className="detail">
                     <p>{product.name}</p>
                     <p className="qty">QTY: {qty}</p>
