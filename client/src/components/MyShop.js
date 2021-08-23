@@ -1157,7 +1157,7 @@ const SingleProduct = ({
                 )}
               </>
             )}
-            {!user.fbMarket.terms && (
+            {!user.fbMarket?.terms && (
               <Link to="/account/myShop/fbMarketplace" className="edit">
                 Setup FB Marketplace
               </Link>

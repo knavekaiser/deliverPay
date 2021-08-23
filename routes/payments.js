@@ -1167,7 +1167,7 @@ app.post(
   async (req, res) => {
     const { amount, seller, dscr, order, refund } = req.body;
     const { fee } = await Config.findOne().then((config) => config || {});
-    if (seller?.toString() === req.user._id.toString()) {
+    if (seller?._id?.toString() === req.user._id.toString()) {
       res
         .status(403)
         .json({ code: 403, message: "Can not create milestone for self." });
