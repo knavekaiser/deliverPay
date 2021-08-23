@@ -426,3 +426,202 @@ app.delete(
       });
   }
 );
+
+app.put(
+  "/api/updateFBMarketUser",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { accessToken, pageId } = req.body;
+    fetch(`https://graph.facebook.com/oauth/access_token?${new URLSearchParams({
+      grant_type: "fb_exchange_token",
+      client_id: process.env.FACEBOOK_APP_ID,
+      client_secret: process.env.FACEBOOK_APP_SECRET,
+      fb_exchange_token: accessToken,
+    }).toString()}
+`)
+      .then((res) => res.json())
+      .then(async (data) => {
+        if (data.access_token) {
+          const pageAccessToken = pageId
+            ? await fetch(`https://graph.facebook.com/${pageId}?${new URLSearchParams(
+                {
+                  fields: access_token,
+                  access_token: data.accessToken,
+                }
+              ).toString()}
+            `)
+                .then((res) => res.json())
+                .then((data) => data)
+            : null;
+          res.json({
+            code: "ok",
+            long_lived_token: data.access_token,
+            page_access_token: pageAccessToken,
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res
+          .status(500)
+          .json({ code: 500, message: "Could not get api from facebook" });
+      });
+  }
+);
+
+const addToFbMarket = async (products, catalogId, user_id, accessToken) => {
+  const fb_products = [];
+  for (var i = 0; i < products.length; i++) {
+    const item = products[i];
+    await fetch(
+      `https://graph.facebook.com/${catalogId}/products?${new URLSearchParams({
+        access_token: accessToken,
+      }).toString()}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currency: "INR",
+          name: item.name,
+          price: item.price,
+          price_amount: item.price * 100,
+          image_url: item.images[0],
+          category: item.category,
+          brand: item.brand || "none",
+          retailer_id: item._id,
+          url: `https://deliverypay.in/marketplace/${item._id}`,
+          description: item.dscr,
+        }),
+      }
+    )
+      .then((res) => res.json())
+      .then(async (data) => {
+        if (data.error) {
+          fb_products.push({
+            _id: item._id,
+            name: item.name,
+            success: false,
+            error: data.error.error_user_msg || data.error.message,
+          });
+          return;
+        }
+        await Product.findOneAndUpdate(
+          { _id: item._id },
+          { fbMarketId: data.id },
+          { new: true }
+        ).then((dbProduct) => {
+          fb_products.push({
+            _id: dbProduct._id,
+            name: item.name,
+            success: true,
+            fbMarketId: dbProduct.fbMarketId,
+          });
+        });
+      });
+  }
+  return fb_products;
+};
+const removeFromFbMarket = async (
+  products,
+  catalogId,
+  user_id,
+  accessToken
+) => {
+  const fb_products = [];
+  for (var i = 0; i < products.length; i++) {
+    const item = products[i];
+    await fetch(
+      `https://graph.facebook.com/${item.fbMarketId}?${new URLSearchParams({
+        access_token: accessToken,
+      }).toString()}`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      }
+    )
+      .then((res) => res.json())
+      .then(async (data) => {
+        if (data.error) {
+          fb_products.push({
+            _id: item._id,
+            name: item.name,
+            success: false,
+            error: data.error.error_user_msg || data.error.message,
+          });
+          return;
+        }
+        await Product.findOneAndUpdate(
+          { _id: item._id },
+          { fbMarketId: null },
+          { new: true }
+        ).then((dbProduct) => {
+          fb_products.push({
+            _id: dbProduct._id,
+            name: item.name,
+            success: true,
+          });
+        });
+      });
+  }
+  return fb_products;
+};
+
+app.put(
+  "/api/addToFbMarket",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { _ids } = req.body;
+    if (Array.isArray(_ids) && _ids.length > 0) {
+      Product.find({
+        $or: _ids.map((_id) => ({ _id })),
+        user: req.user._id,
+      }).then(async (products) => {
+        const fb_products = await addToFbMarket(
+          products,
+          req.user.fbMarket.commerceAccount.catalog.id,
+          req.user._id,
+          req.body.access_token
+        );
+        res.json({
+          code: "ok",
+          fb_products,
+        });
+      });
+    } else {
+      res.status(400).json({
+        code: 400,
+        message: "_ids with at least 1 product _id is required.",
+      });
+    }
+  }
+);
+
+app.delete(
+  "/api/removeFromFbMarket",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { _ids } = req.body;
+    if (Array.isArray(_ids) && _ids.length > 0) {
+      Product.find({
+        $or: _ids.map((_id) => ({ _id })),
+        user: req.user._id,
+      }).then(async (products) => {
+        const fb_products = await removeFromFbMarket(
+          products,
+          req.user.fbMarket.commerceAccount.catalog.id,
+          req.user._id,
+          req.body.access_token
+        );
+        res.json({
+          code: "ok",
+          fb_products,
+        });
+      });
+    } else {
+      res.status(400).json({
+        code: 400,
+        message: "_ids with at least 1 product _id is required.",
+      });
+    }
+  }
+);

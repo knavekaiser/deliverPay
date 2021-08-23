@@ -5,7 +5,10 @@ app.post(
     const { issue, milestoneId, defendantId, _case } = req.body;
     const [dispute, defendant, milestone] = await Promise.all([
       Dispute.findOne({ milestoneId }),
-      User.findOne({ _id: defendantId }),
+      User.findOne(
+        { _id: defendantId },
+        "firstName lastName profileImg phone email"
+      ),
       Milestone.findOne({
         _id: milestoneId,
         $and: [
@@ -24,6 +27,7 @@ app.post(
       console.log(err);
       res.status(400).json({ message: "bad request" });
     });
+    console.log(dispute, defendant, milestone);
     if (defendant && milestone && issue) {
       if (req.user.balance > 500) {
         if (dispute) {
@@ -133,6 +137,7 @@ app.post(
                           { new: true }
                         ).then((milestone) => {
                           res.json({
+                            code: "ok",
                             message: "dispute filed",
                             dispute,
                             milestone,

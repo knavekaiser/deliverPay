@@ -162,6 +162,344 @@ const RegisterForm = () => {
     </div>
   );
 };
+const RegisterFormNew = () => {
+  const { user, setUser } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
+  const history = useHistory();
+  const query = useQuery();
+  const [firstName, setFirstName] = useState("");
+  const [step, setStep] = useState(1);
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("+91");
+  const [pass, setPass] = useState("");
+  const [confirm_pass, setConfirm_pass] = useState("");
+  const [errMsg, setErrMsg] = useState(null);
+  const code1 = useRef(null);
+  const code2 = useRef(null);
+  const code3 = useRef(null);
+  const code4 = useRef(null);
+  const code5 = useRef(null);
+  const code6 = useRef(null);
+  const [attempts, setAttempts] = useState(0);
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const sendOtp = (phone) => {
+    setLoading(true);
+    setAttempts(0);
+    fetch("/api/sendPhoneVerificationCode", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          setStep(2);
+        } else if (data.code === 409) {
+          setErrMsg("Phone already exists. Please log in.");
+        } else {
+          setErrMsg("Could not complete request. Please try again.");
+        }
+      });
+  };
+  useEffect(() => {
+    setLoading(false);
+  }, [code]);
+  const submit = (e) => {
+    e.preventDefault?.();
+    if (pass !== confirm_pass) {
+      setErrMsg("Password did not match.");
+      return;
+    }
+    if (!phone.match(/^\+91\d{10}$/)) {
+      setErrMsg("Enter valid phone number");
+      return;
+    }
+    if (errMsg) return;
+    if (step === 1) {
+      sendOtp(phone);
+    } else if (step === 2) {
+      setLoading(true);
+      fetch("/api/registerUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: code.join(""),
+          firstName,
+          lastName,
+          phone,
+          password: pass,
+          ...(query.get("referer") && { referer: query.get("referer") }),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setLoading(false);
+          if (data.user) {
+            history.replace("/account/home");
+            setUser(user);
+          } else if (data.code === 11000) {
+            setErrMsg("Phone already exists.");
+          } else if (data.code === 400) {
+            setErrMsg("Wrong Code.");
+            setAttempts(data.attempt);
+            setCode(["", "", "", "", "", ""]);
+          } else if (data.code === 429) {
+            setStep(1);
+            setCode(["", "", "", "", "", ""]);
+            setErrMsg("Too many attempts. Start again.");
+            setTimeout(() => setErrMsg(null), 1500);
+            setAttempts(0);
+          } else if (data.code === 403 || data.code === 404) {
+            setAttempts(0);
+            setStep(1);
+            setCode(["", "", "", "", "", ""]);
+            setErrMsg("Timeout. Start again");
+            setTimeout(() => setErrMsg(null), 1500);
+          }
+        });
+    }
+  };
+  useEffect(() => {
+    setErrMsg(null);
+  }, [confirm_pass]);
+  return (
+    <div className={`formWrapper ${step === 1 ? "register" : "resetPass"}`}>
+      <Img
+        className="logo"
+        onClick={() => history.push("/")}
+        src="/logo_benner.jpg"
+        alt="Delivery pay logo"
+      />
+      <p className="title">Create your Delivery pay account</p>
+      {
+        //   <p className="links">
+        //   Already have an account? <Link to="/u/login">Login</Link>
+        // </p>
+      }
+      {step === 1 && (
+        <form onSubmit={submit}>
+          <input
+            type="text"
+            name="firstName"
+            required={true}
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <input
+            type="text"
+            name="lastName"
+            required={true}
+            placeholder="Last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+          <input
+            type="text"
+            name="phone"
+            required={true}
+            placeholder="Phone number"
+            value={phone}
+            onChange={(e) => {
+              setErrMsg(null);
+              if (e.target.value.match(/^\+91\d{0,10}$/)) {
+                setPhone(e.target.value);
+              }
+            }}
+          />
+          <section className="pass">
+            <input
+              type="password"
+              name="password"
+              required={true}
+              placeholder="Password"
+              aria-autocomplete="list"
+              autoComplete="new-password"
+              onChange={(e) => setPass(e.target.value)}
+            />
+          </section>
+          <section className="repeatPass">
+            <input
+              type="password"
+              name="confirm_password"
+              id="confirm_password"
+              required={true}
+              placeholder="Confirm Password"
+              aria-autocomplete="list"
+              autoComplete="new-password"
+              onChange={(e) => setConfirm_pass(e.target.value)}
+            />
+          </section>
+          <section className="checkbox">
+            <Checkbox required={true} />
+            <label>
+              I Accept{" "}
+              <Link to="/terms" target="_blank">
+                Terms & Conditions
+              </Link>
+              , User Agreement,{" "}
+              <Link to="/codeOfConduct" target="_blank">
+                Code of Conduct
+              </Link>
+              ,{" "}
+              <Link to="/fees&Charges" target="_blank">
+                Charges & Fee
+              </Link>{" "}
+              & Consent to receiving Communications via Text, Email or Phone.
+            </label>
+          </section>
+          <button disabled={errMsg || loading} type="submit">
+            Register
+          </button>
+        </form>
+      )}
+      {step === 2 && (
+        <form onSubmit={submit}>
+          <label>
+            A 6 digit code has been sent to {phone}. Enter the code below.{" "}
+            <span className="attempts">{3 - attempts} attempts left.</span>
+            <span className="resend">
+              Did not get the code?{" "}
+              {loading ? (
+                <a>Sending</a>
+              ) : (
+                <a
+                  onClick={() => {
+                    sendOtp(
+                      "+91" + phone.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")
+                    );
+                  }}
+                >
+                  Resend
+                </a>
+              )}
+            </span>
+          </label>
+          <section className="code">
+            <input
+              ref={code1}
+              type="number"
+              value={code[0]}
+              required={true}
+              onChange={(e) => {
+                setCode((prev) => {
+                  const newCode = [...prev];
+                  newCode[0] = e.target.value[0] || "";
+                  return newCode;
+                });
+                setErrMsg(null);
+                if (e.target.value.length === 1) {
+                  code2.current.focus();
+                } else {
+                  code1.current.focus();
+                }
+              }}
+            />
+            <input
+              ref={code2}
+              type="number"
+              value={code[1]}
+              required={true}
+              onChange={(e) => {
+                setCode((prev) => {
+                  const newCode = [...prev];
+                  newCode[1] = e.target.value[0] || "";
+                  return newCode;
+                });
+                setErrMsg(null);
+                if (e.target.value.length === 1) {
+                  code3.current.focus();
+                } else {
+                  code1.current.focus();
+                }
+              }}
+            />
+            <input
+              ref={code3}
+              type="number"
+              value={code[2]}
+              required={true}
+              onChange={(e) => {
+                setCode((prev) => {
+                  const newCode = [...prev];
+                  newCode[2] = e.target.value[0] || "";
+                  return newCode;
+                });
+                setErrMsg(null);
+                if (e.target.value.length === 1) {
+                  code4.current.focus();
+                } else {
+                  code2.current.focus();
+                }
+              }}
+            />
+            <input
+              ref={code4}
+              type="number"
+              value={code[3]}
+              required={true}
+              onChange={(e) => {
+                setCode((prev) => {
+                  const newCode = [...prev];
+                  newCode[3] = e.target.value[0] || "";
+                  return newCode;
+                });
+                setErrMsg(null);
+                if (e.target.value.length === 1) {
+                  code5.current.focus();
+                } else {
+                  code3.current.focus();
+                }
+              }}
+            />
+            <input
+              ref={code5}
+              type="number"
+              value={code[4]}
+              required={true}
+              onChange={(e) => {
+                setCode((prev) => {
+                  const newCode = [...prev];
+                  newCode[4] = e.target.value[0] || "";
+                  return newCode;
+                });
+                setErrMsg(null);
+                if (e.target.value.length === 1) {
+                  code6.current.focus();
+                } else {
+                  code4.current.focus();
+                }
+              }}
+            />
+            <input
+              ref={code6}
+              type="number"
+              value={code[5]}
+              required={true}
+              onChange={(e) => {
+                setCode((prev) => {
+                  const newCode = [...prev];
+                  newCode[5] = e.target.value[0] || "";
+                  return newCode;
+                });
+                setErrMsg(null);
+                if (e.target.value.length === 0) {
+                  code5.current.focus();
+                }
+              }}
+            />
+          </section>
+          <button disabled={errMsg || loading} type="submit">
+            Next
+          </button>
+        </form>
+      )}
+      {errMsg && <p className="errMsg">{errMsg}</p>}
+    </div>
+  );
+};
 const LoginForm = () => {
   const { user, setUser } = useContext(SiteContext);
   const history = useHistory();
@@ -628,7 +966,7 @@ function UserStart() {
         <div className="forms">
           <Switch>
             <Route path="/u/join">
-              <RegisterForm />
+              <RegisterFormNew />
             </Route>
             <Route path="/u/login">
               <LoginForm />

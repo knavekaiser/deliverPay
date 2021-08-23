@@ -642,7 +642,7 @@
       border: 1px solid rgba(0, 0, 0, 0.15);
       li {
         display: flex;
-        // grid-gap: 1rem;
+        grid-gap: 1rem;
         align-items: center;
         label {
           flex-shrink: 0;
@@ -893,7 +893,13 @@
   }
 }
 
-.myShop {
+.productContainer {
+  display: grid;
+  grid-gap: 1rem;
+}
+
+.myShop,
+.productContainer {
   & > .actions {
     display: flex;
     align-items: center;
@@ -993,6 +999,50 @@
           .devider {
             height: 1px;
             width: 100%;
+          }
+        }
+      }
+    }
+  }
+  .singleOrder {
+    grid-template-columns: 1fr;
+    grid-row-gap: 2.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    .milestones,
+    .delivery,
+    .terms {
+      grid-column: 1/2;
+    }
+    .summery {
+      ul {
+        grid-gap: 1.5rem;
+        li {
+          flex-direction: column;
+          align-items: flex-start;
+          grid-gap: 0.3rem;
+          label {
+            font-size: 0.85rem;
+            color: rgba(0, 0, 0, 0.6);
+          }
+        }
+      }
+    }
+    .products {
+      ul {
+        li {
+          img {
+            height: 3.5rem;
+            width: 3.5rem;
+          }
+        }
+      }
+      .total {
+        max-width: 100%;
+        font-size: 1.3rem;
+        .data {
+          label {
+            font-size: 0.7em;
           }
         }
       }

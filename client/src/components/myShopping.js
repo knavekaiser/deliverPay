@@ -719,7 +719,8 @@ const FullOrder = ({ history, match }) => {
                 <label>Shipping</label>₹{order.shippingCost || "N/A"}
               </div>
               <div className="data">
-                <label>Delivery Pay fee 10%</label>₹{(order.total * 0.1).fix()}
+                <label>Delivery Pay fee {order.fee}%</label>₹
+                {(order.total - (order.total / (order.fee + 100)) * 100).fix()}
               </div>
               <hr />
               <div className="data">
@@ -852,6 +853,15 @@ const FullOrder = ({ history, match }) => {
             onSuccess={(refund) => {
               setIssueRefund(false);
               setOrder((prev) => ({ ...prev, status: "refundPending" }));
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Succ_svg />
+                    <h4>Refund has been issued.</h4>
+                  </div>
+                </>
+              );
             }}
           />
         </Modal>
@@ -1313,41 +1323,6 @@ const FullRefund = ({ history, match }) => {
   const [milestoneForm, setMilestoneForm] = useState(false);
   const [refundTill, setRefundTill] = useState(false);
   const milestoneTimeout = useRef();
-  // const updateOrder = async (newData) => {
-  //   return fetch("/api/updateOrder", {
-  //     method: "PATCH",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify(newData),
-  //   })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if (data.code === "ok") {
-  //         return data.refund;
-  //       } else {
-  //         setMsg(
-  //           <>
-  //             <button onClick={() => setMsg(null)}>Okay</button>
-  //             <div>
-  //               <Err_svg />
-  //               <h4>Orders does not exist.</h4>
-  //             </div>
-  //           </>
-  //         );
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //       setMsg(
-  //         <>
-  //           <button onClick={() => setMsg(null)}>Okay</button>
-  //           <div>
-  //             <Err_svg />
-  //             <h4>Could not update order. Make sure you're online.</h4>
-  //           </div>
-  //         </>
-  //       );
-  //     });
-  // };
   const updateRefund = async (newData) => {
     return fetch("/api/updateRefund", {
       method: "PATCH",
@@ -1625,27 +1600,23 @@ const FullRefund = ({ history, match }) => {
             </ul>
             <div className="total">
               <div className="data">
-                <label>Total</label>₹
-                {order.products.reduce(
-                  (a, c) =>
-                    a +
-                    calculatePrice({ product: c.product, gst: true }) * c.qty,
-                  0
-                )}
+                <label>Total</label>₹{order.total - order.shippingCost}
               </div>
-              <div className="data">
-                <label>Shipping</label>
-                {order.shippingCost || "N/A"}
-              </div>
-              <div className="data">
-                <label>Grand Total</label>₹
-                {order.products.reduce(
-                  (a, c) =>
-                    a +
-                    calculatePrice({ product: c.product, gst: true }) * c.qty,
-                  0
-                ) + (+order.shippingCost || 0)}
-              </div>
+              {
+                //   <div className="data">
+                //   <label>Shipping</label>
+                //   {order.shippingCost || "N/A"}
+                // </div>
+                // <div className="data">
+                // <label>Grand Total</label>₹
+                // {order.products.reduce(
+                //   (a, c) =>
+                //   a +
+                //   calculatePrice({ product: c.product, gst: true }) * c.qty,
+                //   0
+                // ) + (+order.shippingCost || 0)}
+                // </div>
+              }
             </div>
           </div>
           <div className="milestones">
@@ -1719,7 +1690,7 @@ const FullRefund = ({ history, match }) => {
         >
           <MilestoneForm
             action="request"
-            definedAmount={order.total}
+            definedAmount={order.total - order.shippingCost}
             client={order.seller}
             refund={refund._id}
             onSuccess={(milestone) => {

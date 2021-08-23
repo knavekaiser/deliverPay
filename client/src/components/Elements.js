@@ -697,10 +697,10 @@ export const Chev_down_svg = ({ className }) => {
 
 export const External_link_icon = () => {
   return (
-    <span class="externalLinkIcon" aria-label="(opens a new window)">
+    <span className="externalLinkIcon" aria-label="(opens a new window)">
       <svg
         viewBox="0 0 20 20"
-        class="Polaris-Icon__Svg_375hu"
+        className="Polaris-Icon__Svg_375hu"
         focusable="false"
         aria-hidden="true"
       >
@@ -1430,7 +1430,6 @@ export const calculatePrice = ({ product, gst, discount }) => {
   if (gst === true) {
     finalPrice += product.price * (product.gst / 100);
   }
-  // finalPrice *= 1.1;
   return finalPrice.fix();
 };
 export const calculateDiscount = (product) => {

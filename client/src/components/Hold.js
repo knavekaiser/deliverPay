@@ -193,6 +193,7 @@ const Hold = ({ history, location, match }) => {
                 { label: "All", value: "" },
                 { label: "In Progress", value: "inProgress" },
                 { label: "Pending", value: "pending" },
+                { label: "Release requested", value: "pendingRelease" },
                 { label: "Released", value: "released" },
                 { label: "Dispute", value: "dispute" },
               ]}
@@ -467,7 +468,11 @@ const SellerMilestone = ({ milestone, setMilestones }) => {
                 Approve
               </a>
             )}
-            {milestone.status === "inProgress" && (
+            {milestone.status === "pendingRelease" && (
+              <a className="released">Release requested</a>
+            )}
+            {(milestone.status === "inProgress" ||
+              milestone.status === "pendingRelease") && (
               <a onClick={() => setReleaseForm(true)}>Release</a>
             )}
             {
@@ -663,7 +668,6 @@ const BuyerMilestone = ({ milestone, setMilestones }) => {
       });
   };
   const cancelRequest = () => {
-    console.log(milestone._id);
     fetch("/api/cancelMilestoneRequest", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -711,6 +715,62 @@ const BuyerMilestone = ({ milestone, setMilestones }) => {
         );
       });
   };
+  const requestRelease = () => {
+    fetch("/api/requestRelease", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id: milestone._id }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setMilestones((prev) =>
+            prev.map((item) => {
+              if (item._id === data.milestone._id) {
+                return {
+                  ...data.milestone,
+                  client: milestone.client,
+                  role: milestone.role,
+                };
+              } else {
+                return item;
+              }
+            })
+          );
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Succ_svg />
+                <h4>Milestone request cancelled.</h4>
+              </div>
+            </>
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not request release. Try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not request release. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
   return (
     <>
       <li className={`milestone buyer`} key={milestone._id}>
@@ -718,12 +778,18 @@ const BuyerMilestone = ({ milestone, setMilestones }) => {
         <div className="clas">
           <h4>₹{milestone.amount}</h4>
           <div className="btns">
-            {(milestone.status === "pending" ||
-              milestone.status === "inProgress") && (
-              <a className="dispute" onClick={() => setDisputeForm(true)}>
-                Raise Dispute
-              </a>
-            )}
+            {
+              // milestone.status === "pending" ||
+              // milestone.status === "inProgress"
+              milestone.status === "pendingRelease" && (
+                <>
+                  <a className="released">Release requested</a>
+                  <a className="dispute" onClick={() => setDisputeForm(true)}>
+                    Raise Dispute
+                  </a>
+                </>
+              )
+            }
             {milestone.status === "pending" && (
               <a
                 className="disputeRes"
@@ -751,18 +817,32 @@ const BuyerMilestone = ({ milestone, setMilestones }) => {
               </a>
             )}
             {milestone.status === "inProgress" && (
-              <a
-                className="disputeRes"
-                onClick={() =>
-                  Confirm({
-                    label: "Decline Milestone",
-                    question: "You sure want to decline this milestone?",
-                    callback: declineMilestone,
-                  })
-                }
-              >
-                Decline
-              </a>
+              <>
+                <a
+                  onClick={() =>
+                    Confirm({
+                      label: "Request Release",
+                      question:
+                        "You sure want to request release of this milestone?",
+                      callback: requestRelease,
+                    })
+                  }
+                >
+                  Request Release
+                </a>
+                <a
+                  className="disputeRes"
+                  onClick={() =>
+                    Confirm({
+                      label: "Decline Milestone",
+                      question: "You sure want to decline this milestone?",
+                      callback: declineMilestone,
+                    })
+                  }
+                >
+                  Decline
+                </a>
+              </>
             )}
             {milestone.status === "declined" && (
               <a className="disputed">Declined</a>

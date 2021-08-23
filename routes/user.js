@@ -13,82 +13,105 @@ async function verify(token) {
 }
 
 app.post("/api/registerUser", async (req, res) => {
-  const { firstName, lastName, phone, password } = req.body;
-  if (firstName && lastName && phone && password) {
-    const referer = await User.findOne({ _id: req.body.referer });
-    bcrypt
-      .hash(password, 10)
-      .then((hash) => {
-        return new User({
-          ...req.body,
-          pass: hash,
-          userId: `${firstName}_${lastName}_${new Date().getTime()}`,
-        }).save();
-      })
-      .then((dbRes) => {
-        if (dbRes) {
-          signingIn(dbRes._doc, res);
-          if (referer) {
-            new Reward({
-              name: "Referral reward",
-              amount: 50,
-              dscr: "cashback",
-            })
-              .save()
-              .then((reward) => {
-                User.findOneAndUpdate(
-                  { _id: referer },
-                  { $addToset: { rewards: reward._id } },
-                  { new: true }
-                )
-                  .then((user) => {
-                    if (user) {
-                      notify(
-                        referer,
-                        JSON.stringify({
-                          title: "Referral reward!",
-                          body:
-                            "Congratulations, you just got ₹50 cashback from Delivery Pay Referral program.",
-                        })
-                      );
-                    }
-                  })
-                  .catch((err) => {
-                    if (err.name === "MongoError") {
-                      User.findOneAndUpdate(
-                        { _id: referer },
-                        { rewards: [reward._id] },
-                        { new: true }
-                      ).then((user) => {
-                        console.log(user.rewards);
-                      });
-                    }
-                  });
-              });
+  const { firstName, lastName, phone, password, code } = req.body;
+  if (firstName && lastName && phone && password && code) {
+    const dbOtp = await OTP.findOne({ id: phone });
+    if (!dbOtp) {
+      res.status(404).json({ code: 404, message: "code does not exists" });
+      return;
+    }
+    if (bcrypt.compareSync(code, dbOtp.code)) {
+      const referer = await User.findOne({ _id: req.body.referer });
+      bcrypt
+        .hash(password, 10)
+        .then((hash) => {
+          return new User({
+            ...req.body,
+            pass: hash,
+            userId: `${firstName}_${lastName}_${new Date().getTime()}`,
+          }).save();
+        })
+        .then((dbRes) => {
+          if (dbRes) {
+            signingIn(dbRes._doc, res);
+            if (referer) {
+              new Reward({
+                name: "Referral reward",
+                amount: 50,
+                dscr: "cashback",
+              })
+                .save()
+                .then((reward) => {
+                  User.findOneAndUpdate(
+                    { _id: referer },
+                    { $addToset: { rewards: reward._id } },
+                    { new: true }
+                  )
+                    .then((user) => {
+                      if (user) {
+                        notify(
+                          referer,
+                          JSON.stringify({
+                            title: "Referral reward!",
+                            body:
+                              "Congratulations, you just got ₹50 cashback from Delivery Pay Referral program.",
+                          })
+                        );
+                      }
+                    })
+                    .catch((err) => {
+                      if (err.name === "MongoError") {
+                        User.findOneAndUpdate(
+                          { _id: referer },
+                          { rewards: [reward._id] },
+                          { new: true }
+                        ).then((user) => {
+                          console.log(user.rewards);
+                        });
+                      }
+                    });
+                });
+            }
+          } else {
+            res.status(500).json({ message: "something went wrong" });
           }
-        } else {
-          res.status(500).json({ message: "something went wrong" });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        if (err.code === 11000) {
-          res.status(400).json({
-            message: "user exists",
-            code: err.code,
-            field: Object.keys(err.keyValue)[0],
-          });
-        } else {
+        })
+        .catch((err) => {
           console.log(err);
-          res.status(500).json({ message: "something went wrong" });
-        }
-      });
+          if (err.code === 11000) {
+            res.status(400).json({
+              message: "user exists",
+              code: err.code,
+              field: Object.keys(err.keyValue)[0],
+            });
+          } else {
+            console.log(err);
+            res.status(500).json({ message: "something went wrong" });
+          }
+        });
+    } else {
+      if (dbOtp.attempt >= 2) {
+        OTP.findOneAndDelete({ id: phone }).then(() => {
+          res
+            .status(403)
+            .json({ code: 403, message: "too many attempts, start again" });
+        });
+      } else {
+        dbOtp.updateOne({ attempt: dbOtp.attempt + 1 }).then(() => {
+          res.status(400).json({
+            code: 400,
+            message: "wrong code",
+            attempt: dbOtp.attempt + 1,
+          });
+        });
+      }
+    }
   } else {
     console.log("res");
     res.status(400).json({
       code: 400,
       message: "Incomplete request",
-      fieldsRequired: "firstName, lastName, phone, email, password",
+      fieldsRequired: "firstName, lastName, phone, email, password, code",
       fieldsFound: req.body,
     });
   }
@@ -199,6 +222,7 @@ app.patch(
   "/api/editUserProfile",
   passport.authenticate("userPrivate"),
   async (req, res) => {
+    console.log(req.body);
     User.findOneAndUpdate(
       { _id: req.user._id },
       {
@@ -255,7 +279,7 @@ app.post("/api/sendUserOTP", async (req, res) => {
             success: true,
           });
         } else {
-          res.status(500).json({ code: 500, message: "database error" });
+          res.status(424).json({ code: 424, message: "Could not send sms" });
         }
       })
       .catch((err) => {
@@ -294,6 +318,45 @@ app.put("/api/submitUserOTP", async (req, res) => {
         });
       });
     }
+  }
+});
+
+app.post("/api/sendPhoneVerificationCode", async (req, res) => {
+  const { phone } = req.body;
+  const code = genCode(6);
+  console.log(code);
+  if (phone) {
+    const user = await User.findOne({ phone }).then((user) => user);
+    if (user) {
+      res.json({ code: 409, message: "User already exists." });
+      return;
+    }
+    const [hash, deleted] = await Promise.all([
+      bcrypt.hash(code, 10),
+      OTP.findOneAndDelete({ id: phone }),
+    ]);
+    new OTP({ id: phone, code: hash })
+      .save()
+      .then((otp) =>
+        sendSms({
+          to: [phone.replace("+91", "")],
+          otp: true,
+          message: 127687,
+          variables_values: code,
+        })
+      )
+      .then((smsRes) => {
+        console.log(code);
+        if (smsRes) {
+          // smsRes.return
+          console.log(smsRes);
+          res.json({ code: "ok", message: "6 digit code has been sent" });
+        } else {
+          res.status(424).json({ code: 424, message: "Could not send sms" });
+        }
+      });
+  } else {
+    res.status(400).json({ code: 400, message: "phone is required." });
   }
 });
 

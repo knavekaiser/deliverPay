@@ -242,3 +242,14 @@ app.post(
     }
   }
 );
+
+app.get("/api/siteConfig", (req, res) => {
+  Config.findOne()
+    .then((config) => {
+      res.json({ code: "ok", config });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ code: 500, message: "something went wrong" });
+    });
+});

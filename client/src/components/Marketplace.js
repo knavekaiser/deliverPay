@@ -412,7 +412,7 @@ export const SingleProduct = ({ match }) => {
             }
             <div className="seller">
               <label>Being sold by:</label>
-              <Link to={`/marketplace?seller=${product.user._id}`}>
+              <Link to={`/marketplace?seller=${product.user?._id}`}>
                 <div className="profile">
                   <Img src={product.user.profileImg || "/profile-user.jpg"} />
                   <p className="name">
@@ -629,7 +629,7 @@ export const Cart = () => {
 };
 
 const Shop = ({ seller, products, loading }) => {
-  const { user, setCart } = useContext(SiteContext);
+  const { user, setCart, config } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [deliveryDetail, setDeliveryDetail] = useState({
     name: user.firstName + " " + user.lastName,
@@ -639,77 +639,18 @@ const Shop = ({ seller, products, loading }) => {
   const [milestoneForm, setMilestoneForm] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const total = +(
-    (products.reduce(
+    products.reduce(
       (a, c) =>
         (
           a +
           calculatePrice({ product: c.product, gst: seller.gst }) * c.qty
         ).fix(),
       0
-    ) +
-      (seller.shopInfo?.shippingCost || 0)) *
-    1.1
-  ).fix();
-  // const submitOrder = () => {
-  //   fetch("/api/submitOrder", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({
-  //       seller: seller._id,
-  //       products: products.map(({ product, qty }) => ({
-  //         product: {
-  //           ...product,
-  //           gst: seller.gst?.verified ? product.gst || seller.gst?.amount : 0,
-  //         },
-  //         qty,
-  //       })),
-  //       deliveryDetail,
-  //       total,
-  //     }),
-  //   })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if (data.code === "ok") {
-  //         setCart((prev) =>
-  //           prev.filter(
-  //             ({ product }) => !data.products.some((_id) => _id === product._id)
-  //           )
-  //         );
-  //         setMsg(
-  //           <>
-  //             <button onClick={() => setMsg(null)}>Okay</button>
-  //             <div>
-  //               <Succ_svg />
-  //               <h4>Order successfully submitted.</h4>
-  //               <Link to="/account/myShopping/orders">View All orders</Link>
-  //             </div>
-  //           </>
-  //         );
-  //       } else {
-  //         setMsg(
-  //           <>
-  //             <button onClick={() => setMsg(null)}>Okay</button>
-  //             <div>
-  //               <Err_svg />
-  //               <h4>Could not submit order. Please try again.</h4>
-  //             </div>
-  //           </>
-  //         );
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //       setMsg(
-  //         <>
-  //           <button onClick={() => setMsg(null)}>Okay</button>
-  //           <div>
-  //             <Err_svg />
-  //             <h4>Could not submit order. Make sure you're online.</h4>
-  //           </div>
-  //         </>
-  //       );
-  //     });
-  // };
+    ) + (seller.shopInfo?.shippingCost || 0)
+  )
+    // *  ((100 + config.fee) / 100)
+    .fix();
+  const fee = (total * ((100 + config.fee) / 100) - total).fix();
   return (
     <>
       <div className="shop">
@@ -733,12 +674,11 @@ const Shop = ({ seller, products, loading }) => {
                 <label>Shipping</label>₹{seller.shopInfo?.shippingCost}
               </p>
               <p>
-                <label>Delivery Pay Fee 10%</label>₹
-                {((total / 110) * 100 * 0.1).fix()}
+                <label>Delivery Pay Fee {config.fee}%</label>₹{fee}
               </p>
               <hr />
               <p>
-                <label>Total</label>₹{total}
+                <label>Total</label>₹{total + fee}
               </p>
               {
                 //   <span className="note">
@@ -812,8 +752,7 @@ const Shop = ({ seller, products, loading }) => {
           <MilestoneForm
             action="create"
             client={seller}
-            definedAmount={total}
-            strict={true}
+            definedAmount={total + fee}
             order={{
               products,
               deliveryDetail: {

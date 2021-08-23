@@ -63,11 +63,14 @@ export const MilestoneReleaseForm = ({
           });
       }}
     >
-      <label>How much money you want to release?</label>
-      <NumberInput
-        defaultValue={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
+      You sure want to release this Milestone?
+      {
+        // <label>How much money you want to release?</label>
+        //   <NumberInput
+        //   defaultValue={amount}
+        //   onChange={(e) => setAmount(e.target.value)}
+        // />
+      }
       <section className="btns">
         <button type="submit">Confirm</button>
         <button

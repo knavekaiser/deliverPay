@@ -76,7 +76,6 @@ function registerValidSW(swUrl, config) {
               }
             }
             navigator.serviceWorker.ready.then(async (serviceWorker) => {
-              alert("sreviceworker registered");
               return await serviceWorker.pushManager
                 .subscribe({
                   userVisibleOnly: true,

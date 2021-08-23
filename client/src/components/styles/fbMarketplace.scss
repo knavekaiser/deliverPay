@@ -8,6 +8,7 @@
     a {
       color: $blue;
       text-decoration: underline;
+      fill: $blue;
     }
     font-size: 0.95rem;
     display: grid;
@@ -69,14 +70,21 @@
         display: grid;
         grid-gap: 1.5rem;
         .note {
+          font-size: 0.85rem;
           line-height: 1.5em;
-          font-size: 0.9em;
           color: rgba(0, 0, 0, 0.8);
         }
         .user {
           align-items: center;
           display: flex;
           grid-gap: 0.7rem;
+        }
+        .err {
+          border-radius: 0.5rem;
+          background: rgba($red, 0.1);
+          padding: 1rem;
+          border: 1px solid $red;
+          font-size: 0.9rem;
         }
       }
       &.open {
@@ -126,6 +134,12 @@
                 display: block;
                 font-size: 0.8rem;
                 color: rgba(0, 0, 0, 0.6);
+              }
+              a {
+                width: max-content;
+                display: flex;
+                align-items: center;
+                grid-gap: 0.3rem;
               }
             }
           }
@@ -186,6 +200,53 @@
       justify-content: flex-end;
       .btn {
         margin: 0;
+      }
+    }
+    .commerceAccount {
+      ul {
+        .catalog {
+          display: grid;
+          grid-gap: 0.5rem;
+        }
+      }
+    }
+  }
+}
+
+.createNewPage {
+  font-size: 0.95rem;
+  max-width: 40rem;
+  .content {
+    padding: 1.5rem;
+    display: grid;
+    grid-gap: 2rem;
+    ul {
+      display: grid;
+      grid-gap: 0.5rem;
+      margin-left: 2rem;
+      li {
+        list-style: initial;
+      }
+    }
+    a {
+      display: flex;
+      align-items: center;
+      grid-gap: 0.3rem;
+      cursor: pointer;
+      white-space: nowrap;
+      margin: auto;
+      margin-right: 0;
+      padding: 0.5rem 0.8rem;
+      background: $blue;
+      color: white;
+      font-weight: 600;
+      border: 2px solid $blue;
+      fill: white;
+      border-radius: 0.5rem;
+      &:hover {
+        fill: $blue;
+        background: white;
+        color: $blue;
       }
     }
   }

@@ -27,6 +27,13 @@ global.razorpay = new Razorpay({
   key_secret: process.env.RAZOR_PAY_SECRET,
 });
 
+Number.prototype.fix = function (p) {
+  return +this.toFixed(p || 2);
+};
+Number.prototype.addPercent = function (n) {
+  return (this * ((100 + (+n || 0)) / 100)).fix();
+};
+
 const { handleSignIn } = require("./config/passport.js");
 global.notify = (client, body, clientType) => {
   if (clientType) {

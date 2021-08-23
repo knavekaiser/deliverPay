@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { SiteContext } from "../SiteContext";
 import { updateProfileInfo } from "./Profile";
 import { Modal } from "./Modal";
+import { Link } from "react-router-dom";
 import {
   Chev_down_svg,
   Checkbox,
@@ -9,13 +10,11 @@ import {
   Step_fill,
   Img,
   LS,
+  Succ_svg,
+  External_link_icon,
 } from "./Elements";
 import Moment from "react-moment";
 require("./styles/fbMarketplace.scss");
-
-const fb_user_ID = "299956335236790";
-const fb_access_token =
-  "EAAMfkavJ6uwBAK6lr0f85WL937EpFALZAzD4R5ZBC8DYF2ZCgfZBdWovUHBYc4Oyu9LBpDYlFqNi8IoP9sA3NZC7ZAPjBZCDuoyynZBkWysrfD8YLo4uKrcZAfn0sM4DDtD7N1w7V6H5QVGa7G1qSbdr3yzwVwRoCd14s6de69Uf1Pw6g8OiBpwdU6YNs6pY5G4dEMl2CWGHXZBV4S6MSFLv7M";
 
 const Step = ({
   label,
@@ -50,6 +49,7 @@ const Step = ({
 };
 
 const Marketplace = () => {
+  const [msg, setMsg] = useState(null);
   const { user, setUser } = useContext(SiteContext);
   const { FB } = window;
   const [step, setStep] = useState("");
@@ -66,23 +66,23 @@ const Marketplace = () => {
     // else if (!user.fbMarket?.dataSharing) {
     // setStep("dataSharing");
     // }
-    else if (!user.fbMarket?.commerceAccount?.id) {
+    else if (!user.fbMarket?.commerceAccount?.catalog?.id) {
       setStep("commerceAccount");
     } else if (!user.fbMarket?.userAggrement) {
       setStep("terms");
     }
   }, [user]);
   useEffect(() => {
-    FB.getLoginStatus(function (response) {
-      console.log(response);
-      if (response.status === "connected") {
-        var accessToken = response.authResponse.accessToken;
-      }
-    }, true);
+    // FB.getLoginStatus(function (response) {
+    //   console.log(response);
+    //   if (response.status === "connected") {
+    //     const accessToken = response.authResponse.accessToken;
+    //   }
+    // }, true);
   }, []);
   return (
     <div className="fbMarket">
-      <h1>Facebook marketplace (Working progress)</h1>
+      <h1>Facebook marketplace</h1>
       <div className="setup">
         <Step
           data={user.fbMarket?.user?.id ? user.fbMarket.user : null}
@@ -91,9 +91,12 @@ const Marketplace = () => {
           label="Facebook Account"
         >
           <p className="note">
-            Shopify uses your personal Facebook account to access your business
-            accounts.
+            Delivery Pay uses your personal Facebook account to access your
+            business accounts.
           </p>
+          {user.fbMarket?.user?.id && (
+            <p>Now you can log into Delivery Pay using this account.</p>
+          )}
           <div className="profile">
             <div className="user">
               {user.fbMarket?.user?.id ? (
@@ -121,6 +124,7 @@ const Marketplace = () => {
                     "fbMarket.facebookPage": {},
                     "fbMarket.dataSharing": null,
                     "fbMarket.commerceAccount": {},
+                    "fbMarket.userAggrement": false,
                   }).then(({ user: newUser }) => {
                     setUser((prev) => ({
                       ...prev,
@@ -129,18 +133,34 @@ const Marketplace = () => {
                   });
                 }}
               >
-                Discounnect
+                Disconnect
               </button>
             ) : (
               <button
                 className="btn"
                 onClick={() => {
                   FB.login((res) => {
-                    console.log(res);
                     LS.set(
                       "facebook_user_accessToken",
                       res.authResponse?.accessToken
                     );
+                    const accessToken = res.authResponse.accessToken;
+                    fetch("/api/updateFBMarketUser", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        accessToken,
+                      }),
+                    })
+                      .then((res) => res.json())
+                      .then((data) => {
+                        if (data.code === "ok") {
+                          LS.set(
+                            "facebook_user_accessToken",
+                            data.long_lived_token
+                          );
+                        }
+                      });
                     FB.api(
                       "/me",
                       "GET",
@@ -180,7 +200,7 @@ const Marketplace = () => {
           label="Business Manager"
           className="businessManager"
         >
-          <BusinessManager />
+          <BusinessManager setLoading={setLoading} />
         </Step>
         <Step
           data={
@@ -206,7 +226,7 @@ const Marketplace = () => {
         }
         <Step
           data={
-            user.fbMarket?.commerceAccount?.id
+            user.fbMarket?.commerceAccount?.catalog?.id
               ? user.fbMarket.commerceAccount
               : null
           }
@@ -215,35 +235,78 @@ const Marketplace = () => {
           defaultStatus={step === "commerceAccount"}
           className="commerceAccount"
         >
-          <CommerceAccount />
+          <CommerceAccount setStep={setStep} />
         </Step>
         <Step
-          disabled={!user.fbMarket?.commerceAccount?.id}
+          disabled={!user.fbMarket?.commerceAccount?.catalog?.id}
           data={user.fbMarket?.userAggrement || null}
           defaultStatus={step === "terms"}
           label="Terms and Conditions"
         >
           <p>
-            You need to accept Facebook Commerce Terms in order to sell your
-            products on Facebook or Instagram.
+            By proceeding, you accept{" "}
+            <a
+              target="_blank"
+              href="https://www.facebook.com/legal/commerce_product_merchant_agreement"
+            >
+              Facebook Commerce Terms <External_link_icon />
+            </a>
+            .
           </p>
-          <button className="btn">Accept terms</button>
+          {!user.fbMarket.userAggrement && (
+            <button
+              className="btn"
+              onClick={() => {
+                updateProfileInfo({
+                  "fbMarket.userAggrement": true,
+                }).then(({ user: newUser }) => {
+                  setUser((prev) => ({ ...prev, fbMarket: newUser.fbMarket }));
+                  setStep("");
+                  setMsg(
+                    <>
+                      <button onClick={() => setMsg(null)}>Okay</button>
+                      <div>
+                        <Succ_svg />
+                        <h4>
+                          Facebook marketplace has been setup successfully. Now
+                          you can add products to facebook marketplace directly
+                          from Delivery Pay.
+                        </h4>
+                        <Link to="/account/myShop/products">
+                          Add your first product
+                        </Link>
+                      </div>
+                    </>
+                  );
+                });
+              }}
+            >
+              Finish setup
+            </button>
+          )}
         </Step>
       </div>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
     </div>
   );
 };
 
-const BusinessManager = () => {
+const BusinessManager = ({ setLoading }) => {
   const { user, setUser } = useContext(SiteContext);
   const { FB } = window;
   const [businessManagers, setBusinessManagers] = useState([]);
+  const [err, setErr] = useState(null);
   useEffect(() => {
     if (!user.fbMarket?.business?.id) {
       FB.api(
         "/me",
         "GET",
-        { fields: "businesses{picture{url},name,id,created_time}" },
+        {
+          fields: "businesses{picture{url},name,id,created_time}",
+          access_token: LS.get("facebook_user_accessToken"),
+        },
         function (res) {
           if (res.businesses) {
             setBusinessManagers(res.businesses.data);
@@ -267,7 +330,7 @@ const BusinessManager = () => {
                   <a
                     href={`https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=${user.fbMarket.businessManager.id}`}
                   >
-                    {user.fbMarket.businessManager.name}
+                    {user.fbMarket.businessManager.name} <External_link_icon />
                   </a>
                   <span>ID: {user.fbMarket.businessManager.id}</span>
                   <span>
@@ -282,6 +345,9 @@ const BusinessManager = () => {
                 onClick={() => {
                   updateProfileInfo({
                     "fbMarket.businessManager": {},
+                    "fbMarket.facebookPage": {},
+                    "fbMarket.commerceAccount": {},
+                    "fbMarket.userAggrement": false,
                   }).then(({ user: newUser }) => {
                     setUser((prev) => ({
                       ...prev,
@@ -291,7 +357,7 @@ const BusinessManager = () => {
                 }}
                 className="btn"
               >
-                Discounnect
+                Disconnect
               </button>
             </li>
           </ul>
@@ -308,6 +374,7 @@ const BusinessManager = () => {
             Facebook. If so, you’ll need to confirm your business email address
             before proceeding.
           </p>
+          {err && <div className="err">{err}</div>}
           <ul>
             {businessManagers.map((item, i) => (
               <li key={i}>
@@ -317,7 +384,7 @@ const BusinessManager = () => {
                     <a
                       href={`https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=${item.business_id}&asset_id=${item.asset_id}`}
                     >
-                      {item.name}
+                      {item.name} <External_link_icon />
                     </a>
                     <span>ID: {item.id}</span>
                     <span>
@@ -354,7 +421,64 @@ const BusinessManager = () => {
                 <Img src="/profile-user.jpg" />
                 <p>Create Business Manager</p>
               </div>
-              <button className="btn">Create new</button>
+              <button
+                className="btn"
+                onClick={() => {
+                  setLoading(true);
+                  FB.api(
+                    "/me/businesses",
+                    "POST",
+                    {
+                      name: "Delivery Pay Business Manager",
+                      vertical: "ECOMMERCE",
+                    },
+                    function (res) {
+                      setLoading(false);
+                      console.log(res);
+                      if (res.id) {
+                        FB.api(
+                          "/me",
+                          "GET",
+                          {
+                            fields:
+                              "businesses{picture{url},name,id,created_time}",
+                          },
+                          function (res) {
+                            if (res.businesses) {
+                              setBusinessManagers(res.businesses.data);
+                            }
+                          }
+                        );
+                      }
+                      if (res.error) {
+                        if (res.error.code === 1) {
+                          setErr(
+                            <>
+                              You have reached maximum number of business
+                              manager one user can have. Use one of existing
+                              business manager instead of creating a new one.
+                            </>
+                          );
+                        } else if (res.error.code === 3947) {
+                          setErr(
+                            <>
+                              You already have a Business Manager with the same
+                              name. Select "Delivery Pay Business Manager"
+                              instead of creating a new one. or Choose another.
+                            </>
+                          );
+                        } else {
+                          setErr(
+                            <>{res.error.error_user_msg || res.error.message}</>
+                          );
+                        }
+                      }
+                    }
+                  );
+                }}
+              >
+                Create new
+              </button>
             </li>
           </ul>
         </>
@@ -366,12 +490,16 @@ const FbPage = () => {
   const { FB } = window;
   const { user, setUser } = useContext(SiteContext);
   const [fbPages, setFbPages] = useState([]);
+  const [createNew, setCreateNew] = useState(false);
   useEffect(() => {
     if (!user.fbMarket?.business?.id) {
       FB.api(
         "/me/accounts",
         "GET",
-        { fields: "picture{url},access_token,name,category" },
+        {
+          fields: "picture{url},access_token,name,category,business",
+          access_token: LS.get("facebook_user_accessToken"),
+        },
         function (res) {
           console.log("facebook pages:", res);
           if (res.data) {
@@ -397,16 +525,19 @@ const FbPage = () => {
                   <a
                     href={`https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=${user.fbMarket.businessManager.id}`}
                   >
-                    {user.fbMarket.facebookPage.name}
+                    {user.fbMarket.facebookPage.name} <External_link_icon />
                   </a>
-                  <span>ID: {user.fbMarket.facebookPage.id}</span>
+                  <span>Category: {user.fbMarket.facebookPage.category}</span>
                 </div>
               </div>
               <button
                 onClick={() => {
                   updateProfileInfo({
                     "fbMarket.facebookPage": {},
+                    "fbMarket.commerceAccount": {},
+                    "fbMarket.userAggrement": false,
                   }).then(({ user: newUser }) => {
+                    console.log(newUser.fbMarket);
                     setUser((prev) => ({
                       ...prev,
                       fbMarket: newUser.fbMarket,
@@ -415,7 +546,7 @@ const FbPage = () => {
                 }}
                 className="btn"
               >
-                Discounnect
+                Disconnect
               </button>
             </li>
           </ul>
@@ -435,9 +566,9 @@ const FbPage = () => {
                     <a
                       href={`https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=${item.business_id}&asset_id=${item.asset_id}`}
                     >
-                      {item.name}
+                      {item.name} <External_link_icon />
                     </a>
-                    <span>ID: {item.id}</span>
+                    <span>{item.category}</span>
                   </div>
                 </div>
                 <button
@@ -466,11 +597,60 @@ const FbPage = () => {
                 <Img src="/profile-user.jpg" />
                 <p>Create Page</p>
               </div>
-              <button className="btn">Create new</button>
+              <button className="btn" onClick={() => setCreateNew(true)}>
+                Create new
+              </button>
             </li>
           </ul>
         </>
       )}
+      <Modal
+        head={true}
+        label="Create a new Facebook business Page"
+        open={createNew}
+        setOpen={() => {
+          setCreateNew(false);
+          FB.api(
+            "/me/accounts",
+            "GET",
+            {
+              fields: "picture{url},access_token,name,category,business",
+              access_token: LS.get("facebook_user_accessToken"),
+            },
+            function (res) {
+              console.log("facebook pages:", res);
+              if (res.data) {
+                setFbPages(res.data);
+              }
+            }
+          );
+        }}
+        className="createNewPage"
+      >
+        <div className="content">
+          <p>
+            You'll be redirected to Facebook where you can create a new business
+            Page. All you need for now are basic details such as:
+          </p>
+          <ul>
+            <li>Business Page name</li>
+            <li>Business Page category</li>
+            <li>Profile Photo</li>
+            <li>Cover photo</li>
+            <li>Store description</li>
+          </ul>
+          <p>
+            As soon as you add these details, return to Delivery Pay and finish
+            setup. You can always update your Page later.
+          </p>
+          <a
+            target="_blank"
+            href="https://www.facebook.com/pages/create/?ref_type=hc"
+          >
+            <External_link_icon /> Go to Facebook
+          </a>
+        </div>
+      </Modal>
     </>
   );
 };
@@ -535,8 +715,8 @@ const DataSharing = ({ setStep }) => {
               <p>
                 Maximum combines all data-sharing options to reach the highest
                 amount of customers. It uses <strong>Conversions API</strong>,
-                which shares data directly from Shopify’s servers to Facebook.
-                This means the data can’t be blocked by ad blockers.
+                which shares data directly from Delivery Pay’s servers to
+                Facebook. This means the data can’t be blocked by ad blockers.
               </p>
             )}
           </div>
@@ -637,39 +817,114 @@ const DataSharing = ({ setStep }) => {
     </>
   );
 };
-const CommerceAccount = () => {
+const CommerceAccount = ({ setStep }) => {
+  const { FB } = window;
+  const { user, setUser } = useContext(SiteContext);
   const [commerceAccounts, setCommerceAccounts] = useState([]);
+  const [catalog, setCatalog] = useState(
+    user.fbMarket?.commerceAccount?.catalog
+  );
+  useEffect(() => {
+    setCatalog(user.fbMarket?.commerceAccount?.catalog);
+  }, [user]);
   return (
     <>
       <p className="note">
         Create a Commerce account to start selling on Facebook, Instagram, or
         both. Once you have an account you’ll be able to customize your Shop and
         collections in the{" "}
-        <a href="https://www.facebook.com/business/help/2371372636254534">
-          Facebook Commerce Manager
+        <a
+          target="_blank"
+          href="https://www.facebook.com/business/help/2371372636254534"
+        >
+          Facebook Commerce Manager <External_link_icon />
         </a>
         .
       </p>
       <ul>
-        {commerceAccounts.map((item, i) => (
-          <li key={i}>
-            {i}
-            <div className="facebookPage">
-              <div className="thumb" />
-              <p>{item.name}</p>
-              <span>ID: {item.id}</span>
-              <span>Created at: {item.createdAt}</span>
-            </div>
-            <button>Connect</button>
+        {
+          //   commerceAccounts.map((item, i) => (
+          //   <li key={i}>
+          //     {i}
+          //     <div className="facebookPage">
+          //       <div className="thumb" />
+          //       <p>{item.name}</p>
+          //       <span>ID: {item.id}</span>
+          //       <span>Created at: {item.createdAt}</span>
+          //     </div>
+          //     <button>Connect</button>
+          //   </li>
+          // ))
+        }
+        {catalog && (
+          <li className="catalog">
+            <p>PRODUCTS WILL BE SYNCED TO THIS CATALOG</p>
+            <p>{catalog.name}</p>
+            <span>ID: {catalog.id}</span>
           </li>
-        ))}
-        <li>
-          <div className="profile">
-            <Img src="/profile-user.jpg" />
-            <p>Create a new Commerce Account</p>
-          </div>
-          <button className="btn">Create new</button>
-        </li>
+        )}
+        {!catalog && (
+          <li>
+            <div className="profile">
+              <Img src="/profile-user.jpg" />
+              <p>Create a new Commerce Account</p>
+            </div>
+            <button
+              className="btn"
+              onClick={() => {
+                FB.api(
+                  `/${user.fbMarket.businessManager.id}/owned_product_catalogs`,
+                  "GET",
+                  {
+                    access_token: LS.get("facebook_user_accessToken"),
+                  },
+                  async function ({ data }) {
+                    const delCatalog =
+                      data.find(
+                        (item) => item.name === "Delivery Pay Product Catalog"
+                      ) ||
+                      (await FB.api(
+                        `/${user.fbMarket.businessManager.id}/owned_product_catalogs`,
+                        "POST",
+                        {
+                          name: "Delivery Pay Product Catalog",
+                          access_token: LS.get("facebook_user_accessToken"),
+                        },
+                        function (res) {
+                          console.log(res.id);
+                          if (res.id) {
+                            return {
+                              ...res,
+                              name: "Delivery Pay Product Catalog",
+                            };
+                          } else {
+                            return null;
+                          }
+                          if (res.error) {
+                            console.log(res.error);
+                          }
+                        }
+                      ));
+                    if (delCatalog) {
+                      setCatalog(delCatalog);
+                      updateProfileInfo({
+                        "fbMarket.commerceAccount.catalog": delCatalog,
+                      }).then(({ user: newUser }) => {
+                        setUser((prev) => ({
+                          ...prev,
+                          fbMarket: newUser.fbMarket,
+                        }));
+                        setStep("terms");
+                      });
+                    }
+                  }
+                );
+              }}
+            >
+              Create new
+            </button>
+          </li>
+        )}
       </ul>
     </>
   );

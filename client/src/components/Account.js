@@ -364,7 +364,7 @@ const UserSearch = ({ setClient }) => {
           <input
             label="search"
             required={true}
-            placeholder="Search with Delivery pay ID or Phone Number"
+            placeholder="Search with Phone Number or Delivery pay ID"
             onFocus={() => setShowUsers(true)}
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -449,6 +449,7 @@ function Account() {
           </Link>
           {userType === "buyer" && <Link to="/marketplace">Browse</Link>}
         </div>
+        <UserTypeSwitch />
         <ProfileAvatar />
       </header>
       <div className="content">
@@ -567,7 +568,7 @@ function Account() {
                   />
                 </svg>
               </div>
-              Chat
+              Open Chat
             </Link>
             {unread ? <span className="unred">{unread}</span> : null}
           </li>
@@ -626,7 +627,7 @@ function Account() {
                       />
                     </svg>
                   </div>
-                  My Orders
+                  Open Order Ledger
                 </Link>
               </li>
             </>
@@ -1047,7 +1048,7 @@ function Account() {
                   </g>
                 </svg>
               </div>
-              Customer Support
+              Customer Care
             </Link>
           </li>
           <li
@@ -1723,7 +1724,7 @@ export const ProfileAvatar = () => {
           <p className="name">
             {user?.firstName + " " + user?.lastName || user.phone}
           </p>
-          <UserTypeSwitch />
+          <UserTypeSwitch tip={true} />
           <Link className="link" to="/account">
             Dashboard
           </Link>
@@ -1859,7 +1860,7 @@ export const ProfileAvatar = () => {
   );
 };
 
-const UserTypeSwitch = () => {
+const UserTypeSwitch = ({ tip }) => {
   const { userType, setUserType } = useContext(SiteContext);
   return (
     <div className="userTypeSwitch">
@@ -1878,17 +1879,21 @@ const UserTypeSwitch = () => {
           Seller
         </li>
       </ul>
-      <div className="break" />
-      {userType === "seller" ? (
-        <p className="note">
-          As a seller, you can manage your
-          <br /> product listing, order, refunds and general shop settings.
-        </p>
-      ) : (
-        <p className="note">
-          As a buyer, you can manage your
-          <br /> perchase orders, payments and deals.
-        </p>
+      {tip && (
+        <>
+          <div className="break" />
+          {userType === "seller" ? (
+            <p className="note">
+              As a seller, you can manage your
+              <br /> product listing, order, refunds and general shop settings.
+            </p>
+          ) : (
+            <p className="note">
+              As a buyer, you can manage your
+              <br /> perchase orders, payments and deals.
+            </p>
+          )}
+        </>
       )}
     </div>
   );
@@ -1896,16 +1901,14 @@ const UserTypeSwitch = () => {
 
 export const MilestoneForm = ({
   action,
-  // searchClient,
   client,
   onSuccess,
-  // onSubmit,
   definedAmount,
   order,
   refund,
   strict,
 }) => {
-  const { user, setUser } = useContext(SiteContext);
+  const { user, setUser, config } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   // const [type, setType] = useState("product");
@@ -1918,6 +1921,7 @@ export const MilestoneForm = ({
   // );
   const [dscr, setDscr] = useState("");
   const [amount, setAmount] = useState(definedAmount || "");
+  const [fee, setFee] = useState(0);
   const [msg, setMsg] = useState(null);
   // const [productResult, setProductResult] = useState([]);
   // const [showSelectedProducts, setShowSelectedProducts] = useState(false);
@@ -2047,6 +2051,11 @@ export const MilestoneForm = ({
     // type,
     // deliveryTime,
   ]);
+  useEffect(() => {
+    setFee(() => {
+      return (+amount / (100 + config.fee)) * config.fee;
+    });
+  }, [amount]);
   // useEffect(() => {
   //   if (search) {
   //     fetch(`/api/products?q=${search}&perPage=8`)
@@ -2216,6 +2225,21 @@ export const MilestoneForm = ({
               onChange={(e) => setAmount((+e.target.value).toString())}
             />
           </section>
+          {amount && (
+            <>
+              {action === "create" && (
+                <label className="receivable">
+                  {client.firstName} {client.lastName} will recieve ₹
+                  {amount - fee}
+                </label>
+              )}
+              {action === "request" && (
+                <label className="receivable">
+                  You will recieve ₹{amount - fee}
+                </label>
+              )}
+            </>
+          )}
           <section>
             <label>Detail</label>
             <input

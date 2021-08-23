@@ -834,11 +834,13 @@ app.post(
         .json({ code: 403, message: "Can not request milestone to self." });
       return;
     }
+    const { fee } = await Config.findOne().then((config) => config || {});
     const buyer = await User.findOne({ _id: buyer_id });
     if (buyer && amount && dscr) {
       new Milestone({
         ...req.body,
         status: "pending",
+        fee,
         buyer,
         seller: req.user,
       })
@@ -916,7 +918,7 @@ app.patch(
     )
       .then((milestone) => {
         if (milestone) {
-          res.json({ message: "release requested", milestone });
+          res.json({ code: "ok", message: "release requested", milestone });
           InitiateChat({
             user: milestone.seller._id,
             client: milestone.buyer._id,
@@ -1164,6 +1166,7 @@ app.post(
   passport.authenticate("userPrivate"),
   async (req, res) => {
     const { amount, seller, dscr, order, refund } = req.body;
+    const { fee } = await Config.findOne().then((config) => config || {});
     if (seller?.toString() === req.user._id.toString()) {
       res
         .status(403)
@@ -1194,7 +1197,8 @@ app.post(
             qty,
           })),
           deliveryDetail: order.deliveryDetail,
-          total: order.total,
+          total: order.total.addPercent(fee),
+          fee: fee,
         })
           .save()
           .catch((err) => {
@@ -1202,7 +1206,7 @@ app.post(
           })
       : null;
     if (order && !newOrder) {
-      res.status(500).json({ code: 500, message: "Internal server error" });
+      res.status(500).json({ code: 500, message: "Could not place order." });
       return;
     }
     if (+amount && seller && dscr) {
@@ -1210,6 +1214,7 @@ app.post(
         ...req.body,
         status: "inProgress",
         buyer: req.user._doc,
+        fee,
         seller,
         ...(newOrder && { order: newOrder._id }),
       })
@@ -1333,6 +1338,7 @@ app.patch(
       $or: [{ status: "inProgress" }, { status: "pendingRelease" }],
       "buyer._id": req.user._id,
     });
+    const { fee } = await Config.findOne().then((config) => config || {});
     if (milestone) {
       if (+amount > milestone.amount) {
         if (+amount - milestone.amount > req.user.balance) {
@@ -1349,7 +1355,7 @@ app.patch(
             dscr: milestone.dscr,
           }).save(),
           new P2PTransaction({
-            amount: +((amount / 110) * 100).toFixed(2),
+            amount: +((amount / (100 + fee)) * 100).toFixed(2),
             milestoneId: milestone._id,
             user: milestone.seller._id,
             client: req.user,
@@ -1424,7 +1430,7 @@ app.patch(
             dscr: milestone.dscr,
           }).save(),
           new P2PTransaction({
-            amount: +((amount / 110) * 100).toFixed(2),
+            amount: +((amount / (100 + fee)) * 100).toFixed(2),
             milestoneId: milestone._id,
             user: milestone.seller._id,
             client: milestone.buyer,
@@ -1450,8 +1456,8 @@ app.patch(
               User.findOneAndUpdate(
                 { _id: milestone.seller._id },
                 {
-                  $inc: { balance: amount },
-                  $addToSet: { transactions: buyerTrans._id },
+                  $inc: { balance: sellerTrans.amount },
+                  $addToSet: { transactions: sellerTrans._id },
                 },
                 { new: true }
               ),
@@ -1489,7 +1495,7 @@ app.patch(
       } else {
         Promise.all([
           new P2PTransaction({
-            amount: +((amount / 110) * 100).toFixed(2),
+            amount: +((amount / (100 + fee)) * 100).toFixed(2),
             milestoneId: milestone._id,
             user: milestone.seller._id,
             client: req.user,

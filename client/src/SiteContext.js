@@ -15,6 +15,7 @@ export const Provider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState(LS.get("userType") || "");
   const [cart, setCart] = useState(JSON.parse(LS.get("localCart")) || []);
+  const [config, setConfig] = useState({});
   useEffect(() => {
     LS.set("localCart", JSON.stringify(cart));
   }, [cart]);
@@ -26,6 +27,18 @@ export const Provider = ({ children }) => {
     }
     LS.set("userType", userType);
   }, [userType]);
+  useEffect(() => {
+    fetch("/api/siteConfig")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setConfig(data.config || {});
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
   return (
     <SiteContext.Provider
       value={{
@@ -37,6 +50,7 @@ export const Provider = ({ children }) => {
         setCart,
         userType,
         setUserType,
+        config,
       }}
     >
       {children}

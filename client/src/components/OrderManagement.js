@@ -995,7 +995,8 @@ export const FullOrder = ({ history, match }) => {
                 }
               </div>
               <div className="data">
-                <label>Delivery Pay fee 10%</label>₹{(order.total * 0.1).fix()}
+                <label>Delivery Pay fee {order.fee}%</label>₹
+                {(order.total - (order.total / (order.fee + 100)) * 100).fix()}
               </div>
               <hr />
               <div className="data">
@@ -1004,7 +1005,7 @@ export const FullOrder = ({ history, match }) => {
               <hr />
               <div className="data">
                 <label>You'll recieve</label>₹
-                {((order.total / 110) * 100).fix()}
+                {((order.total / (order.fee + 100)) * 100).fix()}
               </div>
             </div>
             {

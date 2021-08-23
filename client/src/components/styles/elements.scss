@@ -117,6 +117,19 @@
   }
 }
 
+.externalLinkIcon {
+  height: 0.75em;
+  width: 0.75em;
+  position: relative;
+  display: inline-block !important;
+  svg {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    transform: scale(2);
+  }
+}
+
 .fileInput {
   border: 1px solid rgba(0, 0, 0, 0.2);
   background: rgba(0, 0, 0, 0.03);
@@ -159,8 +172,11 @@
     }
     &.thumb {
       max-height: 6rem;
+      max-width: 7rem;
       img {
-        max-height: 6rem;
+        height: 100%;
+        width: 100%;
+        object-fit: contain;
       }
     }
     &.any {
@@ -503,6 +519,7 @@
       }
       &.batchAction {
         background: rgba(0, 0, 0, 0.78);
+        grid-template-columns: 1.5rem max-content max-content max-content;
         color: white;
         button {
           color: white;

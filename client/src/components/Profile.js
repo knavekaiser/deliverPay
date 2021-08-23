@@ -434,6 +434,7 @@ const Profile = ({ history, match, location }) => {
           {user.paymentMethods.map((method, i) => (
             <SinglePaymentMethod key={i} setMsg={setMsg} method={method} />
           ))}
+          {user.paymentMethods?.length === 0 && <p>No payment method added.</p>}
         </ul>
       </div>
       <div className="socials">

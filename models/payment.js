@@ -107,6 +107,7 @@ const milestoneModel = new Schema(
     verification: { type: String, default: "smooth" },
     dispute: { type: Schema.Types.ObjectId, ref: "Dispute" },
     dscr: { type: String },
+    fee: { type: Number, required: true },
   },
   { timestamps: true }
 );

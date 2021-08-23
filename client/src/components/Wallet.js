@@ -328,7 +328,7 @@ const Wallet = ({ history, location, match }) => {
                 min="10"
                 value={addMoneyAmount}
                 onChange={(e) => setAddMoneyAmount(e.target.value)}
-                placeholder="Enter ammount"
+                placeholder="Enter amount"
                 required={true}
               />
               <button>Proceed</button>
@@ -1177,7 +1177,7 @@ export const Cards = ({ paymentMethods }) => {
           ))}
           {paymentMethods.length === 0 && (
             <li style={style}>
-              <p className="placeholder">No payment method added.</p>
+              <p className="placeholder">Withdraw Payments</p>
             </li>
           )}
         </ul>

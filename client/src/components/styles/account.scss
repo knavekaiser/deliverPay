@@ -1271,6 +1271,9 @@
         font-size: 1.2rem;
       }
     }
+    .receivable {
+      margin-top: -1.5rem;
+    }
     button[type="submit"] {
       margin: auto;
       color: white;
@@ -1726,6 +1729,7 @@
               }
             }
             .placeholder {
+              width: 100%;
               background: rgba(0, 0, 0, 0.03);
               height: 100%;
               display: grid;
@@ -2293,6 +2297,9 @@
       }
       .profile {
         grid-gap: 0.5rem;
+      }
+      & > .userTypeSwitch {
+        display: none;
       }
     }
     .content {

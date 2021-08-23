@@ -36,10 +36,9 @@ app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
       },
     }),
   };
-  console.log(query);
   User.aggregate([
     { $match: query },
-    { $limit: 20 },
+    { $limit: 5 },
     {
       $project: {
         firstName: 1,
@@ -52,7 +51,6 @@ app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
     },
   ])
     .then((users) => {
-      console.log(users);
       res.json(users);
     })
     .catch((err) => {

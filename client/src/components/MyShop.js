@@ -24,6 +24,7 @@ import {
   calculatePrice,
   Tip,
   Media,
+  LS,
 } from "./Elements";
 import { Modal, Confirm } from "./Modal";
 import { Link, Route, Switch, Redirect } from "react-router-dom";
@@ -413,6 +414,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
 };
 
 const Products = ({ categories, shopSetupComplete }) => {
+  const { FB } = window;
   const dateFilterRef = useRef();
   const [productForm, setProductForm] = useState(false);
   const [total, setTotal] = useState(0);
@@ -478,6 +480,171 @@ const Products = ({ categories, shopSetupComplete }) => {
     }
   };
   const deleteMany = () => deleteItems(batch);
+  const addToFbMarket = (_ids) => {
+    fetch("/api/addToFbMarket", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        _ids,
+        access_token: LS.get("facebook_user_accessToken"),
+      }),
+    })
+      .then((res) => res.json())
+      .then(({ code, fb_products }) => {
+        if (code === "ok") {
+          const success = [];
+          const failed = [];
+          fb_products.forEach((item, i) => {
+            if (item.success) {
+              success.push(item);
+            } else {
+              failed.push(item);
+            }
+          });
+          setProducts((prev) =>
+            prev.map((item) => {
+              const prod = fb_products.find(
+                (product) => product._id === item._id
+              );
+              if (prod) {
+                return {
+                  ...item,
+                  fbMarketId: prod.fbMarketId,
+                };
+              } else {
+                return item;
+              }
+            })
+          );
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                {failed.length === 0 ? (
+                  <>
+                    <Succ_svg />
+                    <h4>{success.length} products has been added.</h4>
+                  </>
+                ) : (
+                  <>
+                    <Err_svg />
+                    <h4>{failed.length} products failed.</h4>
+                  </>
+                )}
+              </div>
+            </>
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not add products to Facebook Marketplace.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>
+                Could not add products to Facebook Marketplace. Make sure you're
+                online.
+              </h4>
+            </div>
+          </>
+        );
+      });
+  };
+  const removeFromFbMarket = (_ids) => {
+    fetch("/api/removeFromFbMarket", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        _ids,
+        access_token: LS.get("facebook_user_accessToken"),
+      }),
+    })
+      .then((res) => res.json())
+      .then(({ code, fb_products }) => {
+        if (code === "ok") {
+          const success = [];
+          const failed = [];
+          fb_products.forEach((item, i) => {
+            if (item.success) {
+              success.push(item);
+            } else {
+              failed.push(item);
+            }
+          });
+          setProducts((prev) =>
+            prev.map((item) => {
+              const prod = fb_products.find(
+                (product) => product._id === item._id
+              );
+              if (prod) {
+                return {
+                  ...item,
+                  fbMarketId: prod.fbMarketId,
+                };
+              } else {
+                return item;
+              }
+            })
+          );
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                {failed.length === 0 ? (
+                  <>
+                    <Succ_svg />
+                    <h4>{success.length} products has been removed.</h4>
+                  </>
+                ) : (
+                  <>
+                    <Err_svg />
+                    <h4>{failed.length} products failed to remove.</h4>
+                  </>
+                )}
+              </div>
+            </>
+          );
+          // console.log(data);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not remove products from Facebook Marketplace.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>
+                Could not remove products from Facebook Marketplace. Make sure
+                you're online.
+              </h4>
+            </div>
+          </>
+        );
+      });
+  };
   useEffect(() => {
     const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
     const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
@@ -705,6 +872,26 @@ const Products = ({ categories, shopSetupComplete }) => {
                   Delete
                 </button>
               </th>
+              <th>
+                <button
+                  onClick={() => {
+                    addToFbMarket(batch);
+                    setBatch([]);
+                  }}
+                >
+                  Add to Facebook
+                </button>
+              </th>
+              <th>
+                <button
+                  onClick={() => {
+                    removeFromFbMarket(batch);
+                    setBatch([]);
+                  }}
+                >
+                  Remove from Facebook
+                </button>
+              </th>
             </tr>
           ) : (
             <tr>
@@ -719,6 +906,7 @@ const Products = ({ categories, shopSetupComplete }) => {
               <th>Image</th>
               <th className="name">Name</th>
               <th>Type</th>
+              <th>Facebook Marketplace</th>
               <th>Available</th>
               <th>Price</th>
               <th>GST</th>
@@ -742,6 +930,8 @@ const Products = ({ categories, shopSetupComplete }) => {
               setBatch={setBatch}
               batch={batch}
               deleteItems={deleteItems}
+              addToFbMarket={addToFbMarket}
+              removeFromFbMarket={removeFromFbMarket}
             />
           ))}
           {products.length === 0 && (
@@ -830,6 +1020,8 @@ const SingleProduct = ({
   setBatch,
   batch,
   deleteItems,
+  addToFbMarket,
+  removeFromFbMarket,
 }) => {
   const { user } = useContext(SiteContext);
   const [selected, setSelected] = useState(selectAll || false);
@@ -864,6 +1056,7 @@ const SingleProduct = ({
       </td>
       <td className="name">{product.name}</td>
       <td>{product.type}</td>
+      <td>{product.fbMarketId ? "Added" : "N/A"}</td>
       <td>
         {product.available} {product.available === true && "Available"}
         {product.available === false && "Unavailable"}
@@ -885,6 +1078,24 @@ const SingleProduct = ({
             <Link to={`/marketplace/${product._id}`} target="_blank">
               View
             </Link>
+            {user.fbMarket?.terms && LS.get("facebook_user_accessToken") && (
+              <>
+                {product.fbMarketId ? (
+                  <button onClick={() => removeFromFbMarket([product._id])}>
+                    Remove from Facebook
+                  </button>
+                ) : (
+                  <button onClick={() => addToFbMarket([product._id])}>
+                    Add to Facebook
+                  </button>
+                )}
+              </>
+            )}
+            {!user.fbMarket.terms && (
+              <Link to="/account/myShop/fbMarketplace" className="edit">
+                Setup FB Marketplace
+              </Link>
+            )}
             <Link to="#" className="edit" onClick={() => setEdit(true)}>
               Edit
             </Link>

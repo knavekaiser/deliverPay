@@ -16,6 +16,7 @@ const productModel = new Schema(
     gst: { type: Number },
     tags: [{ type: String }],
     popularity: { type: Number },
+    fbMarketId: { type: String },
     reviews: [
       new Schema(
         {
@@ -58,6 +59,7 @@ const orderModel = new Schema(
         ref: "Milestone",
       },
     ],
+    fee: { type: Number, required: true },
     deliveryDetail: {
       name: { type: String, required: true },
       phone: { type: String, required: true },
