@@ -2053,7 +2053,7 @@ export const MilestoneForm = ({
   ]);
   useEffect(() => {
     setFee(() => {
-      return (+amount / (100 + config.fee)) * config.fee;
+      return ((+amount / 100) * config.fee).fix();
     });
   }, [amount]);
   // useEffect(() => {

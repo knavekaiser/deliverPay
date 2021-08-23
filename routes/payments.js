@@ -1166,7 +1166,6 @@ app.post(
   passport.authenticate("userPrivate"),
   async (req, res) => {
     const { amount, seller, dscr, order, refund } = req.body;
-    console.log(order);
     const { fee } = await Config.findOne().then((config) => config || {});
     if (seller?.toString() === req.user._id.toString()) {
       res
@@ -1496,7 +1495,7 @@ app.patch(
       } else {
         Promise.all([
           new P2PTransaction({
-            amount: +((amount / (100 + fee)) * 100).toFixed(2),
+            amount: +((amount / 100) * 100).toFixed(2),
             milestoneId: milestone._id,
             user: milestone.seller._id,
             client: req.user,
