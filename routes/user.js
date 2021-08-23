@@ -264,8 +264,7 @@ app.post("/api/sendUserOTP", async (req, res) => {
       .then((dbRes) =>
         sendSms({
           to: [phone.replace("+91", "")],
-          otp: true,
-          message: 127687,
+          message: 1207162812104316840,
           variables_values: code,
         })
       )
@@ -340,8 +339,7 @@ app.post("/api/sendPhoneVerificationCode", async (req, res) => {
       .then((otp) =>
         sendSms({
           to: [phone.replace("+91", "")],
-          otp: true,
-          message: 127687,
+          message: 1207162812104316840,
           variables_values: code,
         })
       )
@@ -401,8 +399,7 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
           } else if (phone) {
             sendSms({
               to: [phone.replace("+91", "")],
-              otp: true,
-              message: 127687,
+              message: 1207162942077296006,
               variables_values: code,
             })
               .then((smsRes) => {

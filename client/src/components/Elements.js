@@ -745,15 +745,14 @@ export const Cart_svg = () => {
   );
 };
 
-export const Img = ({ src: defaultSrc, onClick, alt, className }) => {
+export const Img = ({ src: defaultSrc, ...rest }) => {
   const [src, setSrc] = useState(defaultSrc);
   return (
     <img
       src={src}
-      onClick={onClick}
       onError={() => setSrc("/img_err.png")}
-      alt={alt}
-      className={className || ""}
+      {...rest}
+      onClick={rest.onClick || function () {}}
     />
   );
 };
@@ -813,10 +812,10 @@ export const Combobox = ({
   const [value, setValue] = useState(() => {
     if (defaultValue > -1 && options[defaultValue]) {
       return options[defaultValue].label;
-    } else if (typeof defaultValue === "object") {
-      return defaultValue;
     } else if (options.find((item) => item.value === defaultValue)) {
       return options.find((item) => item.value === defaultValue).label;
+    } else if (typeof defaultValue === "object") {
+      return defaultValue;
     } else {
       return "";
     }
@@ -1417,18 +1416,13 @@ export const User = ({ user }) => {
 export const calculatePrice = ({ product, gst, discount }) => {
   let finalPrice = product.price;
   if (discount !== false && product.discount?.amount) {
-    const { type, amount } = product.discount;
-    if (type === "flat") {
-      finalPrice -= amount;
-    } else if (type === "percent") {
-      finalPrice *= amount / 100;
-    }
+    finalPrice -= calculateDiscount(product);
   }
   if (gst?.verified) {
-    finalPrice += product.price * ((product.gst || gst.amount) / 100);
+    finalPrice += finalPrice * ((product.gst || gst.amount) / 100);
   }
   if (gst === true) {
-    finalPrice += product.price * (product.gst / 100);
+    finalPrice += finalPrice * (product.gst / 100);
   }
   return finalPrice.fix();
 };

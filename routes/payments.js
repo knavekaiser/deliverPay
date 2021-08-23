@@ -1166,6 +1166,7 @@ app.post(
   passport.authenticate("userPrivate"),
   async (req, res) => {
     const { amount, seller, dscr, order, refund } = req.body;
+    console.log(order);
     const { fee } = await Config.findOne().then((config) => config || {});
     if (seller?.toString() === req.user._id.toString()) {
       res
@@ -1196,7 +1197,7 @@ app.post(
             product: { ...product, _id: ObjectId(product._id) },
             qty,
           })),
-          deliveryDetail: order.deliveryDetail,
+          // deliveryDetail: order.deliveryDetail,
           total: order.total.addPercent(fee),
           fee: fee,
         })

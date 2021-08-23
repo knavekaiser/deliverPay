@@ -317,7 +317,7 @@ const Product = ({ data }) => {
             setCart((prev) => addToCart(prev, data));
           }}
         >
-          <Cart_svg />
+          Add to Cart
         </button>
       </div>
     </div>
@@ -481,6 +481,7 @@ const Gallery = ({ images }) => {
 };
 
 const ImageView = ({ img }) => {
+  const [src, setSrc] = useState(img || "/open_box.png");
   const [boundingBody, setBoundingBody] = useState(null);
   const [applyStyle, setApplyStyle] = useState(false);
   const [style, setStyle] = useState({});
@@ -488,6 +489,9 @@ const ImageView = ({ img }) => {
   useLayoutEffect(() => {
     setBoundingBody(container.current?.getBoundingClientRect());
   }, []);
+  useEffect(() => {
+    setSrc(img || "/open_box.png");
+  }, [img]);
   return (
     <div
       ref={container}
@@ -546,10 +550,11 @@ const ImageView = ({ img }) => {
       onMouseEnter={() => setApplyStyle(true)}
       onMouseLeave={() => setApplyStyle(false)}
     >
-      <Img
+      <img
         className={applyStyle ? "scale" : ""}
         style={applyStyle ? style : {}}
-        src={img || "/open_box.png"}
+        src={src}
+        onError={() => setSrc("/img_err.png")}
       />
     </div>
   );
@@ -647,9 +652,7 @@ const Shop = ({ seller, products, loading }) => {
         ).fix(),
       0
     ) + (seller.shopInfo?.shippingCost || 0)
-  )
-    // *  ((100 + config.fee) / 100)
-    .fix();
+  ).fix();
   const fee = (total * ((100 + config.fee) / 100) - total).fix();
   return (
     <>

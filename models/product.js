@@ -7,6 +7,8 @@ const productModel = new Schema(
     dscr: { type: String, required: true },
     images: [{ type: String }],
     price: { type: Number, required: true },
+    material: { type: String },
+    size: { type: String },
     discount: {
       type: { type: String, enum: ["flat", "percent"] },
       amount: { type: Number },
@@ -14,6 +16,7 @@ const productModel = new Schema(
     },
     available: {},
     gst: { type: Number },
+    hsn: { type: String },
     tags: [{ type: String }],
     popularity: { type: Number },
     fbMarketId: { type: String },

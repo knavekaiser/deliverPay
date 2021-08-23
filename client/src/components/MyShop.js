@@ -138,7 +138,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
   const [type, setType] = useState(prefill?.type || "product");
   const [category, setCategory] = useState(prefill?.category || "");
   const [discount, setDiscount] = useState({
-    type: prefill?.discount?.type || "none",
+    type: prefill?.discount?.type || null,
     amount: prefill?.discount?.amount || 0,
     dscr: prefill?.discount?.dscr || "",
   });
@@ -146,9 +146,13 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
   const [dscr, setDscr] = useState(prefill?.dscr || "");
   const [price, setPrice] = useState(prefill?.price || "");
   const [files, setFiles] = useState(prefill?.images || []);
-  const [gst, setGst] = useState(prefill?.gst || user.gst?.verified ? 18 : 0);
+  const [gst, setGst] = useState(
+    prefill?.gst || user.gst?.verified ? user.gst.amount : 0
+  );
+  const [hsn, setHsn] = useState(prefill?.hsn || "");
   const [available, setAvailable] = useState(prefill?.available);
   const [msg, setMsg] = useState(null);
+  const [tags, setTags] = useState(prefill?.tags || []);
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -168,6 +172,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
         price: +price,
         images,
         category,
+        tags,
         available:
           available === true || available === false ? available : +available,
         gst,
@@ -300,6 +305,57 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
             required={true}
           />
         </section>
+        <section className="tags">
+          <label>Tags</label>
+          <ul>
+            {tags.map((item) => (
+              <li key={item}>
+                {item}
+                <button
+                  onClick={() => {
+                    setTags((prev) => prev.filter((tag) => tag !== item));
+                  }}
+                >
+                  <X_svg />
+                </button>
+              </li>
+            ))}
+            <li className="form">
+              <input
+                placeholder="addNewTag"
+                onKeyPress={(e) => {
+                  const value = `${e.target.value.trim()}`;
+                  if (e.charCode === 13) {
+                    e.preventDefault();
+                    if (!value) return;
+                    setTags((prev) => [
+                      ...prev.filter((tag) => tag !== value),
+                      value,
+                    ]);
+                    e.target.focus();
+                    e.target.value = "";
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  const input = e.target.previousElementSibling;
+                  const value = `${e.target.previousElementSibling.value.trim()}`;
+                  if (!value) return;
+                  setTags((prev) => [
+                    ...prev.filter((tag) => tag !== value),
+                    value,
+                  ]);
+                  input.value = "";
+                  input.focus();
+                }}
+              >
+                Add Tag
+              </button>
+            </li>
+          </ul>
+        </section>
         <section className="images">
           <label>Images of the product</label>
           <FileInput
@@ -308,6 +364,10 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
             accept="image/*"
             onChange={(files) => setFiles(files)}
           />
+        </section>
+        <section>
+          <label>HSN Code</label>
+          <input value={hsn} onChange={(e) => setHsn(e.target.value)} />
         </section>
         {user.gst?.verified && (
           <section>
@@ -323,7 +383,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
           <Combobox
             defaultValue={discount.type}
             options={[
-              { label: "None", value: "none" },
+              { label: "None", value: null },
               { label: "Percent", value: "percent" },
               { label: "Flat", value: "flat" },
             ]}
@@ -332,7 +392,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
             }
           />
         </section>
-        {discount.type !== "none" && (
+        {discount.type !== null && (
           <>
             <section className="discountAmount">
               <label>Amount {discount.type === "percent" && "(%)"}</label>
@@ -365,10 +425,12 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
                 <label>GST {gst}%</label>+{((+price / 100) * +gst).fix()}
               </p>
             )}
-            <p>
-              <label>Delivery Pay fee 10%</label>+
-              {((+price + (+price / 100) * +gst) * 0.1).fix(2)}
-            </p>
+            {
+              //   <p>
+              //   <label>Delivery Pay fee 10%</label>+
+              //   {((+price + (+price / 100) * +gst) * 0.1).fix(2)}
+              // </p>
+            }
             {discount.amount > 0 && discount.type === "flat" && (
               <p>
                 <label>Discount flat</label>- ₹{(+discount.amount).fix()}
@@ -383,13 +445,12 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
             <p className="final">
               <label>Listing Price</label>₹
               {(
-                (+price +
-                  (+price / 100) * +gst -
-                  (discount.type === "percent"
-                    ? (+price / 100) * discount.amount
-                    : 0) -
-                  (discount.type === "flat" ? discount.amount : 0)) *
-                1.1
+                +price +
+                (+price / 100) * +gst -
+                (discount.type === "percent"
+                  ? (+price / 100) * discount.amount
+                  : 0) -
+                (discount.type === "flat" ? discount.amount : 0)
               ).fix()}
             </p>
           </section>
@@ -414,6 +475,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
 };
 
 const Products = ({ categories, shopSetupComplete }) => {
+  const { user } = useContext(SiteContext);
   const { FB } = window;
   const dateFilterRef = useRef();
   const [productForm, setProductForm] = useState(false);
@@ -872,26 +934,30 @@ const Products = ({ categories, shopSetupComplete }) => {
                   Delete
                 </button>
               </th>
-              <th>
-                <button
-                  onClick={() => {
-                    addToFbMarket(batch);
-                    setBatch([]);
-                  }}
-                >
-                  Add to Facebook
-                </button>
-              </th>
-              <th>
-                <button
-                  onClick={() => {
-                    removeFromFbMarket(batch);
-                    setBatch([]);
-                  }}
-                >
-                  Remove from Facebook
-                </button>
-              </th>
+              {user.fbMarket?.terms && LS.get("facebook_user_accessToken") && (
+                <>
+                  <th>
+                    <button
+                      onClick={() => {
+                        addToFbMarket(batch);
+                        setBatch([]);
+                      }}
+                    >
+                      Add to Facebook
+                    </button>
+                  </th>
+                  <th>
+                    <button
+                      onClick={() => {
+                        removeFromFbMarket(batch);
+                        setBatch([]);
+                      }}
+                    >
+                      Remove from Facebook
+                    </button>
+                  </th>
+                </>
+              )}
             </tr>
           ) : (
             <tr>

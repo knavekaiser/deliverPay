@@ -118,6 +118,10 @@ const Marketplace = () => {
               <button
                 className="btn"
                 onClick={() => {
+                  FB.logout((res) => {
+                    console.log(res);
+                  });
+                  LS.remove("facebook_user_accessToken");
                   updateProfileInfo({
                     "fbMarket.user": {},
                     "fbMarket.businessManager": {},

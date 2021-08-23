@@ -1,8 +1,27 @@
 app.get("/api/inviteUser", passport.authenticate("userPrivate"), (req, res) => {
-  const { origin } = req.query;
+  const { q, origin } = req.query;
   const messageBody = `${req.user.firstName} ${req.user.lastName} invites you to join Delivery Pay. Join Delivery Pay to make safe transactions. ${origin}/u/join?referer=${req.user._id}`;
-  // send message here
-  res.json({ code: "ok", message: "invitation sent" });
+  if (q) {
+    sendSms({
+      to: [q.replace("+91", "")],
+      message: 1207162942106249190,
+      variables_values: req.user.firstName + " " + req.user.lastName,
+    }).then((smsRes) => {
+      if (smsRes.returns) {
+        res.json({ code: "ok", message: "invitation sent" });
+      } else {
+        res.status(424).json({
+          code: 424,
+          message: "Could not send Invitaion. Please try again.",
+        });
+      }
+    });
+  } else {
+    res.status(400).json({
+      code: 400,
+      message: "q and origin is required in the query parameter.",
+    });
+  }
 });
 
 app.get("/api/getUsers", passport.authenticate("userPrivate"), (req, res) => {
