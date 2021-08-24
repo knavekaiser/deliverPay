@@ -270,9 +270,8 @@ const UserSearch = ({ setClient }) => {
                     // <h4>Invitation sent.</h4>
                   }
                   <h4>
-                    An sms will be sent to{" "}
-                    {"+91" + value.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")},
-                    when the sms API is ready.
+                    An invitaion has been sent to{" "}
+                    {"+91" + value.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")}.
                   </h4>
                 </div>
               </>
