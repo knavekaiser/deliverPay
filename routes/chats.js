@@ -3,11 +3,12 @@ app.get("/api/inviteUser", passport.authenticate("userPrivate"), (req, res) => {
   const messageBody = `${req.user.firstName} ${req.user.lastName} invites you to join Delivery Pay. Join Delivery Pay to make safe transactions. ${origin}/u/join?referer=${req.user._id}`;
   if (q) {
     sendSms({
-      to: [q.replace("+91", "")],
+      to: [q.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "")],
       message: 128575,
       variables_values: req.user.firstName + " " + req.user.lastName,
     }).then((smsRes) => {
-      if (smsRes.returns) {
+      console.log(smsRes);
+      if (smsRes.return) {
         res.json({ code: "ok", message: "invitation sent" });
       } else {
         res.status(424).json({

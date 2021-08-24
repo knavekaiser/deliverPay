@@ -252,13 +252,14 @@ const UserSearch = ({ setClient }) => {
     const phoneReg = new RegExp(/^(\+91|91|1|)(?=\d{10}$)/gi);
     if (phoneReg.test(value.toLowerCase())) {
       fetch(
-        `/api/inviteUser?q=+91${value.replace(
-          /^(\+91|91|1|)(?=\d{10}$)/g,
-          ""
-        )}origin=${window.location.origin}`
+        `/api/inviteUser?${new URLSearchParams({
+          q: "+91" + value.replace(/^(\+91|91|1|)(?=\d{10}$)/g, ""),
+          origin: window.location.origin,
+        }).toString()}`
       )
         .then((res) => res.json())
         .then((data) => {
+          console.log(data);
           if (data.code === "ok") {
             setMsg(
               <>
