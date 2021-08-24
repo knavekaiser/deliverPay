@@ -24,8 +24,17 @@ app.get("/api/getTickets", passport.authenticate("userPrivate"), (req, res) => {
         foreignField: "_id",
       },
     },
+    {
+      $lookup: {
+        from: "transactions",
+        as: "transaction",
+        localField: "transaction",
+        foreignField: "_id",
+      },
+    },
     { $sort: sortOrder },
     { $set: { milestone: { $first: "$milestone" } } },
+    { $set: { transaction: { $first: "$transaction" } } },
     {
       $facet: {
         tickets: [
@@ -166,7 +175,7 @@ app.patch(
   "/api/addTicketReply",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    if (req.body._id && ObjectId.isValid(req.body._id) && req.body.message) {
+    if (ObjectId.isValid(req.body._id) && req.body.message) {
       Ticket.findOneAndUpdate(
         { _id: req.body._id },
         {

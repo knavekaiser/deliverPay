@@ -351,7 +351,7 @@ const RegisterFormNew = () => {
             </label>
           </section>
           <button disabled={errMsg || loading} type="submit">
-            Register
+            Next
           </button>
         </form>
       )}
@@ -492,7 +492,7 @@ const RegisterFormNew = () => {
             />
           </section>
           <button disabled={errMsg || loading} type="submit">
-            Next
+            Register
           </button>
         </form>
       )}

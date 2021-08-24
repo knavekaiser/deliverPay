@@ -4,7 +4,7 @@ app.get("/api/inviteUser", passport.authenticate("userPrivate"), (req, res) => {
   if (q) {
     sendSms({
       to: [q.replace("+91", "")],
-      message: 1207162942106249190,
+      message: 128575,
       variables_values: req.user.firstName + " " + req.user.lastName,
     }).then((smsRes) => {
       if (smsRes.returns) {
@@ -157,164 +157,170 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
     });
 });
 
-app.post("/sendMessage", passport.authenticate("userPrivate"), (req, res) => {
-  const { to } = req.body;
-  if (ObjectId.isValid(to)) {
-    Chat.updateMany(
-      {
-        user: req.user._id,
-        client: to,
-      },
-      { $push: { messages: req.body } }
-    ).then((dbRes) => {
-      console.log(dbRes);
-      res.json({ code: "ok", message: req.body });
-    });
-  } else {
-    res.status(400).json({ code: 400, message: "to is required" });
-  }
-});
+// app.post("/sendMessage", passport.authenticate("userPrivate"), (req, res) => {
+//   const { to } = req.body;
+//   if (ObjectId.isValid(to)) {
+//     Chat.updateMany(
+//       {
+//         user: req.user._id,
+//         client: to,
+//       },
+//       { $push: { messages: req.body } }
+//     ).then((dbRes) => {
+//       console.log(dbRes);
+//       res.json({ code: "ok", message: req.body });
+//     });
+//   } else {
+//     res.status(400).json({ code: 400, message: "to is required" });
+//   }
+// });
 
 app.get(
   "/api/getMessages",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    Chat.aggregate([
-      {
-        $match: {
-          user: req.user._id,
-          client: ObjectId(req.query.client),
-        },
-      },
-      {
-        $project: {
-          messages: { $slice: ["$messages", -(50 * (+req.query.page || 2))] },
-          total: { $size: "$messages" },
-        },
-      },
-    ])
-      .then((contact) => {
-        if (contact.length) {
-          res.json({ code: "ok", contact: contact[0] });
-        } else {
-          res.status(400).json({ code: 400, message: "Chat does not exists." });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({ code: 500, message: "Database error" });
-      });
-  }
-);
-
-app.post(
-  "/api/sendContactRequest",
-  passport.authenticate("userPrivate"),
-  (req, res) => {
-    Promise.all([
-      User.findOneAndUpdate(
+    if (ObjectId.isValid(req.query.client)) {
+      Chat.aggregate([
         {
-          _id: req.user._id,
-          contacts: { $not: { $elemMatch: { _id: req.body._id } } },
+          $match: {
+            user: req.user._id,
+            client: ObjectId(req.query.client),
+          },
         },
-        { $addToSet: { contacts: { _id: req.body._id } } }
-      ),
-      User.findOneAndUpdate(
         {
-          _id: req.body._id,
-          contacts: { $not: { $elemMatch: { _id: req.user._id } } },
+          $project: {
+            messages: { $slice: ["$messages", -(50 * (+req.query.page || 2))] },
+            total: { $size: "$messages" },
+          },
         },
-        { $addToSet: { contacts: { _id: req.user._id } } }
-      ),
-    ])
-      .then(([user, target]) => {
-        if (user && target) {
-          res.json({ message: "request sent" });
-          notify(
-            target._id,
-            JSON.stringify({
-              title: "Contact Request",
-              body: `${user.firstName} requested to contact.`,
-            }),
-            "User"
-          );
-        } else {
-          res.status(400).json({ message: "bad request" });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(400).json({ message: "bad request" });
-      });
-  }
-);
-app.patch(
-  "/api/acceptContactRequest",
-  passport.authenticate("userPrivate"),
-  async (req, res) => {
-    const client = await User.findOne({
-      _id: req.body._id,
-      contacts: { $elemMatch: { _id: req.user._id, status: "pending" } },
-    });
-    if (client) {
-      const userContacts = req.user.contacts.map((user) => {
-        if (
-          user._id.toString() === client._id.toString() &&
-          user.status === "pending"
-        ) {
-          return {
-            ...user._doc,
-            status: "connected",
-          };
-        } else {
-          return user;
-        }
-      });
-      const clientContacts = client.contacts.map((user) => {
-        if (
-          user._id.toString() === req.user._id.toString() &&
-          user.status === "pending"
-        ) {
-          return {
-            ...user._doc,
-            status: "connected",
-          };
-        } else {
-          return user;
-        }
-      });
-      Promise.all([
-        User.findOneAndUpdate(
-          { _id: req.user._id },
-          { contacts: userContacts },
-          { new: true }
-        ),
-        User.findOneAndUpdate(
-          { _id: client._id },
-          { contacts: clientContacts },
-          { new: true }
-        ),
       ])
-        .then(([user, client]) => {
-          res.json({ message: "request accepted" });
-          notify(
-            client._id,
-            JSON.stringify({
-              title: "Contact Request Accepted",
-              body: `${user.firstName} accepted your contact request.`,
-            }),
-            "User"
-          );
+        .then((contact) => {
+          if (contact.length) {
+            res.json({ code: "ok", contact: contact[0] });
+          } else {
+            res
+              .status(400)
+              .json({ code: 400, message: "Chat does not exists." });
+          }
         })
         .catch((err) => {
           console.log(err);
-          res.status(400).json({ message: "something went wrong" });
+          res.status(500).json({ code: 500, message: "Database error" });
         });
     } else {
-      res.status(400).json({ message: "bad request" });
+      res.status(400).json({ code: 400, message: "client is required" });
     }
   }
 );
+
+// app.post(
+//   "/api/sendContactRequest",
+//   passport.authenticate("userPrivate"),
+//   (req, res) => {
+//     Promise.all([
+//       User.findOneAndUpdate(
+//         {
+//           _id: req.user._id,
+//           contacts: { $not: { $elemMatch: { _id: req.body._id } } },
+//         },
+//         { $addToSet: { contacts: { _id: req.body._id } } }
+//       ),
+//       User.findOneAndUpdate(
+//         {
+//           _id: req.body._id,
+//           contacts: { $not: { $elemMatch: { _id: req.user._id } } },
+//         },
+//         { $addToSet: { contacts: { _id: req.user._id } } }
+//       ),
+//     ])
+//       .then(([user, target]) => {
+//         if (user && target) {
+//           res.json({ message: "request sent" });
+//           notify(
+//             target._id,
+//             JSON.stringify({
+//               title: "Contact Request",
+//               body: `${user.firstName} requested to contact.`,
+//             }),
+//             "User"
+//           );
+//         } else {
+//           res.status(400).json({ message: "bad request" });
+//         }
+//       })
+//       .catch((err) => {
+//         console.log(err);
+//         res.status(400).json({ message: "bad request" });
+//       });
+//   }
+// );
+// app.patch(
+//   "/api/acceptContactRequest",
+//   passport.authenticate("userPrivate"),
+//   async (req, res) => {
+//     const client = await User.findOne({
+//       _id: req.body._id,
+//       contacts: { $elemMatch: { _id: req.user._id, status: "pending" } },
+//     });
+//     if (client) {
+//       const userContacts = req.user.contacts.map((user) => {
+//         if (
+//           user._id.toString() === client._id.toString() &&
+//           user.status === "pending"
+//         ) {
+//           return {
+//             ...user._doc,
+//             status: "connected",
+//           };
+//         } else {
+//           return user;
+//         }
+//       });
+//       const clientContacts = client.contacts.map((user) => {
+//         if (
+//           user._id.toString() === req.user._id.toString() &&
+//           user.status === "pending"
+//         ) {
+//           return {
+//             ...user._doc,
+//             status: "connected",
+//           };
+//         } else {
+//           return user;
+//         }
+//       });
+//       Promise.all([
+//         User.findOneAndUpdate(
+//           { _id: req.user._id },
+//           { contacts: userContacts },
+//           { new: true }
+//         ),
+//         User.findOneAndUpdate(
+//           { _id: client._id },
+//           { contacts: clientContacts },
+//           { new: true }
+//         ),
+//       ])
+//         .then(([user, client]) => {
+//           res.json({ message: "request accepted" });
+//           notify(
+//             client._id,
+//             JSON.stringify({
+//               title: "Contact Request Accepted",
+//               body: `${user.firstName} accepted your contact request.`,
+//             }),
+//             "User"
+//           );
+//         })
+//         .catch((err) => {
+//           console.log(err);
+//           res.status(400).json({ message: "something went wrong" });
+//         });
+//     } else {
+//       res.status(400).json({ message: "bad request" });
+//     }
+//   }
+// );
 
 app.patch(
   "/api/updateLastSeen",

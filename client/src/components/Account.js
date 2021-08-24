@@ -2230,12 +2230,12 @@ export const MilestoneForm = ({
               {action === "create" && (
                 <label className="receivable">
                   {client.firstName} {client.lastName} will recieve ₹
-                  {amount - fee}
+                  {(amount - fee).fix()}
                 </label>
               )}
               {action === "request" && (
                 <label className="receivable">
-                  You will recieve ₹{amount - fee}
+                  You will recieve ₹{(amount - fee).fix()}
                 </label>
               )}
             </>

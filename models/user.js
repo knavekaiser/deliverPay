@@ -84,7 +84,7 @@ const userModel = new Schema(
       facebookPage: {},
       dataSharing: { type: String, default: null },
       commerceAccount: {},
-      userAggrement: { type: Boolean, default: false },
+      userAgreement: { type: Boolean, default: false },
     },
     shopInfo: {
       shippingCost: { type: Number },

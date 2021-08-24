@@ -12,6 +12,42 @@ async function verify(token) {
   return userid || null;
 }
 
+app.post("/api/sendPhoneVerificationCode", async (req, res) => {
+  const { phone } = req.body;
+  const code = genCode(6);
+  console.log(code);
+  if (phone) {
+    const user = await User.findOne({ phone }).then((user) => user);
+    if (user) {
+      res.json({ code: 409, message: "User already exists." });
+      return;
+    }
+    const [hash, deleted] = await Promise.all([
+      bcrypt.hash(code, 10),
+      OTP.findOneAndDelete({ id: phone }),
+    ]);
+    new OTP({ id: phone, code: hash })
+      .save()
+      .then((otp) =>
+        sendSms({
+          to: [phone.replace("+91", "")],
+          message: 128576,
+          variables_values: code,
+        })
+      )
+      .then((smsRes) => {
+        console.log(code);
+        if (smsRes.return) {
+          console.log(smsRes);
+          res.json({ code: "ok", message: "6 digit code has been sent" });
+        } else {
+          res.status(424).json({ code: 424, message: "Could not send sms" });
+        }
+      });
+  } else {
+    res.status(400).json({ code: 400, message: "phone is required." });
+  }
+});
 app.post("/api/registerUser", async (req, res) => {
   const { firstName, lastName, phone, password, code } = req.body;
   if (firstName && lastName && phone && password && code) {
@@ -264,13 +300,13 @@ app.post("/api/sendUserOTP", async (req, res) => {
       .then((dbRes) =>
         sendSms({
           to: [phone.replace("+91", "")],
-          message: 1207162812104316840,
+          message: 128576,
           variables_values: code,
         })
       )
       .then((smsRes) => {
         console.log(smsRes);
-        if (smsRes) {
+        if (smsRes.return) {
           res.json({
             code: "ok",
             message: "6 digit code has been sent, enter it within 2 minutes",
@@ -320,44 +356,6 @@ app.put("/api/submitUserOTP", async (req, res) => {
   }
 });
 
-app.post("/api/sendPhoneVerificationCode", async (req, res) => {
-  const { phone } = req.body;
-  const code = genCode(6);
-  console.log(code);
-  if (phone) {
-    const user = await User.findOne({ phone }).then((user) => user);
-    if (user) {
-      res.json({ code: 409, message: "User already exists." });
-      return;
-    }
-    const [hash, deleted] = await Promise.all([
-      bcrypt.hash(code, 10),
-      OTP.findOneAndDelete({ id: phone }),
-    ]);
-    new OTP({ id: phone, code: hash })
-      .save()
-      .then((otp) =>
-        sendSms({
-          to: [phone.replace("+91", "")],
-          message: 1207162812104316840,
-          variables_values: code,
-        })
-      )
-      .then((smsRes) => {
-        console.log(code);
-        if (smsRes) {
-          // smsRes.return
-          console.log(smsRes);
-          res.json({ code: "ok", message: "6 digit code has been sent" });
-        } else {
-          res.status(424).json({ code: 424, message: "Could not send sms" });
-        }
-      });
-  } else {
-    res.status(400).json({ code: 400, message: "phone is required." });
-  }
-});
-
 app.post("/api/sendUserForgotPassOTP", async (req, res) => {
   const { phone, email } = req.body;
   const code = genCode(6);
@@ -399,12 +397,12 @@ app.post("/api/sendUserForgotPassOTP", async (req, res) => {
           } else if (phone) {
             sendSms({
               to: [phone.replace("+91", "")],
-              message: 1207162942077296006,
+              message: 128576,
               variables_values: code,
             })
               .then((smsRes) => {
                 console.log(smsRes);
-                if (smsRes.return === true) {
+                if (smsRes.return) {
                   res.json({
                     code: "ok",
                     message:

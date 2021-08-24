@@ -934,30 +934,31 @@ const Products = ({ categories, shopSetupComplete }) => {
                   Delete
                 </button>
               </th>
-              {user.fbMarket?.terms && LS.get("facebook_user_accessToken") && (
-                <>
-                  <th>
-                    <button
-                      onClick={() => {
-                        addToFbMarket(batch);
-                        setBatch([]);
-                      }}
-                    >
-                      Add to Facebook
-                    </button>
-                  </th>
-                  <th>
-                    <button
-                      onClick={() => {
-                        removeFromFbMarket(batch);
-                        setBatch([]);
-                      }}
-                    >
-                      Remove from Facebook
-                    </button>
-                  </th>
-                </>
-              )}
+              {user.fbMarket?.userAgreement &&
+                LS.get("facebook_user_accessToken") && (
+                  <>
+                    <th>
+                      <button
+                        onClick={() => {
+                          addToFbMarket(batch);
+                          setBatch([]);
+                        }}
+                      >
+                        Add to Facebook
+                      </button>
+                    </th>
+                    <th>
+                      <button
+                        onClick={() => {
+                          removeFromFbMarket(batch);
+                          setBatch([]);
+                        }}
+                      >
+                        Remove from Facebook
+                      </button>
+                    </th>
+                  </>
+                )}
             </tr>
           ) : (
             <tr>
@@ -1144,20 +1145,21 @@ const SingleProduct = ({
             <Link to={`/marketplace/${product._id}`} target="_blank">
               View
             </Link>
-            {user.fbMarket?.terms && LS.get("facebook_user_accessToken") && (
-              <>
-                {product.fbMarketId ? (
-                  <button onClick={() => removeFromFbMarket([product._id])}>
-                    Remove from Facebook
-                  </button>
-                ) : (
-                  <button onClick={() => addToFbMarket([product._id])}>
-                    Add to Facebook
-                  </button>
-                )}
-              </>
-            )}
-            {!user.fbMarket?.terms && (
+            {user.fbMarket?.userAgreement &&
+              LS.get("facebook_user_accessToken") && (
+                <>
+                  {product.fbMarketId ? (
+                    <button onClick={() => removeFromFbMarket([product._id])}>
+                      Remove from Facebook
+                    </button>
+                  ) : (
+                    <button onClick={() => addToFbMarket([product._id])}>
+                      Add to Facebook
+                    </button>
+                  )}
+                </>
+              )}
+            {!user.fbMarket?.userAgreement && (
               <Link to="/account/myShop/fbMarketplace" className="edit">
                 Setup FB Marketplace
               </Link>

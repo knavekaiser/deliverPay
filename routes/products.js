@@ -56,8 +56,8 @@ app.post(
   "/api/addProduct",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    const { type, name, dscr, images, price } = req.body;
-    if (type && name && price && dscr) {
+    const { type, name, dscr, images, price, category } = req.body;
+    if (type && name && price && dscr && category) {
       Product.find({ user: req.user._id })
         .countDocuments()
         .then((num) => {
@@ -363,10 +363,10 @@ app.post(
   "/api/addCategory",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    if (req.body.category) {
+    if (req.body.category?.trim()) {
       Category.findOneAndUpdate(
         { user: req.user._id },
-        { $addToSet: { categories: req.body.category } },
+        { $addToSet: { categories: req.body.category.trim() } },
         { new: true }
       )
         .then((dbRes) => {
@@ -375,7 +375,7 @@ app.post(
           } else {
             new Category({
               user: req.user._id,
-              categories: [req.body.category],
+              categories: [req.body.category.trim()],
             })
               .save()
               .then((dbRes) => {
@@ -432,40 +432,48 @@ app.put(
   passport.authenticate("userPrivate"),
   (req, res) => {
     const { accessToken, pageId } = req.body;
-    fetch(`https://graph.facebook.com/oauth/access_token?${new URLSearchParams({
-      grant_type: "fb_exchange_token",
-      client_id: process.env.FACEBOOK_APP_ID,
-      client_secret: process.env.FACEBOOK_APP_SECRET,
-      fb_exchange_token: accessToken,
-    }).toString()}
-`)
-      .then((res) => res.json())
-      .then(async (data) => {
-        if (data.access_token) {
-          const pageAccessToken = pageId
-            ? await fetch(`https://graph.facebook.com/${pageId}?${new URLSearchParams(
-                {
-                  fields: access_token,
-                  access_token: data.accessToken,
-                }
-              ).toString()}
-            `)
-                .then((res) => res.json())
-                .then((data) => data)
-            : null;
-          res.json({
-            code: "ok",
-            long_lived_token: data.access_token,
-            page_access_token: pageAccessToken,
-          });
+    if (accessToken) {
+      fetch(`https://graph.facebook.com/oauth/access_token?${new URLSearchParams(
+        {
+          grant_type: "fb_exchange_token",
+          client_id: process.env.FACEBOOK_APP_ID,
+          client_secret: process.env.FACEBOOK_APP_SECRET,
+          fb_exchange_token: accessToken,
         }
-      })
-      .catch((err) => {
-        console.log(err);
-        res
-          .status(500)
-          .json({ code: 500, message: "Could not get api from facebook" });
-      });
+      ).toString()}
+      `)
+        .then((res) => res.json())
+        .then(async (data) => {
+          if (data.access_token) {
+            const pageAccessToken = pageId
+              ? await fetch(`https://graph.facebook.com/${pageId}?${new URLSearchParams(
+                  {
+                    fields: access_token,
+                    access_token: data.accessToken,
+                  }
+                ).toString()}
+          `)
+                  .then((res) => res.json())
+                  .then((data) => data)
+              : null;
+            res.json({
+              code: "ok",
+              long_lived_token: data.access_token,
+              page_access_token: pageAccessToken,
+            });
+          } else {
+            res.status(428).json({ code: 428, ...data });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res
+            .status(500)
+            .json({ code: 500, message: "Could not get api from facebook" });
+        });
+    } else {
+      res.status(400).json({ code: 400, message: "accessToken is required" });
+    }
   }
 );
 

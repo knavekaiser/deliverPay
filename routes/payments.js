@@ -389,9 +389,23 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
   const search = {
     ...(q && {
       $or: [
-        { "client.firstName": new RegExp(q, "gi") },
-        { "client.phone": new RegExp(q, "gi") },
-        // { note: new RegExp(q, "gi") },
+        {
+          $expr: {
+            $regexMatch: {
+              input: {
+                $concat: [
+                  "$client.firstName",
+                  " ",
+                  "$client.lastName",
+                  " ",
+                  "$client.phone",
+                ],
+              },
+              regex: new RegExp(q.replace(/[#-.]|[[-^]|[?|{}]/g, "\\$&")),
+              options: "i",
+            },
+          },
+        },
         ...(ObjectId.isValid(q) ? [{ _id: ObjectId(q) }] : []),
       ],
     }),
@@ -508,150 +522,150 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
 });
 
 // -------------------------- withdraw money
-app.post(
-  "/api/withdrawMoney",
-  passport.authenticate("userPrivate"),
-  async (req, res) => {
-    const { amount, paymentMethod, accountDetail } = req.body;
-    if (+amount > req.user.balance) {
-      res.status(403).json({ code: 403, message: "insufficient fund" });
-      return;
-    }
-    let fundAccountDetail;
-    switch (paymentMethod) {
-      case "BankAccount":
-        fundAccountDetail = {
-          account_type: "bank_account",
-          bank_account: { ...accountDetail },
-        };
-        break;
-      case "BankCard":
-        fundAccountDetail = {
-          account_type: "card",
-          // "card.name": accountDetail.name,
-          // "card.number": accountDetail.number,
-          card: { ...accountDetail },
-        };
-        break;
-      case "VpaAccount":
-        fundAccountDetail = {
-          account_type: "vpa",
-          vpa: { ...accountDetail },
-        };
-        break;
-      default:
-        res.status(400).json({ message: "bad request" });
-    }
-    const razorHeaders = {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${base64.encode(
-        `${process.env.RAZOR_PAY_ID}:${process.env.RAZOR_PAY_SECRET}`
-      )}`,
-    };
-    const razorPayContactId =
-      req.user.razorPayContactId ||
-      (await fetch("https://api.razorpay.com/v1/contacts", {
-        method: "POST",
-        headers: razorHeaders,
-        body: JSON.stringify({
-          name: `${req.user.firstName} ${req.user.lastName}`,
-          email: req.user.email,
-          contact: req.user.phone,
-          type: "user",
-          reference_id: req.user._id.toString(),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          return User.findOneAndUpdate(
-            { _id: req.user._id },
-            { razorPayContactId: data.id },
-            { new: true }
-          ).then((newUser) => newUser.razorPayContactId);
-        })
-        .catch((err) => {
-          console.log(err);
-          return null;
-        }));
-    const razorBody = {
-      contact_id: razorPayContactId,
-      ...fundAccountDetail,
-    };
-    console.log(razorBody);
-    const razorPayFundAccount = await fetch(
-      "https://api.razorpay.com/v1/fund_accounts",
-      {
-        method: "POST",
-        headers: razorHeaders,
-        body: JSON.stringify(razorBody),
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          console.log(data.error);
-          return null;
-        } else {
-          return data.id;
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        return null;
-      });
-    if (razorPayContactId && razorPayFundAccount) {
-      console.log(razorPayFundAccount);
-      fetch("https://api.razorpay.com/v1/payouts", {
-        method: "POST",
-        headers: razorHeaders,
-        body: JSON.stringify({
-          account_number: process.env.RAZOR_PAY_X_ACCOUNT,
-          fund_account_id: razorPayFundAccount,
-          amount: amount * 100,
-          currency: "INR",
-          mode: "IMPS",
-          purpose: "withdrawal",
-          queue_if_low_balance: false,
-          reference_id: req.user._id,
-          narration: "fund withdrawal from skropay",
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.id) {
-            new WithdrawMoney({
-              transactionId: data.id,
-              user: req.user._id,
-              amount: amount,
-              paymentMethod,
-              note: "Withdraw money from wallet",
-            })
-              .save()
-              .then((transaction) => {
-                User.findOneAndUpdate(
-                  { _id: req.user._id },
-                  {
-                    $inc: { balance: -Math.abs(amount) },
-                    $addToSet: { transactions: transaction._id },
-                  },
-                  { new: true }
-                ).then((updated) => {
-                  res.json({ code: "ok", transaction: transaction });
-                });
-              })
-              .catch((err) => {
-                console.log(err);
-              });
-          } else {
-            console.log(data);
-            res.status(500).json({ message: "someting went wrong" });
-          }
-        });
-    } else {
-      res.status(400).json({ message: "bad request" });
-    }
-  }
-);
+// app.post(
+//   "/api/withdrawMoney",
+//   passport.authenticate("userPrivate"),
+//   async (req, res) => {
+//     const { amount, paymentMethod, accountDetail } = req.body;
+//     if (+amount > req.user.balance) {
+//       res.status(403).json({ code: 403, message: "insufficient fund" });
+//       return;
+//     }
+//     let fundAccountDetail;
+//     switch (paymentMethod) {
+//       case "BankAccount":
+//         fundAccountDetail = {
+//           account_type: "bank_account",
+//           bank_account: { ...accountDetail },
+//         };
+//         break;
+//       case "BankCard":
+//         fundAccountDetail = {
+//           account_type: "card",
+//           // "card.name": accountDetail.name,
+//           // "card.number": accountDetail.number,
+//           card: { ...accountDetail },
+//         };
+//         break;
+//       case "VpaAccount":
+//         fundAccountDetail = {
+//           account_type: "vpa",
+//           vpa: { ...accountDetail },
+//         };
+//         break;
+//       default:
+//         res.status(400).json({ message: "bad request" });
+//     }
+//     const razorHeaders = {
+//       "Content-Type": "application/json",
+//       Authorization: `Basic ${base64.encode(
+//         `${process.env.RAZOR_PAY_ID}:${process.env.RAZOR_PAY_SECRET}`
+//       )}`,
+//     };
+//     const razorPayContactId =
+//       req.user.razorPayContactId ||
+//       (await fetch("https://api.razorpay.com/v1/contacts", {
+//         method: "POST",
+//         headers: razorHeaders,
+//         body: JSON.stringify({
+//           name: `${req.user.firstName} ${req.user.lastName}`,
+//           email: req.user.email,
+//           contact: req.user.phone,
+//           type: "user",
+//           reference_id: req.user._id.toString(),
+//         }),
+//       })
+//         .then((res) => res.json())
+//         .then((data) => {
+//           return User.findOneAndUpdate(
+//             { _id: req.user._id },
+//             { razorPayContactId: data.id },
+//             { new: true }
+//           ).then((newUser) => newUser.razorPayContactId);
+//         })
+//         .catch((err) => {
+//           console.log(err);
+//           return null;
+//         }));
+//     const razorBody = {
+//       contact_id: razorPayContactId,
+//       ...fundAccountDetail,
+//     };
+//     console.log(razorBody);
+//     const razorPayFundAccount = await fetch(
+//       "https://api.razorpay.com/v1/fund_accounts",
+//       {
+//         method: "POST",
+//         headers: razorHeaders,
+//         body: JSON.stringify(razorBody),
+//       }
+//     )
+//       .then((res) => res.json())
+//       .then((data) => {
+//         if (data.error) {
+//           console.log(data.error);
+//           return null;
+//         } else {
+//           return data.id;
+//         }
+//       })
+//       .catch((err) => {
+//         console.log(err);
+//         return null;
+//       });
+//     if (razorPayContactId && razorPayFundAccount) {
+//       console.log(razorPayFundAccount);
+//       fetch("https://api.razorpay.com/v1/payouts", {
+//         method: "POST",
+//         headers: razorHeaders,
+//         body: JSON.stringify({
+//           account_number: process.env.RAZOR_PAY_X_ACCOUNT,
+//           fund_account_id: razorPayFundAccount,
+//           amount: amount * 100,
+//           currency: "INR",
+//           mode: "IMPS",
+//           purpose: "withdrawal",
+//           queue_if_low_balance: false,
+//           reference_id: req.user._id,
+//           narration: "fund withdrawal from skropay",
+//         }),
+//       })
+//         .then((res) => res.json())
+//         .then((data) => {
+//           if (data.id) {
+//             new WithdrawMoney({
+//               transactionId: data.id,
+//               user: req.user._id,
+//               amount: amount,
+//               paymentMethod,
+//               note: "Withdraw money from wallet",
+//             })
+//               .save()
+//               .then((transaction) => {
+//                 User.findOneAndUpdate(
+//                   { _id: req.user._id },
+//                   {
+//                     $inc: { balance: -Math.abs(amount) },
+//                     $addToSet: { transactions: transaction._id },
+//                   },
+//                   { new: true }
+//                 ).then((updated) => {
+//                   res.json({ code: "ok", transaction: transaction });
+//                 });
+//               })
+//               .catch((err) => {
+//                 console.log(err);
+//               });
+//           } else {
+//             console.log(data);
+//             res.status(500).json({ message: "someting went wrong" });
+//           }
+//         });
+//     } else {
+//       res.status(400).json({ message: "bad request" });
+//     }
+//   }
+// );
 
 // -------------------------- payment methods
 app.post(
@@ -822,9 +836,9 @@ app.post(
     const {
       buyer_id,
       amount,
-      products,
+      // products,
       dscr,
-      deliveryDetail,
+      // deliveryDetail,
       order,
       refund,
     } = req.body;
@@ -911,48 +925,52 @@ app.patch(
   passport.authenticate("userPrivate"),
   (req, res) => {
     const { _id } = req.body;
-    Milestone.findOneAndUpdate(
-      { _id: req.body._id, "seller._id": req.user._id, status: "inProgress" },
-      { status: "pendingRelease" },
-      { new: true }
-    )
-      .then((milestone) => {
-        if (milestone) {
-          res.json({ code: "ok", message: "release requested", milestone });
-          InitiateChat({
-            user: milestone.seller._id,
-            client: milestone.buyer._id,
-          })
-            .then(([userChat, clientChat]) => {
-              return SendMessage({
-                rooms: [userChat._id, clientChat._id],
-                message: {
-                  type: "milestone",
-                  from: milestone.seller._id,
-                  to: milestone.buyer._id,
-                  text: `${req.user.firstName} requested release of a milestone`,
-                  milestoneId: milestone._id,
-                },
-              });
+    if (ObjectId.isValid(_id)) {
+      Milestone.findOneAndUpdate(
+        { _id: req.body._id, "seller._id": req.user._id, status: "inProgress" },
+        { status: "pendingRelease" },
+        { new: true }
+      )
+        .then((milestone) => {
+          if (milestone) {
+            res.json({ code: "ok", message: "release requested", milestone });
+            InitiateChat({
+              user: milestone.seller._id,
+              client: milestone.buyer._id,
             })
-            .then((chatRes) => {
-              notify(
-                milestone.buyer._id,
-                JSON.stringify({
-                  title: "Milestone request",
-                  body: `${milestone.seller.firstName} requested a milestone`,
-                }),
-                "User"
-              );
-            });
-        } else {
-          res.status(400).json({ code: 400, message: "bad request" });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({ message: "something went wrong" });
-      });
+              .then(([userChat, clientChat]) => {
+                return SendMessage({
+                  rooms: [userChat._id, clientChat._id],
+                  message: {
+                    type: "milestone",
+                    from: milestone.seller._id,
+                    to: milestone.buyer._id,
+                    text: `${req.user.firstName} requested release of a milestone`,
+                    milestoneId: milestone._id,
+                  },
+                });
+              })
+              .then((chatRes) => {
+                notify(
+                  milestone.buyer._id,
+                  JSON.stringify({
+                    title: "Milestone request",
+                    body: `${milestone.seller.firstName} requested a milestone`,
+                  }),
+                  "User"
+                );
+              });
+          } else {
+            res.status(400).json({ code: 400, message: "bad request" });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ message: "something went wrong" });
+        });
+    } else {
+      res.status(400).jsoN({ code: 400, message: "Valid _id is required" });
+    }
   }
 );
 app.patch(
@@ -1048,14 +1066,12 @@ app.delete(
   "/api/cancelMilestoneRequest",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    console.log(req.body._id);
     if (req.body._id) {
       Milestone.findOneAndDelete({
         _id: req.body._id,
         status: "pending",
         "seller._id": req.user._id,
       }).then((milestone) => {
-        console.log(milestone);
         if (milestone) {
           res.json({ code: "ok", message: "milestone request cancelled" });
         } else {
@@ -1332,7 +1348,10 @@ app.patch(
   "/api/releaseMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const { _id, amount } = req.body;
+    const {
+      _id,
+      // amount
+    } = req.body;
     const milestone = await Milestone.findOne({
       _id,
       $or: [{ status: "inProgress" }, { status: "pendingRelease" }],

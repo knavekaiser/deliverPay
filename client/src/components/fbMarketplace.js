@@ -68,7 +68,7 @@ const Marketplace = () => {
     // }
     else if (!user.fbMarket?.commerceAccount?.catalog?.id) {
       setStep("commerceAccount");
-    } else if (!user.fbMarket?.userAggrement) {
+    } else if (!user.fbMarket?.userAgreement) {
       setStep("terms");
     }
   }, [user]);
@@ -128,7 +128,7 @@ const Marketplace = () => {
                     "fbMarket.facebookPage": {},
                     "fbMarket.dataSharing": null,
                     "fbMarket.commerceAccount": {},
-                    "fbMarket.userAggrement": false,
+                    "fbMarket.userAgreement": false,
                   }).then(({ user: newUser }) => {
                     setUser((prev) => ({
                       ...prev,
@@ -243,7 +243,7 @@ const Marketplace = () => {
         </Step>
         <Step
           disabled={!user.fbMarket?.commerceAccount?.catalog?.id}
-          data={user.fbMarket?.userAggrement || null}
+          data={user.fbMarket?.userAgreement || null}
           defaultStatus={step === "terms"}
           label="Terms and Conditions"
         >
@@ -257,12 +257,12 @@ const Marketplace = () => {
             </a>
             .
           </p>
-          {!user.fbMarket.userAggrement && (
+          {!user.fbMarket.userAgreement && (
             <button
               className="btn"
               onClick={() => {
                 updateProfileInfo({
-                  "fbMarket.userAggrement": true,
+                  "fbMarket.userAgreement": true,
                 }).then(({ user: newUser }) => {
                   setUser((prev) => ({ ...prev, fbMarket: newUser.fbMarket }));
                   setStep("");
@@ -351,7 +351,7 @@ const BusinessManager = ({ setLoading }) => {
                     "fbMarket.businessManager": {},
                     "fbMarket.facebookPage": {},
                     "fbMarket.commerceAccount": {},
-                    "fbMarket.userAggrement": false,
+                    "fbMarket.userAgreement": false,
                   }).then(({ user: newUser }) => {
                     setUser((prev) => ({
                       ...prev,
@@ -539,7 +539,7 @@ const FbPage = () => {
                   updateProfileInfo({
                     "fbMarket.facebookPage": {},
                     "fbMarket.commerceAccount": {},
-                    "fbMarket.userAggrement": false,
+                    "fbMarket.userAgreement": false,
                   }).then(({ user: newUser }) => {
                     console.log(newUser.fbMarket);
                     setUser((prev) => ({

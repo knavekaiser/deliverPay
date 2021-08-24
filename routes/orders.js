@@ -12,7 +12,7 @@ app.get("/api/getOrders", passport.authenticate("userPrivate"), (req, res) => {
     dateTo,
   } = req.query;
   const query = {
-    [`${user}._id`]: req.user._id,
+    [`${user || "none"}._id`]: req.user._id,
     ...(q && {
       [`${user === "seller" ? "buyer" : "seller"}.firstName`]: new RegExp(
         q,
@@ -373,56 +373,55 @@ app.patch(
     }
   }
 );
-
 //------------------------------------ Buyer
-app.post(
-  "/api/submitOrder",
-  passport.authenticate("userPrivate"),
-  async (req, res) => {
-    let { products, seller, deliveryDetail, total } = req.body;
-    seller = await User.findOne(
-      { _id: seller },
-      "_id firstName lastName phone email profileImg"
-    );
-    if (deliveryDetail && seller && products?.length && total) {
-      new Order({
-        buyer: req.user,
-        seller: seller,
-        products: products.map(({ product, qty }) => ({
-          product: { ...product, _id: ObjectId(product._id) },
-          qty,
-        })),
-        deliveryDetail,
-        total,
-      })
-        .save()
-        .then((order) => {
-          notify(
-            seller._id,
-            JSON.stringify({
-              title: "New order!",
-              body: "You have a new order",
-            }),
-            "User"
-          );
-          res.json({
-            code: "ok",
-            products: order.products.map(({ product }) => product._id),
-          });
-        })
-        .catch((err) => {
-          console.log(err);
-          res.status(500).json({ code: 500, message: "Database error" });
-        });
-    } else {
-      res.status(400).json({
-        code: 400,
-        message: "seller, deliveryDetail, products and total is required",
-        fieldsFound: req.body,
-      });
-    }
-  }
-);
+// app.post(
+//   "/api/submitOrder",
+//   passport.authenticate("userPrivate"),
+//   async (req, res) => {
+//     let { products, seller, deliveryDetail, total } = req.body;
+//     seller = await User.findOne(
+//       { _id: seller },
+//       "_id firstName lastName phone email profileImg"
+//     );
+//     if (deliveryDetail && seller && products?.length && total) {
+//       new Order({
+//         buyer: req.user,
+//         seller: seller,
+//         products: products.map(({ product, qty }) => ({
+//           product: { ...product, _id: ObjectId(product._id) },
+//           qty,
+//         })),
+//         deliveryDetail,
+//         total,
+//       })
+//         .save()
+//         .then((order) => {
+//           notify(
+//             seller._id,
+//             JSON.stringify({
+//               title: "New order!",
+//               body: "You have a new order",
+//             }),
+//             "User"
+//           );
+//           res.json({
+//             code: "ok",
+//             products: order.products.map(({ product }) => product._id),
+//           });
+//         })
+//         .catch((err) => {
+//           console.log(err);
+//           res.status(500).json({ code: 500, message: "Database error" });
+//         });
+//     } else {
+//       res.status(400).json({
+//         code: 400,
+//         message: "seller, deliveryDetail, products and total is required",
+//         fieldsFound: req.body,
+//       });
+//     }
+//   }
+// );
 app.patch(
   "/api/cancelOrder",
   passport.authenticate("userPrivate"),
@@ -502,12 +501,12 @@ app.post(
   (req, res) => {
     const {
       _id,
-      products,
-      total,
-      deliveryTime,
-      terms,
-      refundable,
-      shippingCost,
+      // products,
+      // total,
+      // deliveryTime,
+      // terms,
+      // refundable,
+      // shippingCost,
     } = req.body;
     if (
       ObjectId.isValid(_id)
@@ -533,7 +532,6 @@ app.post(
       )
         .then(async (order) => {
           if (order) {
-            console.log();
             Promise.all([
               order.products.map(({ product, qty }) =>
                 Product.findOneAndUpdate(
@@ -654,17 +652,17 @@ app.post(
         { status: "approved" },
         { new: true }
       )
-        .then(async (order) => {
-          if (order) {
+        .then(async (refund) => {
+          if (refund) {
             notify(
-              order.buyer._id,
+              refund.buyer._id,
               JSON.stringify({
                 title: "Refund approved",
                 body: "Your refund request has been approved",
               }),
               "User"
             );
-            res.json({ code: "ok", order });
+            res.json({ code: "ok", refund });
           } else {
             res
               .status(400)
@@ -705,7 +703,7 @@ app.patch(
               }),
               "User"
             );
-            res.json({ code: "ok", order: dbRes });
+            res.json({ code: "ok", refund: dbRes });
           } else {
             res
               .status(400)
