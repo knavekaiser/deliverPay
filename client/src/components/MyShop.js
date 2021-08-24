@@ -36,7 +36,9 @@ import RefundManagement, { FullRefund } from "./RefundManagement";
 import FBMarket from "./fbMarketplace";
 import { updateProfileInfo } from "./Profile";
 import moment from "moment";
+import { Step } from "./fbMarketplace";
 import XLSX from "xlsx";
+import { CSVLink } from "react-csv";
 require("./styles/products.scss");
 
 const parseXLSXtoJSON = (file, cb) => {
@@ -53,7 +55,47 @@ const parseXLSXtoJSON = (file, cb) => {
     data.forEach((row, i) => {
       const item = {};
       cols.forEach((col, j) => {
-        item[col] = row[j];
+        let label;
+        switch (col) {
+          case "Images":
+            label = "images";
+            break;
+          case "Name":
+            label = "name";
+            break;
+          case "Description":
+            label = "dscr";
+            break;
+          case "Material":
+            label = "material";
+            break;
+          case "Size [Please specify mm, cm, inch or KG]":
+            label = "size";
+            break;
+          case "Category":
+            label = "category";
+            break;
+          case "Type":
+            label = "type";
+            break;
+          case "Price in INR.":
+            label = "price";
+            break;
+          case "Units Available":
+            label = "available";
+            break;
+          case "HSN Code":
+            label = "hsn";
+            break;
+          case "GST %":
+            label = "gst";
+            break;
+          case "id":
+            label = "_id";
+            break;
+          default:
+        }
+        item[label] = row[j];
       });
       arr.push(item);
     });
@@ -747,7 +789,7 @@ const Products = ({ categories, shopSetupComplete }) => {
           </>
         );
       });
-  }, [category, search, page, perPage, dateFilter, type]);
+  }, [category, search, page, perPage, dateFilter, type, addMany]);
   useLayoutEffect(() => {
     if (dateFilterRef.current) {
       const {
@@ -1069,9 +1111,8 @@ const Products = ({ categories, shopSetupComplete }) => {
         className="batchItemPreview"
       >
         <BatchUpload
-          onSuccess={(products) => {
-            setProducts((prev) => [...products, ...prev]);
-            setTotal((prev) => prev + products.length);
+          categories={categories}
+          onSuccess={() => {
             setAddMany(false);
           }}
         />
@@ -1223,31 +1264,41 @@ const SingleProduct = ({
   );
 };
 
-const BatchUpload = ({ onSuccess }) => {
+const BatchUpload = ({ onSuccess, categories }) => {
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
   const [batchItems, setBatchItems] = useState(null);
+  const [images, setImages] = useState([]);
   const [msg, setMsg] = useState(null);
+  const [category, setCategory] = useState("");
+  const [csvDraft, setCsvDraft] = useState(null);
   const addBatchProducts = () => {
     setLoading(true);
-    fetch("/api/addManyProducts", {
-      method: "POST",
+    fetch("/api/updateDraft", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: batchItems }),
     })
       .then((res) => res.json())
-      .then(({ code, products }) => {
+      .then(({ code, updated }) => {
         setLoading(false);
         if (code === "ok") {
-          setBatchItems((prev) =>
-            prev.filter((item) => {
-              return !products.some(
-                (product) =>
-                  product.name + product.dscr + product.price + product.type ===
-                  item.name + item.dscr + item.price + item.type
-              );
-            })
+          setMsg(
+            <>
+              <button
+                onClick={() => {
+                  setMsg(null);
+                  onSuccess?.();
+                }}
+              >
+                Okay
+              </button>
+              <div>
+                {updated ? <Succ_svg /> : <Err_svg />}
+                <h4>{updated} items has been updated.</h4>
+              </div>
+            </>
           );
-          onSuccess?.(products);
         } else {
           setMsg(
             <>
@@ -1274,124 +1325,265 @@ const BatchUpload = ({ onSuccess }) => {
         );
       });
   };
+  const uploadImages = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const imgLinks = (await UploadFiles({ files: images, setMsg })) || [];
+    if (imgLinks.length !== images.length) {
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>Could not upload images. Please try again.</h4>
+          </div>
+        </>
+      );
+      return;
+    }
+    fetch("/api/uploadProductImg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        images: imgLinks,
+        category,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          console.log(data);
+          const headers = Object.entries({
+            Images: "images",
+            id: "_id",
+            Name: "name",
+            Description: "dscr",
+            Material: "material",
+            "Size [Please specify mm, cm, inch or KG]": "size",
+            Category: "category",
+            Type: "type",
+            "Price in INR.": "price",
+            "Units Available": "available",
+            "HSN Code": "hsn",
+            "GST %": "gst",
+          }).map(([key, value]) => ({
+            label: key,
+            key: value,
+          }));
+          console.log(headers, data.products);
+          setCsvDraft({
+            headers,
+            data: data.products,
+            filename: `Delivery Pay Product Draft.csv`,
+          });
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not add products. Make sure you're online.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not add products. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
   return (
-    <>
-      {!!batchItems?.length && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Images</th>
-              <th className="name">Name</th>
-              <th className="dscr">Description</th>
-              <th>Available</th>
-              <th>Price</th>
-              <th>GST</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {batchItems?.map((item, i) => (
-              <tr key={i}>
-                <td>{item.type}</td>
-                <td className="thumbs">
-                  <Media links={item.images} />
-                </td>
-                <td className="name">{item.name}</td>
-                <td className="dscr">{item.dscr}</td>
-                <td>
-                  {item.available}
-                  {item.available === true && "Available"}
-                  {item.available === false && "Unavailable"}
-                </td>
-                <td>{item.price}</td>
-                <td>{item.gst}</td>
-                <td>
-                  <button
-                    className="remove"
-                    onClick={() =>
-                      setBatchItems((prev) => {
-                        const newItems = [...prev];
-                        newItems.splice(i, 1);
-                        return newItems;
-                      })
-                    }
-                  >
-                    <X_svg />
-                  </button>
-                </td>
+    <div className="content">
+      <Step
+        label="Create Draft"
+        className="createDraft"
+        defaultStatus={step === 1}
+        data={csvDraft}
+      >
+        <>
+          <form onSubmit={uploadImages}>
+            <section className="category">
+              <label>Choose category</label>
+              <Combobox
+                options={categories.map((item) => ({
+                  label: item,
+                  value: item.toLowerCase(),
+                }))}
+                required={true}
+                onChange={(e) => setCategory(e.value)}
+              />
+            </section>
+            <p>
+              Choose images{" "}
+              <span>
+                Choose 1 image for each product. you can add multiple images
+                later.
+              </span>
+            </p>
+            <FileInput onChange={(files) => setImages(files)} multiple={true} />
+            <section className="btns">
+              <button
+                className="clean"
+                type="button"
+                onClick={() => setStep(3)}
+              >
+                Already have a draft
+              </button>
+              {csvDraft ? (
+                <CSVLink
+                  {...csvDraft}
+                  className="submit"
+                  type="submit"
+                  onClick={() => {
+                    setCsvDraft(null);
+                    setStep(2);
+                  }}
+                >
+                  Download Draft
+                </CSVLink>
+              ) : (
+                <button className="submit">Create Draft</button>
+              )}
+            </section>
+          </form>
+        </>
+      </Step>
+      <Step label="Populate With data" defaultStatus={step === 2}>
+        <p>
+          Populate the Sheet with real product data. Don't Change the header.
+        </p>
+        <button className="submit" onClick={() => setStep(3)}>
+          Next
+        </button>
+      </Step>
+      <Step label="Upload Draft" defaultStatus={step === 3}>
+        {!!batchItems?.length && (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Images</th>
+                <th className="name">Name</th>
+                <th className="dscr">Description</th>
+                <th>Available</th>
+                <th>Price</th>
+                <th>GST</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {!batchItems?.length && (
-        <div className="uploadFile">
-          <p>
-            You can upload xlsx file in supported format. See the example file{" "}
-            <a
-              href="/batch_product_upload_xlsx_file_example.xlsx"
-              target="_blank"
-            >
-              here
-            </a>
-            .
-          </p>
-          <input
-            type="file"
-            accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            onChange={(e) => {
-              if (e.target.files[0]) {
-                parseXLSXtoJSON(e.target.files[0], (result) => {
-                  if (result?.length) {
-                    setBatchItems(
-                      result
-                        .filter(
-                          (item) =>
-                            item.type &&
-                            item.category &&
-                            item.name &&
-                            item.dscr &&
-                            item.price
-                        )
-                        .map((item) => ({
-                          ...item,
-                          images: item.images
-                            .split(/,( |\n)/)
-                            .filter((item) => item.trim()),
-                        }))
-                    );
-                  }
-                });
-              }
-              e.target.value = null;
-            }}
-          />
-        </div>
-      )}
+            </thead>
+            <tbody>
+              {batchItems?.map((item, i) => (
+                <tr key={i}>
+                  <td>{item.type}</td>
+                  <td className="thumbs">
+                    <Media links={item.images} />
+                  </td>
+                  <td className="name">{item.name}</td>
+                  <td className="dscr">{item.dscr}</td>
+                  <td>
+                    {item.available}
+                    {item.available === true && "Available"}
+                    {item.available === false && "Unavailable"}
+                  </td>
+                  <td>{item.price}</td>
+                  <td>{item.gst}</td>
+                  <td>
+                    <button
+                      className="remove"
+                      onClick={() =>
+                        setBatchItems((prev) => {
+                          const newItems = [...prev];
+                          newItems.splice(i, 1);
+                          return newItems;
+                        })
+                      }
+                    >
+                      <X_svg />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {!batchItems?.length && (
+          <div className="uploadFile">
+            <p>
+              Upload xlsx/csv file in. See the example file{" "}
+              <a
+                href="/batch_product_upload_xlsx_file_example.csv"
+                target="_blank"
+              >
+                here
+              </a>
+              .
+            </p>
+            <input
+              type="file"
+              accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={(e) => {
+                if (e.target.files[0]) {
+                  parseXLSXtoJSON(e.target.files[0], (result) => {
+                    if (result?.length) {
+                      setBatchItems(
+                        result
+                          .filter(
+                            (item) =>
+                              item.type &&
+                              item.category &&
+                              item.name &&
+                              item.dscr &&
+                              item.price !== undefined
+                          )
+                          .map((item) => ({
+                            ...item,
+                            images: item.images
+                              .split(/,( |\n)/)
+                              .filter((item) => item.trim()),
+                          }))
+                      );
+                    }
+                  });
+                }
+                e.target.value = null;
+              }}
+            />
+          </div>
+        )}
+        {!!batchItems?.length && (
+          <button
+            className="submit"
+            onClick={() =>
+              Confirm({
+                label: "Adding Batch products",
+                question: "You sure want to add all these items?",
+                callback: addBatchProducts,
+              })
+            }
+          >
+            Add
+          </button>
+        )}
+      </Step>
       {loading && (
         <div className="spinnerContainer">
           <div className="spinner" />
         </div>
       )}
-      {!!batchItems?.length && (
-        <button
-          className="submit"
-          onClick={() =>
-            Confirm({
-              label: "Adding Batch products",
-              question: "You sure want to add all these items?",
-              callback: addBatchProducts,
-            })
-          }
-        >
-          Add
-        </button>
-      )}
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>
-    </>
+    </div>
   );
 };
 

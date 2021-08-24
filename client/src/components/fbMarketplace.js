@@ -16,7 +16,7 @@ import {
 import Moment from "react-moment";
 require("./styles/fbMarketplace.scss");
 
-const Step = ({
+export const Step = ({
   label,
   defaultStatus,
   children,
@@ -26,6 +26,9 @@ const Step = ({
   step,
 }) => {
   const [open, setOpen] = useState(data ? !data : null);
+  useEffect(() => {
+    setOpen(defaultStatus);
+  }, [defaultStatus]);
   return (
     <div
       className={`step ${open || defaultStatus ? "open" : ""} ${

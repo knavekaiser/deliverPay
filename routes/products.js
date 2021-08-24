@@ -166,6 +166,86 @@ app.delete(
   }
 );
 
+app.post(
+  "/api/uploadProductImg",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { category, images } = req.body;
+    if (category && images) {
+      const products = images.map(
+        (img) =>
+          new Product({
+            type: "product",
+            user: req.user._id,
+            name: "Product draft",
+            dscr: "Product draft",
+            category,
+            images: [img],
+            price: 0,
+            status: "draft",
+          })
+      );
+      Product.insertMany(products)
+        .then((dbRes) => {
+          res.json({
+            code: "ok",
+            products: dbRes.map((item) => ({
+              _id: item._id,
+              images: item.images,
+              name: item.name,
+              dscr: item.dscr,
+              material: item.material,
+              size: item.size,
+              category: item.category,
+              type: item.type,
+              price: item.price,
+              available: item.available,
+              hsn: item.hsn,
+              gst: item.gst,
+            })),
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ code: 500, message: "Databaser error" });
+        });
+    } else {
+      res
+        .status(400)
+        .json({ code: 400, message: "category, images are required" });
+    }
+  }
+);
+app.patch(
+  "/api/updateDraft",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { items } = req.body;
+    if (Array.isArray(items) && items.length > 0) {
+      const products = items.map((item) => ({
+        updateOne: {
+          filter: { _id: ObjectId(item._id) },
+          update: { ...item },
+          upsert: false,
+        },
+      }));
+      Product.bulkWrite(products, { ordered: false, new: true })
+        .then((dbRes) => {
+          res.json({ code: "ok", updated: dbRes.result?.nModified || 0 });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ code: 500, message: "Database error" });
+        });
+    } else {
+      res.status(400).json({
+        code: 400,
+        message: "items with at least one product is required.",
+      });
+    }
+  }
+);
+
 app.get("/api/getProducts", (req, res) => {
   const { seller, q, page, perPage, sort, order, category } = req.query;
   const sortOrder = {
@@ -175,6 +255,7 @@ app.get("/api/getProducts", (req, res) => {
     ? jwt_decode(req.cookies?.access_token)?.sub
     : null;
   const query = {
+    status: { $ne: "draft" },
     ...(user && { user: { $not: { $eq: ObjectId(user) } } }),
     ...(ObjectId.isValid(seller) && { user: ObjectId(seller) }),
     ...(q && {

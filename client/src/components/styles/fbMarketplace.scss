@@ -38,68 +38,6 @@
       color: $blue;
       cursor: pointer;
     }
-    .step {
-      background: rgba(0, 0, 0, 0.01);
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      border-radius: 0.7rem;
-      .head {
-        padding: 1rem 1.3rem;
-        display: flex;
-        align-items: center;
-        grid-gap: 0.75rem;
-        font-weight: 500;
-        .chev {
-          width: 1rem;
-          path {
-            fill: rgba(0, 0, 0, 0.56);
-          }
-        }
-        .status {
-          margin: auto;
-          margin-right: 0;
-          svg {
-            height: 1.2rem;
-            width: 1.2rem;
-          }
-        }
-      }
-      .body {
-        padding: 1.3rem;
-        padding-top: 0.5rem;
-        display: grid;
-        grid-gap: 1.5rem;
-        .note {
-          font-size: 0.85rem;
-          line-height: 1.5em;
-          color: rgba(0, 0, 0, 0.8);
-        }
-        .user {
-          align-items: center;
-          display: flex;
-          grid-gap: 0.7rem;
-        }
-        .err {
-          border-radius: 0.5rem;
-          background: rgba($red, 0.1);
-          padding: 1rem;
-          border: 1px solid $red;
-          font-size: 0.9rem;
-        }
-      }
-      &.open {
-        .head {
-          .chev {
-            transform: rotate(180deg);
-          }
-        }
-      }
-      &.disabled {
-        opacity: 0.6;
-        box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
-        pointer-events: none;
-      }
-    }
     .profile {
       p {
         span {
@@ -210,6 +148,68 @@
         }
       }
     }
+  }
+}
+.step {
+  background: rgba(0, 0, 0, 0.01);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 0.7rem;
+  .head {
+    padding: 1rem 1.3rem;
+    display: flex;
+    align-items: center;
+    grid-gap: 0.75rem;
+    font-weight: 500;
+    .chev {
+      width: 1rem;
+      path {
+        fill: rgba(0, 0, 0, 0.56);
+      }
+    }
+    .status {
+      margin: auto;
+      margin-right: 0;
+      svg {
+        height: 1.2rem;
+        width: 1.2rem;
+      }
+    }
+  }
+  .body {
+    padding: 1.3rem;
+    padding-top: 0.5rem;
+    display: grid;
+    grid-gap: 1.5rem;
+    .note {
+      font-size: 0.85rem;
+      line-height: 1.5em;
+      color: rgba(0, 0, 0, 0.8);
+    }
+    .user {
+      align-items: center;
+      display: flex;
+      grid-gap: 0.7rem;
+    }
+    .err {
+      border-radius: 0.5rem;
+      background: rgba($red, 0.1);
+      padding: 1rem;
+      border: 1px solid $red;
+      font-size: 0.9rem;
+    }
+  }
+  &.open {
+    .head {
+      .chev {
+        transform: rotate(180deg);
+      }
+    }
+  }
+  &.disabled {
+    opacity: 0.6;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+    pointer-events: none;
   }
 }
 

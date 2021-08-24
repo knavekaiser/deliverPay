@@ -30,6 +30,7 @@ const productModel = new Schema(
         { timestamps: true }
       ),
     ],
+    status: { type: String },
   },
   { timestamps: true }
 );

@@ -1015,7 +1015,7 @@ export const FileInput = ({
 }) => {
   const [files, setFiles] = useState(prefill || []);
   useEffect(() => {
-    onChange(files);
+    onChange?.(files);
   }, [files]);
   return (
     <section className="fileInput">

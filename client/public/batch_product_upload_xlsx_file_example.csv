@@ -1,0 +1,5 @@
+﻿"Images","id","Name","Description","Material","Size [Please specify mm, cm, inch or KG]","Category","Type","Price in INR.","Units Available","HSN Code","GST %"
+"http://localhost:4000/file_1629805420903.jpg","6124db6c7ec1d749043d259c","Product draft","Product draft","","","mobile","product","0","","",""
+"http://localhost:4000/file_1629805420914.jpg","6124db6c7ec1d749043d259d","Product draft","Product draft","","","mobile","product","0","","",""
+"http://localhost:4000/file_1629805420915.png","6124db6c7ec1d749043d259e","Product draft","Product draft","","","mobile","product","0","","",""
+"http://localhost:4000/file_1629805420922.jpg","6124db6c7ec1d749043d259f","Product draft","Product draft","","","mobile","product","0","","",""
