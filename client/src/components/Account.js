@@ -31,7 +31,7 @@ import MyShop from "./MyShop";
 import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
 import Marketplace, { SingleProduct, Cart, CartItem } from "./Marketplace";
-import Deals, { socket } from "./Deals";
+import Deals, { socket } from "./_Deals_old";
 import MyShopping from "./myShopping";
 import OrderManagement from "./OrderManagement";
 import { GoogleLogout } from "react-google-login";
