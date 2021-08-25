@@ -33,10 +33,45 @@
     <title>Delivery pay</title>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <div id="portal"></div>
-    <div id="confirm"></div>
+    <div class="splash-screen">
+      <style>
+        body {
+          padding: 0;
+          margin: 0;
+          box-sizing: border-box;
+        }
+        .splash-screen {
+          position: fixed;
+          z-index: 100;
+          background: white;
+          display: grid;
+          place-items: center;
+          height: 100vh;
+          width: 100vw;
+        }
+        img {
+          max-width: 7rem;
+          max-height: 7rem;
+        }
+        <p>Loading</p></style
+      ><img
+        className="logo_small"
+        src="/logo_sqr.jpg"
+        alt="Delivery pay logo"
+      />
+    </div>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-BZSLSKZPSL"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-BZSLSKZPSL");
+    </script>
     <script>
       window.fbAsyncInit = function () {
         FB.init({
@@ -47,7 +82,6 @@
         });
         FB.AppEvents.logPageView();
       };
-
       (function (d, s, id) {
         var js,
           fjs = d.getElementsByTagName(s)[0];
@@ -60,5 +94,44 @@
         fjs.parentNode.insertBefore(js, fjs);
       })(document, "script", "facebook-jssdk");
     </script>
+    <script>
+      !(function (f, b, e, v, n, t, s) {
+        if (f.fbq) return;
+        n = f.fbq = function () {
+          n.callMethod
+            ? n.callMethod.apply(n, arguments)
+            : n.queue.push(arguments);
+        };
+        if (!f._fbq) f._fbq = n;
+        n.push = n;
+        n.loaded = !0;
+        n.version = "2.0";
+        n.queue = [];
+        t = b.createElement(e);
+        t.async = !0;
+        t.src = v;
+        s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s);
+      })(
+        window,
+        document,
+        "script",
+        "https://connect.facebook.net/en_US/fbevents.js"
+      );
+      fbq("init", "964531507660585");
+      fbq("track", "PageView");
+    </script>
+    <noscript>
+      <img
+        height="1"
+        width="1"
+        src="https://www.facebook.com/tr?id=964531507660585&ev=PageView
+&noscript=1"
+      />
+    </noscript>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <div id="portal"></div>
+    <div id="confirm"></div>
   </body>
 </html>

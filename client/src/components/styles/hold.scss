@@ -74,6 +74,8 @@
         align-items: center;
         margin-bottom: 1rem;
         .step {
+          border: none;
+          border-radius: 5rem;
           position: relative;
           .icons {
             display: grid;

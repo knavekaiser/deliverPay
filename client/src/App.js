@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, lazy, Suspense } from "react";
 import { SiteContext, ChatProvider } from "./SiteContext";
 import {
   Route,
@@ -12,22 +12,26 @@ import { Modal } from "./components/Modal";
 import { Header, Footer } from "./components/Elements";
 import LandingPage from "./components/LandingPage";
 import UserStart from "./components/UserStart";
-import Account from "./components/Account";
-import AboutUs from "./components/AboutUs";
-import PrivacyPolicy from "./components/PrivacyPolicy";
-import CodeOfConduct from "./components/codeOfConduct";
-import CopyrightPolicy from "./components/copyrightPolicy";
-import FeesCharges from "./components/feesCharges";
-import UserAgreement from "./components/userAgreement";
-import HowItWorks from "./components/howItWorks";
-import ContactUs from "./components/contactUs";
-import RefundPolicy from "./components/refundPolicy";
-import ShippingPolicy from "./components/shippingPolicy";
-import Marketplace, { SingleProduct } from "./components/Marketplace";
-import WorkWithUs from "./components/WorkWithUs";
-import Apply from "./components/Apply";
 import { ToastContainer } from "react-toastify";
+import Marketplace, { SingleProduct } from "./components/Marketplace";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+
+const Account = lazy(() => import("./components/Account"));
+
+const AboutUs = lazy(() => import("./components/AboutUs"));
+const PrivacyPolicy = lazy(() => import("./components/PrivacyPolicy"));
+const CodeOfConduct = lazy(() => import("./components/codeOfConduct"));
+const CopyrightPolicy = lazy(() => import("./components/copyrightPolicy"));
+const FeesCharges = lazy(() => import("./components/feesCharges"));
+const UserAgreement = lazy(() => import("./components/userAgreement"));
+const HowItWorks = lazy(() => import("./components/howItWorks"));
+const ContactUs = lazy(() => import("./components/contactUs"));
+const RefundPolicy = lazy(() => import("./components/refundPolicy"));
+const ShippingPolicy = lazy(() => import("./components/shippingPolicy"));
+const WorkWithUs = lazy(() => import("./components/WorkWithUs"));
+const Apply = lazy(() => import("./components/Apply"));
+
+// const Marketplace, { SingleProduct } = lazy(() => import("./components/Apply"));
 
 Number.prototype.fix = function (p) {
   return +this.toFixed(p || 2);
@@ -59,68 +63,81 @@ function resizeWindow() {
 }
 
 function App() {
+  const { siteLoading, setSiteLoading } = useContext(SiteContext);
   const [mobile, setMobile] = useState(window.innerWidth <= 480);
   useEffect(() => {
     window.addEventListener("resize", () => resizeWindow());
     resizeWindow();
     serviceWorkerRegistration.register();
+    document.querySelector(".splash-screen")?.remove();
   }, []);
   return (
     <div className="App">
-      <BrowserRouter>
-        <Modal open={mobile} className="mobileApp">
-          <button onClick={() => setMobile(false)}>
-            I don't like better things.
-          </button>
-          <div className="wrapper">
-            <Link to="#">
-              <img src="/logo_big.jpg" />
-            </Link>
-            <p>Download our mobile app for a better experience.</p>
-          </div>
-        </Modal>
-        <ChatProvider>
-          <Switch>
-            <Route path="/" exact component={LandingPage} />
-            <Route path="/u" component={UserStart} />
-            <ProtectedRoute path="/account" component={Account} />
-            <Route path="/aboutUs" component={AboutUs} />
-            <Route path="/marketplace/:_id" component={SingleProduct} />
-            <Route path="/marketplace" component={Marketplace} />
-            <Route path="/privacyPolicy" component={PrivacyPolicy} />
-            <Route path="/codeOfConduct" component={CodeOfConduct} />
-            <Route path="/copyrightPolicy" component={CopyrightPolicy} />
-            <Route path="/fees&Charges" component={FeesCharges} />
-            <Route path="/terms" component={UserAgreement} />
-            <Route path="/howItWorks" component={HowItWorks} />
-            <Route path="/contactUs" component={ContactUs} />
-            <Route path="/refundCancellationPolicy" component={RefundPolicy} />
-            <Route path="/shippingDeliveryPolicy" component={ShippingPolicy} />
-            <Route path="/employment-opportunities" component={WorkWithUs} />
-            <Route path="/apply" component={Apply} />
-            <Route path="/">
-              <div className="generic">
-                <Header />
-                <div className="fourFour">
-                  <h1>404</h1>
+      {
+        // siteLoading && <Splash />
+      }
+      <Suspense fallback={<>Loading</>}>
+        <BrowserRouter>
+          <Modal open={mobile} className="mobileApp">
+            <button onClick={() => setMobile(false)}>
+              I don't like better things.
+            </button>
+            <div className="wrapper">
+              <Link to="#">
+                <img src="/logo_big.jpg" />
+              </Link>
+              <p>Download our mobile app for a better experience.</p>
+            </div>
+          </Modal>
+          <ChatProvider>
+            <Switch>
+              <Route path="/" exact component={LandingPage} />
+              <Route path="/u" component={UserStart} />
+              <ProtectedRoute path="/account" component={Account} />
+              <Route path="/aboutUs" component={AboutUs} />
+              <Route path="/marketplace/:_id" component={SingleProduct} />
+              <Route path="/marketplace" component={Marketplace} />
+              <Route path="/privacyPolicy" component={PrivacyPolicy} />
+              <Route path="/codeOfConduct" component={CodeOfConduct} />
+              <Route path="/copyrightPolicy" component={CopyrightPolicy} />
+              <Route path="/fees&Charges" component={FeesCharges} />
+              <Route path="/terms" component={UserAgreement} />
+              <Route path="/howItWorks" component={HowItWorks} />
+              <Route path="/contactUs" component={ContactUs} />
+              <Route
+                path="/refundCancellationPolicy"
+                component={RefundPolicy}
+              />
+              <Route
+                path="/shippingDeliveryPolicy"
+                component={ShippingPolicy}
+              />
+              <Route path="/employment-opportunities" component={WorkWithUs} />
+              <Route path="/apply" component={Apply} />
+              <Route path="/">
+                <div className="generic">
+                  <Header />
+                  <div className="fourFour">
+                    <h1>404</h1>
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
-              </div>
-            </Route>
-          </Switch>
-        </ChatProvider>
-        <ToastContainer
-          position="bottom-center"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-      </BrowserRouter>
+              </Route>
+            </Switch>
+          </ChatProvider>
+          <ToastContainer
+            position="bottom-center"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+        </BrowserRouter>
+      </Suspense>
     </div>
   );
 }

@@ -173,12 +173,12 @@ app.post(
     const { category, images } = req.body;
     if (category && images) {
       const products = images.map(
-        (img) =>
+        (img, i) =>
           new Product({
             type: "product",
             user: req.user._id,
-            name: "Product draft",
-            dscr: "Product draft",
+            name: "Product draft" + i,
+            dscr: "Product draft" + i,
             category,
             images: [img],
             price: 0,

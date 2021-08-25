@@ -4,6 +4,7 @@ import {
   useContext,
   useRef,
   useLayoutEffect,
+  lazy,
 } from "react";
 import { SiteContext } from "../SiteContext";
 import {
@@ -29,16 +30,17 @@ import {
 import { Modal, Confirm } from "./Modal";
 import { Link, Route, Switch, Redirect } from "react-router-dom";
 import { DateRange } from "react-date-range";
-import Moment from "react-moment";
 import TextareaAutosize from "react-textarea-autosize";
 import OrderManagement, { FullOrder } from "./OrderManagement";
 import RefundManagement, { FullRefund } from "./RefundManagement";
 import FBMarket from "./fbMarketplace";
 import { updateProfileInfo } from "./Profile";
-import moment from "moment";
 import { Step } from "./fbMarketplace";
-import XLSX from "xlsx";
 import { CSVLink } from "react-csv";
+import moment from "moment";
+
+const Moment = lazy(() => import("react-moment"));
+const XLSX = lazy(() => import("xlsx"));
 require("./styles/products.scss");
 
 const parseXLSXtoJSON = (file, cb) => {
@@ -1547,6 +1549,7 @@ const BatchUpload = ({ onSuccess, categories }) => {
                           )
                           .map((item) => ({
                             ...item,
+                            status: "",
                             images: item.images
                               .split(/,( |\n)/)
                               .filter((item) => item.trim()),

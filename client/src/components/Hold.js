@@ -4,6 +4,7 @@ import {
   useRef,
   useLayoutEffect,
   useContext,
+  lazy,
 } from "react";
 import { SiteContext } from "../SiteContext";
 import { Link, useHistory } from "react-router-dom";
@@ -24,9 +25,11 @@ import {
 } from "./Elements";
 import { MilestoneReleaseForm, DisputeForm } from "./Forms";
 import { DateRange } from "react-date-range";
-import Moment from "react-moment";
-import moment from "moment";
 import queryString from "query-string";
+import moment from "moment";
+
+// const queryString = lazy(async () => await import("query-string"));
+const Moment = lazy(() => import("react-moment"));
 require("./styles/hold.scss");
 
 const Hold = ({ history, location, match }) => {

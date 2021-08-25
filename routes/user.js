@@ -102,7 +102,16 @@ app.post("/api/registerUser", async (req, res) => {
                           { rewards: [reward._id] },
                           { new: true }
                         ).then((user) => {
-                          console.log(user.rewards);
+                          if (user) {
+                            notify(
+                              referer,
+                              JSON.stringify({
+                                title: "Referral reward!",
+                                body:
+                                  "Congratulations, you just got ₹50 cashback from Delivery Pay Referral program.",
+                              })
+                            );
+                          }
                         });
                       }
                     });
@@ -157,7 +166,6 @@ app.post(
   passport.authenticate("user", { session: false, failWithError: true }),
   handleSignIn,
   (err, req, res, next) => {
-    console.log(err);
     res.status(401).json({ code: 401, message: "invalid credentials" });
   }
 );

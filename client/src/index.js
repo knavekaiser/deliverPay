@@ -1,10 +1,10 @@
-import React, { useContext } from "react";
+import React, { useContext, lazy, Suspense } from "react";
 import ReactDOM from "react-dom";
 import "./index.scss";
-import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { Provider } from "./SiteContext";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+const App = lazy(() => import("./App.js"));
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -15,17 +15,15 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
   componentDidCatch(error, errorInfo) {
-    console.log(error, errorInfo);
     const options = {
       method: "POST",
       headers: { "Content-type": "application/json" },
       body: JSON.stringify({
-        err: error.name,
-        message: error.message,
+        issue: error.toString(),
         dscr: errorInfo,
       }),
     };
-    fetch("/api/bugReportAuto", options)
+    fetch("/api/bugReport", options)
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "ok") {
@@ -40,9 +38,7 @@ class ErrorBoundary extends React.Component {
           <div className="content">
             <ion-icon name="skull-outline"></ion-icon>
             <h2>Oops.</h2>
-            <a href="/">
-              <ion-icon name="refresh-outline"></ion-icon>
-            </a>
+            <a href="/">RELOAD</a>
             {this.reported && <p>successfully reported</p>}
           </div>
         </div>
@@ -56,21 +52,9 @@ ReactDOM.render(
   <React.StrictMode>
     <ErrorBoundary>
       <Provider>
-        <App />
-        {
-          //   <button
-          //   style={{ padding: "2rem" }}
-          //   onClick={() => serviceWorkerRegistration.register()}
-          // >
-          //   Register service worker
-          // </button>
-          // <button
-          //   style={{ padding: "2rem" }}
-          //   onClick={() => serviceWorkerRegistration.unregister()}
-          // >
-          //   Unregister service worker
-          // </button>
-        }
+        <Suspense fallback={<p>Loading...</p>}>
+          <App />
+        </Suspense>
       </Provider>
     </ErrorBoundary>
   </React.StrictMode>,

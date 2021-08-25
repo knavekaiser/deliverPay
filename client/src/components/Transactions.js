@@ -1,8 +1,8 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, lazy } from "react";
 import { SiteContext } from "../SiteContext";
 import { Err_svg, Img } from "./Elements";
 import { Modal } from "./Modal";
-import Moment from "react-moment";
+const Moment = lazy(() => import("react-moment"));
 
 const Transactions = ({ history, location, match }) => {
   const [transactions, setTransactions] = useState([]);

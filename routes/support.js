@@ -262,3 +262,21 @@ app.get("/api/siteConfig", (req, res) => {
       res.status(500).json({ code: 500, message: "something went wrong" });
     });
 });
+
+app.post("/api/bugReport", (req, res) => {
+  new Bug({
+    user: req.body.user || null,
+    issue: req.body.issue,
+    dscr: req.body.dscr,
+    url: req.headers.referer,
+    files: req.body.files || null,
+  })
+    .save()
+    .then((bug) => {
+      res.json({ code: "ok", message: "bug has been reported" });
+    })
+    .catch((err) => {
+      console.log(err, req.body);
+      res.status(500).json({ code: 500, message: "Database error" });
+    });
+});

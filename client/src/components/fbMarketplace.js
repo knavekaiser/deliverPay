@@ -162,6 +162,7 @@ const Marketplace = () => {
                       .then((res) => res.json())
                       .then((data) => {
                         if (data.code === "ok") {
+                          console.log("long_lived_token saved");
                           LS.set(
                             "facebook_user_accessToken",
                             data.long_lived_token
@@ -260,7 +261,7 @@ const Marketplace = () => {
             </a>
             .
           </p>
-          {!user.fbMarket.userAgreement && (
+          {!user.fbMarket?.userAgreement && (
             <button
               className="btn"
               onClick={() => {

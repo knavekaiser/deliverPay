@@ -1,8 +1,14 @@
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  lazy,
+  useContext,
+} from "react";
+import { SiteContext } from "../SiteContext";
 import { Link, Route, Switch } from "react-router-dom";
 import { Modal, Confirm } from "./Modal";
-import Moment from "react-moment";
-import moment from "moment";
 import {
   Arrow_left_svg,
   Combobox,
@@ -15,8 +21,104 @@ import {
 } from "./Elements";
 import { DateRange } from "react-date-range";
 import { TicketForm, TicketReplyForm } from "./Forms";
+import TextareaAutosize from "react-textarea-autosize";
+import moment from "moment";
+
+const Moment = lazy(() => import("react-moment"));
 require("./styles/singleTicket.scss");
 require("./styles/table.scss");
+
+const BugReportForm = ({ onSuccess }) => {
+  const { user } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(
+    user ? user.firstName + " " + user.lastName : ""
+  );
+  const [phone, setPhone] = useState(user ? user.phone : "");
+  const [issue, setIssue] = useState("");
+  const [dscr, setDscr] = useState("");
+  const [msg, setMsg] = useState(null);
+  const submit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    fetch("/api/bugReport", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        phone,
+        issue,
+        dscr,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          onSuccess?.();
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Report could not be submitted.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Report could not be submitted. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <>
+      <form onSubmit={submit}>
+        <section>
+          <label>Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} />
+        </section>
+        <section>
+          <label>Phone</label>
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </section>
+        <section>
+          <label>Issue</label>
+          <input value={issue} onChange={(e) => setIssue(e.target.value)} />
+        </section>
+        <section>
+          <label>Description</label>
+          <TextareaAutosize
+            value={dscr}
+            onChange={(e) => setDscr(e.target.value)}
+          />
+        </section>
+        <section className="btns">
+          <button className="submit">Submit</button>
+        </section>
+      </form>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
+    </>
+  );
+};
 
 export const Tickets = ({ history, location, pathname }) => {
   const dateFilterRef = useRef();
@@ -618,7 +720,9 @@ export const SingleTicket = ({ history, match }) => {
   );
 };
 const Support = ({ history, location, match }) => {
+  const [msg, setMsg] = useState(null);
   const [faqs, setFaqs] = useState([]);
+  const [bugReport, setBugReport] = useState(false);
   useEffect(() => {
     fetch(`/api/faq`)
       .then((res) => res.json())
@@ -635,9 +739,17 @@ const Support = ({ history, location, match }) => {
         <Route path="/">
           <div className="supportContainer">
             <div className="benner">
-              <Link className="ticketLink" to="/account/support/ticket">
-                My Tickets
-              </Link>
+              <div className="clas">
+                <Link className="ticketLink" to="/account/support/ticket">
+                  My Tickets
+                </Link>
+                <button
+                  className="ticketLink"
+                  onClick={() => setBugReport(true)}
+                >
+                  Report Bug
+                </button>
+              </div>
               <h1>Support portal</h1>
               <p>
                 Search for an answer or browse help topics to create a ticket
@@ -700,6 +812,31 @@ const Support = ({ history, location, match }) => {
           </div>
         </Route>
       </Switch>
+      <Modal
+        open={bugReport}
+        setOpen={setBugReport}
+        className="bugReport"
+        label="Report Bug"
+        head={true}
+      >
+        <BugReportForm
+          onSuccess={() => {
+            setBugReport(false);
+            setMsg(
+              <>
+                <button onClick={() => setMsg(null)}>Okay</button>
+                <div>
+                  <Succ_svg />
+                  <h4>Report has been submitted.</h4>
+                </div>
+              </>
+            );
+          }}
+        />
+      </Modal>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
     </>
   );
 };

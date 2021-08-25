@@ -1,4 +1,11 @@
-import { useState, useEffect, useContext, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  useRef,
+  lazy,
+} from "react";
 import { SiteContext, ChatContext } from "../SiteContext";
 import { Route, Switch, useHistory, Link, useLocation } from "react-router-dom";
 import { Modal } from "./Modal.js";
@@ -26,7 +33,6 @@ import Profile from "./Profile";
 import Marketplace, { SingleProduct, Cart, CartItem } from "./Marketplace";
 import Deals, { socket } from "./Deals";
 import MyShopping from "./myShopping";
-import QRCode from "qrcode.react";
 import OrderManagement from "./OrderManagement";
 import { GoogleLogout } from "react-google-login";
 import {
@@ -71,16 +77,17 @@ import {
   WhatsappIcon,
   WorkplaceIcon,
 } from "react-share";
-import Moment from "react-moment";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+const QRCode = lazy(() => import("qrcode.react"));
+const Moment = lazy(() => import("react-moment"));
 require("./styles/account.scss");
 require("./styles/generic.scss");
 
 const Home = () => {
-  const { userType, setUserType } = useContext(SiteContext);
+  const { userType, setUserType, cart } = useContext(SiteContext);
   const history = useHistory();
   const [value, setValue] = useState("");
   const [users, setUsers] = useState([]);
@@ -88,6 +95,7 @@ const Home = () => {
   const [client, setClient] = useState(null);
   const [msg, setMsg] = useState(null);
   const milestoneTimeout = useRef();
+  const [step, setStep] = useState(3);
   useEffect(() => {
     fetch("/api/recentPayments")
       .then((res) => res.json())
@@ -132,39 +140,68 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <UserSearch setClient={setClient} />
-      {recentPayments.length > 0 && userType && (
-        <div className="recentPayments">
-          <p className="label">
-            Recent Payments
-            <span className="note">
-              {userType === "buyer"
-                ? "Click to view all their products."
-                : "Click to request a milestone."}
-            </span>
-          </p>
-          <ul className="payments">
-            {recentPayments.map((user) => (
-              <li key={user._id}>
-                <Link
-                  target={userType === "buyer" ? "_blank" : ""}
-                  // to={`/account/marketplace?seller=${user._id}`}
-                  to={
-                    userType === "buyer"
-                      ? `/marketplace?seller=${user._id}`
-                      : "/account/home/requestMilestone"
-                  }
-                  onClick={() => {
-                    setClient(user);
-                  }}
-                >
-                  <Img src={user.profileImg} />
-                  <p className="name">{user.firstName + " " + user.lastName}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="navigate">
+        {step > 1 && (
+          <button onClick={() => setStep((prev) => prev - 1)}>Previous</button>
+        )}
+        <button
+          disabled={
+            (step === 1 && !client) || (step === 2 && cart.length === 0)
+          }
+          onClick={() => setStep((prev) => prev + 1)}
+          className="next"
+        >
+          Next
+        </button>
+      </div>
+      {step === 1 && (
+        <>
+          <UserSearch setClient={setClient} setStep={setStep} />
+          {recentPayments.length > 0 && userType && (
+            <div className="recentPayments">
+              <p className="label">
+                Recent Payments
+                <span className="note">
+                  {userType === "buyer"
+                    ? "Click to view all their products."
+                    : "Click to request a milestone."}
+                </span>
+              </p>
+              <ul className="payments">
+                {recentPayments.map((user) => (
+                  <li key={user._id}>
+                    <Link
+                      to={"#"}
+                      onClick={() => {
+                        setStep(2);
+                        setClient(user);
+                      }}
+                    >
+                      <Img src={user.profileImg} />
+                      <p className="name">
+                        {user.firstName + " " + user.lastName}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+      {step === 2 && (
+        <>
+          <Switch>
+            <Route
+              path="/account/home/product/:_id"
+              component={SingleProduct}
+            />
+            <Marketplace />
+          </Switch>
+        </>
+      )}
+      {step === 3 && (
+        <Route path="/account/home/deals/:_id?" component={Deals} />
       )}
       <Footer />
       <Route path={"/account/home/createMilestone"}>
@@ -240,7 +277,7 @@ const Home = () => {
   );
 };
 
-const UserSearch = ({ setClient }) => {
+const UserSearch = ({ setClient, setStep }) => {
   const { userType } = useContext(SiteContext);
   const history = useHistory();
   const [msg, setMsg] = useState(null);
@@ -345,6 +382,7 @@ const UserSearch = ({ setClient }) => {
   }, [value]);
   return (
     <div className="search">
+      <p>Select existing contact / Add new contact / Invite new contact</p>
       <form onSubmit={(e) => e.preventDefault()} ref={formRef}>
         <section>
           <svg
@@ -384,13 +422,15 @@ const UserSearch = ({ setClient }) => {
             {users.map((user, i) => (
               <Link
                 key={i}
-                target={userType === "buyer" ? "_blank" : ""}
-                onClick={() => setClient(user)}
+                onClick={() => {
+                  setStep(2);
+                  setClient(user);
+                }}
                 to={{
                   pathname:
                     userType === "seller"
                       ? "/account/home/createMilestone"
-                      : `/marketplace?seller=${user._id}`,
+                      : `/account/home?seller=${user._id}`,
                 }}
               >
                 <li key={i}>

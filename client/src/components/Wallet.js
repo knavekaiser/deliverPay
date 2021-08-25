@@ -6,6 +6,7 @@ import {
   useRef,
   useLayoutEffect,
   Fragment,
+  lazy,
 } from "react";
 import { SiteContext } from "../SiteContext";
 import { Link, Route } from "react-router-dom";
@@ -20,8 +21,10 @@ import {
   Arrow_down_svg,
   Img,
 } from "./Elements";
-import Moment from "react-moment";
 import moment from "moment";
+
+const Moment = lazy(() => import("react-moment"));
+
 function generateGreetings() {
   const currentHour = moment().format("HH");
   if (currentHour >= 3 && currentHour < 12) {

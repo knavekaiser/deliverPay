@@ -58,6 +58,7 @@
       grid-auto-rows: min-content;
       overflow-y: auto;
       li {
+        pointer-events: none;
         height: min-content;
         font-weight: 500;
         font-size: 0.95rem;
@@ -374,15 +375,6 @@
   }
 }
 .homeContainer {
-  .search {
-    form {
-      section {
-        margin-top: 2rem;
-      }
-    }
-  }
-}
-.homeContainer {
   .userType {
     padding: 2rem 4rem;
     display: flex;
@@ -429,6 +421,13 @@
           background: white;
           box-shadow: 0 0 2.2rem rgba(#059b8d, 0.15);
         }
+      }
+    }
+  }
+  .search {
+    form {
+      section {
+        margin-top: 2rem;
       }
     }
   }
@@ -486,6 +485,36 @@
       a:hover {
         text-decoration: underline;
       }
+    }
+  }
+  .navigate {
+    display: flex;
+    justify-content: space-between;
+    button {
+      padding: 0.5rem 1rem;
+      background: $blue;
+      color: white;
+      border: 2px solid $blue;
+      &.next {
+        margin: auto;
+        margin-right: 0;
+      }
+      &:hover {
+        background: white;
+        color: $blue;
+      }
+      &:disabled {
+        pointer-events: none;
+        filter: grayscale(1);
+        opacity: 0.5;
+      }
+    }
+  }
+  .marketplace,
+  .singleProduct {
+    header,
+    footer {
+      display: none;
     }
   }
 }
@@ -1884,6 +1913,7 @@
 .modal.fileUpload,
 .singleOrder,
 .issueRefund,
+.bugReport,
 .ticketFormModal {
   max-width: 35rem;
   form {
@@ -1980,16 +2010,29 @@
       font-size: 2rem;
       font-weight: 400;
     }
-    .ticketLink {
+    .clas {
+      display: grid;
       position: absolute;
+      grid-gap: 0.5rem;
       right: 1rem;
       top: 1.5rem;
-      padding: 0.5rem 1.5rem;
-      background: white;
-      color: $blue;
-      font-weight: 500;
-      box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.1);
-      border-radius: 2rem;
+      a,
+      button {
+        cursor: pointer;
+        width: max-content;
+        padding: 0.5rem 1.5rem;
+        background: white;
+        color: $blue;
+        font-size: 1rem;
+        font-weight: 600;
+        box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.1);
+        border-radius: 2rem;
+        border: 2px solid white;
+        &:hover {
+          background: $blue;
+          color: white;
+        }
+      }
     }
     p {
       margin: 1.5rem 0;

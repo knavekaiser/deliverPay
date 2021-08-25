@@ -4,6 +4,7 @@ import {
   useRef,
   useLayoutEffect,
   useContext,
+  lazy,
 } from "react";
 import {
   Succ_svg,
@@ -24,12 +25,13 @@ import {
 } from "./Elements";
 import { Link, useHistory } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
-import Moment from "react-moment";
-import moment from "moment";
 import { MilestoneForm } from "./Account";
 import { Modal, Confirm } from "./Modal";
 import { DateRange } from "react-date-range";
 import { toast } from "react-toastify";
+import moment from "moment";
+
+const Moment = lazy(() => import("react-moment"));
 
 const Refunds = ({ history, location }) => {
   const { userType } = useContext(SiteContext);

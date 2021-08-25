@@ -4,13 +4,14 @@ import {
   useLayoutEffect,
   useEffect,
   useContext,
+  lazy,
 } from "react";
 import { SiteContext } from "../SiteContext";
 import { Modal } from "./Modal";
 import { Link, useHistory } from "react-router-dom";
 import { CartItem } from "./Marketplace";
-import Moment from "react-moment";
 import { ProfileAvatar } from "./Account";
+
 require("./styles/elements.scss");
 
 export const Err_svg = () => {

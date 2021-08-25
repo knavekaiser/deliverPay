@@ -90,10 +90,12 @@ global.Config = mongoose.model("Config", configModel);
 
 const bugModel = new Schema(
   {
-    name: { type: String },
-    message: { type: String },
-    dscr: { componentStack: { type: String } },
-    detail: { type: String },
+    user: {
+      name: { type: String },
+      phone: { type: String },
+    },
+    issue: { type: String },
+    dscr: {},
     url: { type: String },
     files: [{ type: String }],
   },
