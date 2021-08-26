@@ -21,6 +21,7 @@ import {
   Tip,
   Cart_svg,
   Img,
+  Moment,
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import { SiteContext } from "../SiteContext";
@@ -30,7 +31,6 @@ import { MilestoneForm } from "./Account";
 import queryString from "query-string";
 import { toast } from "react-toastify";
 
-const Moment = lazy(() => import("react-moment"));
 require("./styles/marketplace.scss");
 
 const Marketplace = ({ history, location, match }) => {

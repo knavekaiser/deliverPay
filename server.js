@@ -213,13 +213,19 @@ const parseCookies = (raw) => {
 };
 io.on("connection", async (socket) => {
   const {
-    query: { room, type },
     headers: { cookie },
   } = socket.handshake;
   await jwt.verify(
-    parseCookies(cookie).access_token || "",
+    parseCookies(cookie).access_token || cookie || "",
     process.env.JWT_SECRET,
     async (err, decoded) => {
+      socket.emit("test", {
+        handshake: socket.handshake,
+        cookie: parseCookies(cookie).access_token || cookie,
+        decoded: decoded,
+        err,
+      });
+      console.log({ cookie, decoded });
       if (decoded) {
         socket.on("joinRooms", async ({ rooms }) => {
           socket.join(decoded.sub.toString());
@@ -227,13 +233,18 @@ io.on("connection", async (socket) => {
             socket.join(room);
           });
         });
-        socket.on("initiateChat", async ({ client_id }) => {
+        socket.on("initiateChat", async ({ client_id, newChat }) => {
           InitiateChat({ user: decoded.sub, client: client_id })
             .then(([userChat, clientChat]) => {
               socket.join(userChat._id.toString());
               socket.join(clientChat._id.toString());
               socket.emit("connectedToRoom", {
                 rooms: [userChat._id, clientChat._id],
+                ...(newChat && {
+                  newChat: !!newChat,
+                  client: clientChat.user,
+                  clientRoom_id: clientChat._id,
+                }),
               });
             })
             .catch((err) => {

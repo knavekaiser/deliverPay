@@ -196,6 +196,10 @@ const RegisterFormNew = () => {
         setLoading(false);
         if (data.code === "ok") {
           setStep(2);
+        } else if (data.code === 424) {
+          setErrMsg(
+            "Could not send verification SMS. Make sure number is correct."
+          );
         } else if (data.code === 409) {
           setErrMsg("Phone already exists. Please log in.");
         } else {
@@ -942,6 +946,7 @@ function UserStart() {
     fetch("/api/authUser")
       .then((res) => res.json())
       .then((data) => {
+        document.querySelector(".splash-screen")?.remove();
         if (data.user) {
           setUser(data.user);
           history.replace(history.location.state?.from || "/account/home");

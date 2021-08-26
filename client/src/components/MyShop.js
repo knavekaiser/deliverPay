@@ -26,6 +26,8 @@ import {
   Tip,
   Media,
   LS,
+  Moment,
+  moment,
 } from "./Elements";
 import { Modal, Confirm } from "./Modal";
 import { Link, Route, Switch, Redirect } from "react-router-dom";
@@ -37,9 +39,7 @@ import FBMarket from "./fbMarketplace";
 import { updateProfileInfo } from "./Profile";
 import { Step } from "./fbMarketplace";
 import { CSVLink } from "react-csv";
-import moment from "moment";
 
-const Moment = lazy(() => import("react-moment"));
 const XLSX = lazy(() => import("xlsx"));
 require("./styles/products.scss");
 
@@ -752,11 +752,14 @@ const Products = ({ categories, shopSetupComplete }) => {
       });
   };
   useEffect(() => {
-    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
-    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
-    const lastDate = moment(
-      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
-    ).format("YYYY-MM-DD");
+    const startDate = moment({
+      time: dateRange?.startDate,
+      format: "YYYY-MM-DD",
+    });
+    const endDate = moment({
+      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      format: "YYYY-MM-DD",
+    });
     fetch(
       `/api/products?${new URLSearchParams({
         ...(search && { q: search }),
@@ -766,7 +769,7 @@ const Products = ({ categories, shopSetupComplete }) => {
         order: sort.order,
         ...(dateFilter && {
           dateFrom: startDate,
-          dateTo: lastDate,
+          dateTo: endDate,
         }),
         ...(category && { category }),
         ...(type && { type }),

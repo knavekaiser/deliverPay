@@ -25,6 +25,8 @@ import {
   UploadFiles,
   FileInput,
   Img,
+  Moment,
+  moment,
 } from "./Elements";
 import { Link, useHistory } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
@@ -33,9 +35,6 @@ import { DateRange } from "react-date-range";
 import TextareaAutosize from "react-textarea-autosize";
 import { MilestoneForm } from "./Account";
 import { toast } from "react-toastify";
-import moment from "moment";
-
-const Moment = lazy(() => import("react-moment"));
 
 const Orders = ({ categories }) => {
   const dateFilterRef = useRef();
@@ -60,11 +59,14 @@ const Orders = ({ categories }) => {
   const [batch, setBatch] = useState([]);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
-    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
-    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
-    const lastDate = moment(
-      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
-    ).format("YYYY-MM-DD");
+    const startDate = moment({
+      time: dateRange?.startDate,
+      format: "YYYY-MM-DD",
+    });
+    const endDate = moment({
+      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      format: "YYYY-MM-DD",
+    });
     fetch(
       `/api/getOrders?${new URLSearchParams({
         user: "seller",
@@ -75,7 +77,7 @@ const Orders = ({ categories }) => {
         order: sort.order,
         ...(dateFilter && {
           dateFrom: startDate,
-          dateTo: lastDate,
+          dateTo: endDate,
         }),
         ...(status && { status }),
       })}`

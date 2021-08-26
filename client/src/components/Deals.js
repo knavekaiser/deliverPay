@@ -17,13 +17,13 @@ import {
   UploadFiles,
   Actions,
   Img,
+  Moment,
+  moment,
 } from "./Elements";
 import { io } from "socket.io-client";
 import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
-import moment from "moment";
 
-const Moment = lazy(() => import("react-moment"));
 require("./styles/deals.scss");
 
 export const socket = io();
@@ -747,8 +747,11 @@ const Bubble = ({ chat, msg, i, user }) => {
         new Date(chat[i + 1]?.createdAt).getTime()
     ) > 120000;
   const dateStamp =
-    moment(msg.createdAt).format("YYYY-MM-DD") !==
-      moment(chat[i - 1]?.createdAt).format("YYYY-MM-DD") || i === 0;
+    moment({
+      time: msg.createdAt,
+      format: "YYYY-MM-DD",
+    }) !== moment({ time: chat[i - 1]?.createdAt, format: "YYYY-MM-DD" }) ||
+    i === 0;
   return (
     <li
       className={`bubble ${msg.from === user._id ? "user" : "client"} ${

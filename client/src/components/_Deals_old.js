@@ -17,13 +17,13 @@ import {
   UploadFiles,
   Actions,
   Img,
+  Moment,
+  moment,
 } from "./Elements";
 import { io } from "socket.io-client";
 import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
-import moment from "moment";
 
-const Moment = lazy(() => import("react-moment"));
 require("./styles/deals.scss");
 
 export const socket = io();
@@ -36,7 +36,10 @@ const Deals = ({ history, location, match }) => {
   useEffect(() => {
     if (userCard) {
       setChat(userCard?.messages);
-      socket.emit("initiateChat", { client_id: userCard?._id });
+      socket.emit("initiateChat", {
+        client_id: userCard?._id,
+        ...(userCard.messages === undefined && { newChat: true }),
+      });
     }
   }, [userCard]);
   useEffect(() => {
@@ -359,9 +362,26 @@ const Chat = ({
   const [page, setPage] = useState(2);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
-    socket.on("connectedToRoom", ({ rooms }) => {
-      setRooms(rooms);
-    });
+    socket.on(
+      "connectedToRoom",
+      ({ rooms, newChat, client, clientRoom_id }) => {
+        if (newChat) {
+          setContacts((prev) =>
+            prev.map((chat) => {
+              if (chat.client._id === client) {
+                return {
+                  ...chat,
+                  _id: clientRoom_id,
+                };
+              } else {
+                return chat;
+              }
+            })
+          );
+        }
+        setRooms(rooms);
+      }
+    );
   }, []);
   useEffect(() => {
     if (rooms.length) {
@@ -755,8 +775,11 @@ const Bubble = ({ chat, msg, i, user }) => {
         new Date(chat[i + 1]?.createdAt).getTime()
     ) > 120000;
   const dateStamp =
-    moment(msg.createdAt).format("YYYY-MM-DD") !==
-      moment(chat[i - 1]?.createdAt).format("YYYY-MM-DD") || i === 0;
+    moment({
+      time: msg.createdAt,
+      format: "YYYY-MM-DD",
+    }) !== moment({ time: chat[i - 1]?.createdAt, format: "YYYY-MM-DD" }) ||
+    i === 0;
   return (
     <li
       className={`bubble ${msg.from === user._id ? "user" : "client"} ${
@@ -855,7 +878,16 @@ const ChatForm = ({ rooms, user, newChat }) => {
           setMsg,
         })
       : [];
-    if (files && !media) {
+    if (files.length && !media.length) {
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>Could not send files. please try again.</h4>
+          </div>
+        </>
+      );
       return;
     }
     if (media.length) {

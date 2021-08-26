@@ -22,6 +22,7 @@ import {
   Cart_svg,
   calculatePrice,
   Img,
+  Moment,
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import Hold from "./Hold.js";
@@ -82,7 +83,6 @@ import "react-date-range/dist/theme/default.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 const QRCode = lazy(() => import("qrcode.react"));
-const Moment = lazy(() => import("react-moment"));
 require("./styles/account.scss");
 require("./styles/generic.scss");
 

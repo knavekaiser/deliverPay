@@ -1,2 +1,0 @@
-(this["webpackJsonpdeliveryPay-react"]=this["webpackJsonpdeliveryPay-react"]||[]).push([[15],{267:function(e,s,c){"use strict";c.r(s);var t=c(2),r=c(0);s.default=function(){return Object(r.jsxs)("div",{className:"generic howItWorks",children:[Object(r.jsx)(t.m,{}),Object(r.jsxs)("div",{className:"content",children:[Object(r.jsx)("h1",{children:"How it Works"}),Object(r.jsx)("section",{children:Object(r.jsx)(t.n,{src:"/how_it_works.png"})})]}),Object(r.jsx)(t.l,{})]})}}}]);
-//# sourceMappingURL=15.1561bece.chunk.js.map

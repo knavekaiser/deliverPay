@@ -18,13 +18,13 @@ import {
   Paginaiton,
   Chev_down_svg,
   Media,
+  Moment,
+  moment,
 } from "./Elements";
 import { DateRange } from "react-date-range";
 import { TicketForm, TicketReplyForm } from "./Forms";
 import TextareaAutosize from "react-textarea-autosize";
-import moment from "moment";
 
-const Moment = lazy(() => import("react-moment"));
 require("./styles/singleTicket.scss");
 require("./styles/table.scss");
 
@@ -151,17 +151,26 @@ export const Tickets = ({ history, location, pathname }) => {
     });
   }, []);
   useEffect(() => {
-    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
-    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
-    const lastDate = moment(
-      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
-    ).format("YYYY-MM-DD");
+    const startDate = moment({
+      time: dateRange?.startDate,
+      format: "YYYY-MM-DD",
+    });
+    const endDate = moment({
+      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      format: "YYYY-MM-DD",
+    });
     fetch(
-      `/api/getTickets?page=${page}&perPage=${perPage}&sort=${
-        sort.column
-      }&order=${sort.order}${search && "&q=" + search}${
-        dateFilter ? "&dateFrom=" + startDate + "&dateTo=" + lastDate : ""
-      }`
+      `/api/getTickets?${new URLSearchParams({
+        page,
+        perPage,
+        sort: sort.column,
+        sort: sort.order,
+        ...(search && { q: search }),
+        ...(dateFilter && {
+          dateFrom: startDate,
+          dateTo: endDate,
+        }),
+      }).toString()}`
     )
       .then((res) => res.json())
       .then((data) => {

@@ -12,8 +12,8 @@ import {
   LS,
   Succ_svg,
   External_link_icon,
+  Moment,
 } from "./Elements";
-import Moment from "react-moment";
 require("./styles/fbMarketplace.scss");
 
 export const Step = ({

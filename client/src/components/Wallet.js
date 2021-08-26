@@ -20,13 +20,11 @@ import {
   Arrow_up_svg,
   Arrow_down_svg,
   Img,
+  Moment,
 } from "./Elements";
-import moment from "moment";
-
-const Moment = lazy(() => import("react-moment"));
 
 function generateGreetings() {
-  const currentHour = moment().format("HH");
+  const currentHour = new Date().getHours();
   if (currentHour >= 3 && currentHour < 12) {
     return "Good Morning";
   } else if (currentHour >= 12 && currentHour < 15) {

@@ -22,6 +22,8 @@ import {
   Arrow_left_svg,
   Media,
   Img,
+  Moment,
+  moment,
 } from "./Elements";
 import { Link, useHistory } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
@@ -29,9 +31,6 @@ import { MilestoneForm } from "./Account";
 import { Modal, Confirm } from "./Modal";
 import { DateRange } from "react-date-range";
 import { toast } from "react-toastify";
-import moment from "moment";
-
-const Moment = lazy(() => import("react-moment"));
 
 const Refunds = ({ history, location }) => {
   const { userType } = useContext(SiteContext);
@@ -57,11 +56,14 @@ const Refunds = ({ history, location }) => {
   const [batch, setBatch] = useState([]);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
-    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
-    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
-    const lastDate = moment(
-      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
-    ).format("YYYY-MM-DD");
+    const startDate = moment({
+      time: dateRange?.startDate,
+      format: "YYYY-MM-DD",
+    });
+    const endDate = moment({
+      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      format: "YYYY-MM-DD",
+    });
     fetch(
       `/api/getRefunds?${new URLSearchParams({
         user: userType,
@@ -72,7 +74,7 @@ const Refunds = ({ history, location }) => {
         order: sort.order,
         ...(dateFilter && {
           dateFrom: startDate,
-          dateTo: lastDate,
+          dateTo: endDate,
         }),
         ...(status && { status }),
       })}`

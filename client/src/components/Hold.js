@@ -22,14 +22,13 @@ import {
   Combobox,
   Paginaiton,
   Img,
+  Moment,
+  moment,
 } from "./Elements";
 import { MilestoneReleaseForm, DisputeForm } from "./Forms";
 import { DateRange } from "react-date-range";
 import queryString from "query-string";
-import moment from "moment";
 
-// const queryString = lazy(async () => await import("query-string"));
-const Moment = lazy(() => import("react-moment"));
 require("./styles/hold.scss");
 
 const Hold = ({ history, location, match }) => {
@@ -85,11 +84,14 @@ const Hold = ({ history, location, match }) => {
       });
   }, [location.search, userType]);
   useEffect(() => {
-    const startDate = moment(dateRange.startDate).format("YYYY-MM-DD");
-    const endDate = moment(dateRange.endDate).format("YYYY-MM-DD");
-    const lastDate = moment(
-      new Date(dateRange.endDate).setDate(dateRange.endDate.getDate() + 1)
-    ).format("YYYY-MM-DD");
+    const startDate = moment({
+      time: dateRange?.startDate,
+      format: "YYYY-MM-DD",
+    });
+    const endDate = moment({
+      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      format: "YYYY-MM-DD",
+    });
     history.replace({
       pathname: location.pathname,
       search:
@@ -103,7 +105,7 @@ const Hold = ({ history, location, match }) => {
           ...(search && { q: search }),
           ...(dateFilter && {
             dateFrom: startDate,
-            dateTo: lastDate,
+            dateTo: endDate,
           }),
           ...(status && { status }),
         }).toString(),
@@ -330,7 +332,7 @@ const CommonMilestoneElement = ({ milestone }) => {
               <p>Desciption</p>-<p>{milestone.dscr}</p>
             </li>
             <li>
-              <p>Transaction ID</p>-<p>{milestone._id}</p>
+              <p>Milestone ID</p>-<p>{milestone._id}</p>
             </li>
             <li className="status">
               <p>Status</p>-<p>{milestone.status}</p>
