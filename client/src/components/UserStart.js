@@ -951,6 +951,10 @@ function UserStart() {
           setUser(data.user);
           history.replace(history.location.state?.from || "/account/home");
         }
+      })
+      .catch((err) => {
+        document.querySelector(".splash-screen")?.remove();
+        console.log(err);
       });
   }, []);
   return (

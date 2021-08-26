@@ -69,7 +69,7 @@ function App() {
     window.addEventListener("resize", () => resizeWindow());
     resizeWindow();
     serviceWorkerRegistration.register();
-    // document.querySelector(".splash-screen")?.remove();
+    document.querySelector(".splash-screen")?.remove();
   }, []);
   return (
     <div className="App">
