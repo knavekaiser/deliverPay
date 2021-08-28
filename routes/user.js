@@ -36,10 +36,13 @@ app.post("/api/sendPhoneVerificationCode", async (req, res) => {
         })
       )
       .then((smsRes) => {
-        console.log(code);
         if (smsRes.return) {
           console.log(smsRes);
-          res.json({ code: "ok", message: "6 digit code has been sent" });
+          res.json({
+            code: "ok",
+            message: "6 digit code has been sent",
+            testCode: code,
+          });
         } else {
           res.status(424).json({ code: 424, message: "Could not send sms" });
         }
@@ -243,11 +246,7 @@ app.get(
           as: "paymentMethods",
         },
       },
-      {
-        $project: {
-          pass: 0,
-        },
-      },
+      { $project: { pass: 0 } },
     ])
       .then((dbRes) => {
         if (dbRes.length) {
