@@ -130,6 +130,15 @@ const OTPModel = new Schema(
     expireAt: { type: Date, default: Date.now, index: { expires: "30m" } },
     attempt: { type: Number, default: 0 },
   },
-  { timestamp: true }
+  { timestamps: true }
 );
 global.OTP = mongoose.model("OTP", OTPModel);
+
+const loginModel = new Schema(
+  {
+    user: { type: Schema.Types.ObjectId, ref: "User" },
+    ip: { type: String },
+  },
+  { timestamps: true }
+);
+global.Login = mongoose.model("Login", loginModel);

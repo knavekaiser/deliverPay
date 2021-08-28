@@ -14,11 +14,13 @@ const cookieExtractor = (req) => {
 const signToken = (_id) => {
   return jwt.sign({ iss: "deliveryPay", sub: _id }, process.env.JWT_SECRET);
 };
-const signingIn = (user, res) => {
+const signingIn = (user, req, res) => {
   const token = signToken(user._id);
   ["pass", "__v"].forEach((key) => delete user[key]);
   res.cookie("access_token", token, { httpOnly: true, sameSite: "strict" });
   res.status(200).json({ code: "ok", isAuthenticated: true, user: user });
+  var ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  new Login({ user: user._id, ip }).save();
 };
 const handleSignIn = async (req, res) => {
   const user = await User.aggregate([
@@ -32,7 +34,7 @@ const handleSignIn = async (req, res) => {
       },
     },
   ]);
-  signingIn(user[0], res);
+  signingIn(user[0], req, res);
 };
 
 function genCode(length) {

@@ -848,13 +848,14 @@ app.post(
         .json({ code: 403, message: "Can not request milestone to self." });
       return;
     }
-    const { fee } = await Config.findOne().then((config) => config || {});
+    const { fee, gst } = await Config.findOne().then((config) => config || {});
     const buyer = await User.findOne({ _id: buyer_id });
     if (buyer && amount && dscr) {
       new Milestone({
         ...req.body,
         status: "pending",
         fee,
+        gst,
         buyer,
         seller: req.user,
       })
@@ -1182,7 +1183,7 @@ app.post(
   passport.authenticate("userPrivate"),
   async (req, res) => {
     const { amount, seller, dscr, order, refund } = req.body;
-    const { fee } = await Config.findOne().then((config) => config || {});
+    const { fee, gst } = await Config.findOne().then((config) => config || {});
     if (seller?._id?.toString() === req.user._id.toString()) {
       res
         .status(403)
@@ -1231,6 +1232,7 @@ app.post(
         status: "inProgress",
         buyer: req.user._doc,
         fee,
+        gst,
         seller,
         ...(newOrder && { order: newOrder._id }),
       })
@@ -1359,217 +1361,217 @@ app.patch(
     });
     const { fee } = await Config.findOne().then((config) => config || {});
     if (milestone) {
-      if (+amount > milestone.amount) {
-        if (+amount - milestone.amount > req.user.balance) {
-          res.status(403).json({ code: 403, message: "insufficient balance" });
-          return;
-        }
-        Promise.all([
-          new P2PTransaction({
-            amount: -Math.abs(amount - milestone.amount),
-            milestoneId: milestone._id,
-            user: req.user._id,
-            client: milestone.client,
-            note: "milestone increase",
-            dscr: milestone.dscr,
-          }).save(),
-          new P2PTransaction({
-            amount: +((amount / (100 + fee)) * 100).toFixed(2),
-            milestoneId: milestone._id,
-            user: milestone.seller._id,
-            client: req.user,
-            note: "milestone release",
-            dscr: milestone.dsc,
-          }).save(),
-          Milestone.findOneAndUpdate(
-            { _id: milestone._id },
-            { status: "released", releaseDate: new Date(), amount },
+      // if (+amount > milestone.amount) {
+      //   if (+amount - milestone.amount > req.user.balance) {
+      //     res.status(403).json({ code: 403, message: "insufficient balance" });
+      //     return;
+      //   }
+      //   Promise.all([
+      //     new P2PTransaction({
+      //       amount: -Math.abs(amount - milestone.amount),
+      //       milestoneId: milestone._id,
+      //       user: req.user._id,
+      //       client: milestone.client,
+      //       note: "milestone increase",
+      //       dscr: milestone.dscr,
+      //     }).save(),
+      //     new P2PTransaction({
+      //       amount: +((amount / (100 + fee)) * 100).toFixed(2),
+      //       milestoneId: milestone._id,
+      //       user: milestone.seller._id,
+      //       client: req.user,
+      //       note: "milestone release",
+      //       dscr: milestone.dsc,
+      //     }).save(),
+      //     Milestone.findOneAndUpdate(
+      //       { _id: milestone._id },
+      //       { status: "released", releaseDate: new Date(), amount },
+      //       { new: true }
+      //     ),
+      //   ]).then(([buyerTrans, sellerTrans, newMilestone]) => {
+      //     if (buyerTrans && sellerTrans && newMilestone) {
+      //       Promise.all([
+      //         User.findOneAndUpdate(
+      //           { _id: milestone.buyer._id },
+      //           {
+      //             $inc: { balance: -Math.abs(amount - buyerTrans.amount) },
+      //             $addToSet: { transactions: buyerTrans._id },
+      //           },
+      //           { new: true }
+      //         ),
+      //         User.findOneAndUpdate(
+      //           { _id: milestone.seller._id },
+      //           {
+      //             $inc: { balance: sellerTrans.amount },
+      //             $addToSet: { transactions: sellerTrans._id },
+      //           },
+      //           { new: true }
+      //         ),
+      //       ]).then(([buyer, seller]) => {
+      //         InitiateChat({
+      //           user: buyer._id,
+      //           client: seller._id,
+      //         }).then(([userChat, clientChat]) =>
+      //           SendMessage({
+      //             rooms: [userChat._id, clientChat._id],
+      //             message: {
+      //               type: "milestone",
+      //               from: buyer._id,
+      //               to: seller._id,
+      //               text: `${req.user.firstName} released a milestone of ₹${newMilestone.amount}`,
+      //               milestoneId: milestone._id,
+      //             },
+      //           })
+      //         );
+      //         notify(
+      //           seller._id,
+      //           JSON.stringify({
+      //             title: "Milestone released",
+      //             body: `${milestone.buyer.firstName} realsed a milestone`,
+      //           }),
+      //           "User"
+      //         );
+      //         res.json({
+      //           message: "milestonre released",
+      //           milestone: newMilestone,
+      //         });
+      //       });
+      //     } else {
+      //       res.status(500).json({ message: "someting went wrong" });
+      //     }
+      //   });
+      // } else if (+amount < milestone.amount) {
+      //   Promise.all([
+      //     new P2PTransaction({
+      //       amount: milestone.amount - amount,
+      //       milestoneId: milestone._id,
+      //       user: req.user._id,
+      //       client: milestone.seller,
+      //       note: "milestone decrease",
+      //       dscr: milestone.dscr,
+      //     }).save(),
+      //     new P2PTransaction({
+      //       amount: +((amount / (100 + fee)) * 100).toFixed(2),
+      //       milestoneId: milestone._id,
+      //       user: milestone.seller._id,
+      //       client: milestone.buyer,
+      //       note: "milestone release",
+      //       dscr: milestone.dscr,
+      //     }).save(),
+      //     Milestone.findOneAndUpdate(
+      //       { _id: milestone._id },
+      //       { status: "released", releaseDate: new Date(), amount },
+      //       { new: true }
+      //     ),
+      //   ]).then(([buyerTrans, sellerTrans, newMilestone]) => {
+      //     if (buyerTrans && sellerTrans && newMilestone) {
+      //       Promise.all([
+      //         User.findOneAndUpdate(
+      //           { _id: milestone.buyer._id },
+      //           {
+      //             $inc: { balance: milestone.amount - amount },
+      //             $addToSet: { transactions: buyerTrans._id },
+      //           },
+      //           { new: true }
+      //         ),
+      //         User.findOneAndUpdate(
+      //           { _id: milestone.seller._id },
+      //           {
+      //             $inc: { balance: sellerTrans.amount },
+      //             $addToSet: { transactions: sellerTrans._id },
+      //           },
+      //           { new: true }
+      //         ),
+      //       ]).then(([buyer, seller]) => {
+      //         InitiateChat({
+      //           user: buyer._id,
+      //           client: seller._id,
+      //         }).then(([userChat, clientChat]) =>
+      //           SendMessage({
+      //             rooms: [userChat._id, clientChat._id],
+      //             message: {
+      //               type: "milestone",
+      //               from: buyer._id,
+      //               to: seller._id,
+      //               text: `${req.user.firstName} released a milestone of ₹${newMilestone.amount}`,
+      //               milestoneId: newMilestone._id,
+      //             },
+      //           })
+      //         );
+      //         notify(
+      //           seller._id,
+      //           JSON.stringify({
+      //             title: "Milestone released",
+      //             body: `${milestone.buyer.firstName} realsed a milestone`,
+      //           }),
+      //           "User"
+      //         );
+      //         res.json({
+      //           message: "milestonre released",
+      //           milestone: newMilestone,
+      //         });
+      //       });
+      //     }
+      //   });
+      // } else {
+      Promise.all([
+        new P2PTransaction({
+          amount: +((milestone.amount / 100) * 100).toFixed(2),
+          milestoneId: milestone._id,
+          user: milestone.seller._id,
+          client: req.user,
+          note: "milestone release",
+          dscr: milestone.dsc,
+        }).save(),
+        Milestone.findOneAndUpdate(
+          { _id: milestone._id },
+          { status: "released", releaseDate: new Date() },
+          { new: true }
+        ),
+      ])
+        .then(([sellerTrans, newMilestone]) => {
+          User.findOneAndUpdate(
+            { _id: milestone.seller._id },
+            {
+              $inc: { balance: sellerTrans.amount },
+              $addToSet: { transactions: sellerTrans._id },
+            },
             { new: true }
-          ),
-        ]).then(([buyerTrans, sellerTrans, newMilestone]) => {
-          if (buyerTrans && sellerTrans && newMilestone) {
-            Promise.all([
-              User.findOneAndUpdate(
-                { _id: milestone.buyer._id },
-                {
-                  $inc: { balance: -Math.abs(amount - buyerTrans.amount) },
-                  $addToSet: { transactions: buyerTrans._id },
+          ).then((seller) => {
+            InitiateChat({
+              user: milestone.buyer._id,
+              client: milestone.seller._id,
+            }).then(([userChat, clientChat]) =>
+              SendMessage({
+                rooms: [userChat._id, clientChat._id],
+                message: {
+                  type: "milestone",
+                  from: milestone.buyer._id,
+                  to: milestone.seller._id,
+                  text: `${req.user.firstName} released a milestone of ₹${milestone.amount}`,
+                  milestoneId: milestone._id,
                 },
-                { new: true }
-              ),
-              User.findOneAndUpdate(
-                { _id: milestone.seller._id },
-                {
-                  $inc: { balance: sellerTrans.amount },
-                  $addToSet: { transactions: sellerTrans._id },
-                },
-                { new: true }
-              ),
-            ]).then(([buyer, seller]) => {
-              InitiateChat({
-                user: buyer._id,
-                client: seller._id,
-              }).then(([userChat, clientChat]) =>
-                SendMessage({
-                  rooms: [userChat._id, clientChat._id],
-                  message: {
-                    type: "milestone",
-                    from: buyer._id,
-                    to: seller._id,
-                    text: `${req.user.firstName} released a milestone of ₹${newMilestone.amount}`,
-                    milestoneId: milestone._id,
-                  },
-                })
-              );
-              notify(
-                seller._id,
-                JSON.stringify({
-                  title: "Milestone released",
-                  body: `${milestone.buyer.firstName} realsed a milestone`,
-                }),
-                "User"
-              );
-              res.json({
-                message: "milestonre released",
-                milestone: newMilestone,
-              });
+              })
+            );
+            notify(
+              seller._id,
+              JSON.stringify({
+                title: "Milestone released",
+                body: `${milestone.buyer.firstName} realsed a milestone`,
+              }),
+              "User"
+            );
+            res.json({
+              message: "milestonre released",
+              milestone: newMilestone,
             });
-          } else {
-            res.status(500).json({ message: "someting went wrong" });
-          }
-        });
-      } else if (+amount < milestone.amount) {
-        Promise.all([
-          new P2PTransaction({
-            amount: milestone.amount - amount,
-            milestoneId: milestone._id,
-            user: req.user._id,
-            client: milestone.seller,
-            note: "milestone decrease",
-            dscr: milestone.dscr,
-          }).save(),
-          new P2PTransaction({
-            amount: +((amount / (100 + fee)) * 100).toFixed(2),
-            milestoneId: milestone._id,
-            user: milestone.seller._id,
-            client: milestone.buyer,
-            note: "milestone release",
-            dscr: milestone.dscr,
-          }).save(),
-          Milestone.findOneAndUpdate(
-            { _id: milestone._id },
-            { status: "released", releaseDate: new Date(), amount },
-            { new: true }
-          ),
-        ]).then(([buyerTrans, sellerTrans, newMilestone]) => {
-          if (buyerTrans && sellerTrans && newMilestone) {
-            Promise.all([
-              User.findOneAndUpdate(
-                { _id: milestone.buyer._id },
-                {
-                  $inc: { balance: milestone.amount - amount },
-                  $addToSet: { transactions: buyerTrans._id },
-                },
-                { new: true }
-              ),
-              User.findOneAndUpdate(
-                { _id: milestone.seller._id },
-                {
-                  $inc: { balance: sellerTrans.amount },
-                  $addToSet: { transactions: sellerTrans._id },
-                },
-                { new: true }
-              ),
-            ]).then(([buyer, seller]) => {
-              InitiateChat({
-                user: buyer._id,
-                client: seller._id,
-              }).then(([userChat, clientChat]) =>
-                SendMessage({
-                  rooms: [userChat._id, clientChat._id],
-                  message: {
-                    type: "milestone",
-                    from: buyer._id,
-                    to: seller._id,
-                    text: `${req.user.firstName} released a milestone of ₹${newMilestone.amount}`,
-                    milestoneId: newMilestone._id,
-                  },
-                })
-              );
-              notify(
-                seller._id,
-                JSON.stringify({
-                  title: "Milestone released",
-                  body: `${milestone.buyer.firstName} realsed a milestone`,
-                }),
-                "User"
-              );
-              res.json({
-                message: "milestonre released",
-                milestone: newMilestone,
-              });
-            });
-          }
-        });
-      } else {
-        Promise.all([
-          new P2PTransaction({
-            amount: +((amount / 100) * 100).toFixed(2),
-            milestoneId: milestone._id,
-            user: milestone.seller._id,
-            client: req.user,
-            note: "milestone release",
-            dscr: milestone.dsc,
-          }).save(),
-          Milestone.findOneAndUpdate(
-            { _id: milestone._id },
-            { status: "released", releaseDate: new Date() },
-            { new: true }
-          ),
-        ])
-          .then(([sellerTrans, newMilestone]) => {
-            User.findOneAndUpdate(
-              { _id: milestone.seller._id },
-              {
-                $inc: { balance: sellerTrans.amount },
-                $addToSet: { transactions: sellerTrans._id },
-              },
-              { new: true }
-            ).then((seller) => {
-              InitiateChat({
-                user: milestone.buyer._id,
-                client: milestone.seller._id,
-              }).then(([userChat, clientChat]) =>
-                SendMessage({
-                  rooms: [userChat._id, clientChat._id],
-                  message: {
-                    type: "milestone",
-                    from: milestone.buyer._id,
-                    to: milestone.seller._id,
-                    text: `${req.user.firstName} released a milestone of ₹${milestone.amount}`,
-                    milestoneId: milestone._id,
-                  },
-                })
-              );
-              notify(
-                seller._id,
-                JSON.stringify({
-                  title: "Milestone released",
-                  body: `${milestone.buyer.firstName} realsed a milestone`,
-                }),
-                "User"
-              );
-              res.json({
-                message: "milestonre released",
-                milestone: newMilestone,
-              });
-            });
-          })
-          .catch((err) => {
-            console.log(err);
-            res.status(500).json({ message: "someting went wrong" });
           });
-      }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ message: "someting went wrong" });
+        });
+      // }
     } else {
       res.status(400).json({ code: 400, message: "_id is invalid" });
     }

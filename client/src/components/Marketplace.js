@@ -25,7 +25,7 @@ import {
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import { SiteContext } from "../SiteContext";
-import { Link, Redirect, useHistory } from "react-router-dom";
+import { Link, Redirect } from "react-router-dom";
 import { Modal, Confirm } from "./Modal";
 import { MilestoneForm } from "./Account";
 import queryString from "query-string";
@@ -33,37 +33,36 @@ import { toast } from "react-toastify";
 
 require("./styles/marketplace.scss");
 
-const Marketplace = ({ location, match }) => {
-  const history = useHistory();
+const Marketplace = ({ history, location, match }) => {
   const { userType } = useContext(SiteContext);
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState(
-    queryString.parse(location?.search).type || ""
+    queryString.parse(location.search).type || ""
   );
   const [perPage, setPerPage] = useState(
-    queryString.parse(location?.search).perPage || 20
+    queryString.parse(location.search).perPage || 20
   );
   const [page, setPage] = useState(
-    queryString.parse(location?.search).page || 1
+    queryString.parse(location.search).page || 1
   );
   const [search, setSearch] = useState(
-    queryString.parse(location?.search).q || ""
+    queryString.parse(location.search).q || ""
   );
   const [sort, setSort] = useState({
-    column: queryString.parse(location?.search).sort || "popularity",
-    order: queryString.parse(location?.search).order || "dsc",
+    column: queryString.parse(location.search).sort || "popularity",
+    order: queryString.parse(location.search).order || "dsc",
   });
   const [products, setProducts] = useState([]);
   const [msg, setMsg] = useState(null);
   const [category, setCategory] = useState("");
   const [seller, setSeller] = useState(
-    queryString.parse(location?.search).seller
+    queryString.parse(location.search).seller
   );
   const [sellerDetail, setSellerDetail] = useState(null);
   useEffect(() => {
-    fetch(`/api/getProducts${history.location?.search}`)
+    fetch(`/api/getProducts${location.search}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "ok") {
@@ -101,7 +100,7 @@ const Marketplace = ({ location, match }) => {
           </>
         );
       });
-  }, [history.location?.search]);
+  }, [location.search]);
   useEffect(() => {
     history.replace({
       pathname: history.location.pathname,
@@ -283,7 +282,7 @@ const Product = ({ data }) => {
   let finalPrice = calculatePrice({ product: data, gst: data.user?.gst });
   return (
     <div className="product">
-      <Link to={`/account/home/product/${data._id}`}>
+      <Link to={`/marketplace/${data._id}`}>
         <div className={`thumb ${data.images[0] ? "" : "noThumb"}`}>
           <Img src={data.images[0] || "/open_box.png"} />
         </div>
@@ -364,99 +363,96 @@ export const SingleProduct = ({ match }) => {
   }, []);
   if (product) {
     return (
-      <>
-        <Link to="/account/home">Back</Link>
-        <div className="generic singleProduct">
-          <Header />
-          <div className="content">
-            <Gallery images={product.images} />
-            <div className="detail">
-              <h1>{product.name}</h1>
-              <p>{product.dscr}</p>
-              <p>
-                {product.type === "product" && (
-                  <>
-                    Available: {product.available && product.available}{" "}
-                    {product.available === 0 && <>Out of stock</>}
-                    {product.available < 7 && product.available > 0 && (
-                      <>Low stock</>
-                    )}
-                  </>
-                )}
-                {product.type !== "product" && (
-                  <>
-                    Availability:{" "}
-                    {product.available ? "Available" : "Unavailable"}
-                  </>
-                )}
-              </p>
-              <p className="price">
-                <label>Price: </label> <span className="symbol">₹</span>
-                {calculatePrice({ product, gst: product.user?.gst })}{" "}
-                {calculatePrice({ product, gst: product.user?.gst }) !==
-                  calculatePrice({
+      <div className="generic singleProduct">
+        <Header />
+        <div className="content">
+          <Gallery images={product.images} />
+          <div className="detail">
+            <h1>{product.name}</h1>
+            <p>{product.dscr}</p>
+            <p>
+              {product.type === "product" && (
+                <>
+                  Available: {product.available && product.available}{" "}
+                  {product.available === 0 && <>Out of stock</>}
+                  {product.available < 7 && product.available > 0 && (
+                    <>Low stock</>
+                  )}
+                </>
+              )}
+              {product.type !== "product" && (
+                <>
+                  Availability:{" "}
+                  {product.available ? "Available" : "Unavailable"}
+                </>
+              )}
+            </p>
+            <p className="price">
+              <label>Price: </label> <span className="symbol">₹</span>
+              {calculatePrice({ product, gst: product.user?.gst })}{" "}
+              {calculatePrice({ product, gst: product.user?.gst }) !==
+                calculatePrice({
+                  product,
+                  gst: product.user?.gst,
+                  discount: false,
+                }) && (
+                <span className="originalPrice">
+                  {calculatePrice({
                     product,
                     gst: product.user?.gst,
                     discount: false,
-                  }) && (
-                  <span className="originalPrice">
-                    {calculatePrice({
-                      product,
-                      gst: product.user?.gst,
-                      discount: false,
-                    })}
-                  </span>
-                )}
-              </p>
-              {
-                //   product.user?.gst?.verified && (
-                //   <p className="gst">
-                //     Including {product.gst || product.user.gst.amount}% GST
-                //   </p>
-                // )
-              }
-              <div className="seller">
-                <label>Being sold by:</label>
-                <Link to={`/marketplace?seller=${product.user?._id}`}>
-                  <div className="profile">
-                    <Img src={product.user.profileImg || "/profile-user.jpg"} />
-                    <p className="name">
-                      {product.user.firstName} {product.user.lastName}{" "}
-                      <span className="contact">{product.user.phone}</span>
-                    </p>
-                  </div>
-                </Link>
-              </div>
-              <div className="actions">
-                <button
-                  disabled={
-                    !product.available ||
-                    userType === "seller" ||
-                    product.user?._id === user?._id
-                  }
-                  onClick={() => {
-                    setCart((prev) => addToCart(prev, product));
-                  }}
-                >
-                  Add to Cart
-                </button>
-                {userType === "seller" && product?.user._id !== user?._id && (
-                  <p className="note">
-                    Switch to buyer profile to buy this product.
+                  })}
+                </span>
+              )}
+            </p>
+            {
+              //   product.user?.gst?.verified && (
+              //   <p className="gst">
+              //     Including {product.gst || product.user.gst.amount}% GST
+              //   </p>
+              // )
+            }
+            <div className="seller">
+              <label>Being sold by:</label>
+              <Link to={`/marketplace?seller=${product.user?._id}`}>
+                <div className="profile">
+                  <Img src={product.user.profileImg || "/profile-user.jpg"} />
+                  <p className="name">
+                    {product.user.firstName} {product.user.lastName}{" "}
+                    <span className="contact">{product.user.phone}</span>
                   </p>
-                )}
-                {userType === "buyer" && product?.user._id === user?._id && (
-                  <p className="note">Can't buy product from self.</p>
-                )}
-              </div>
+                </div>
+              </Link>
             </div>
-            <Modal className="msg" open={msg}>
-              {msg}
-            </Modal>
+            <div className="actions">
+              <button
+                disabled={
+                  !product.available ||
+                  userType === "seller" ||
+                  product.user?._id === user?._id
+                }
+                onClick={() => {
+                  setCart((prev) => addToCart(prev, product));
+                }}
+              >
+                Add to Cart
+              </button>
+              {userType === "seller" && product?.user._id !== user?._id && (
+                <p className="note">
+                  Switch to buyer profile to buy this product.
+                </p>
+              )}
+              {userType === "buyer" && product?.user._id === user?._id && (
+                <p className="note">Can't buy product from self.</p>
+              )}
+            </div>
           </div>
-          <Footer />
+          <Modal className="msg" open={msg}>
+            {msg}
+          </Modal>
         </div>
-      </>
+        <Footer />
+      </div>
     );
   }
   return (

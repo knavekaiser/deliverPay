@@ -219,13 +219,6 @@ io.on("connection", async (socket) => {
     parseCookies(cookie).access_token || cookie || "",
     process.env.JWT_SECRET,
     async (err, decoded) => {
-      socket.emit("test", {
-        handshake: socket.handshake,
-        cookie: parseCookies(cookie).access_token || cookie,
-        decoded: decoded,
-        err,
-      });
-      console.log({ cookie, decoded });
       if (decoded) {
         socket.on("joinRooms", async ({ rooms }) => {
           socket.join(decoded.sub.toString());

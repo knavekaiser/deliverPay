@@ -36,7 +36,7 @@ import { DateRange } from "react-date-range";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "react-toastify";
 
-const Orders = () => {
+export const Orders = ({ status, onClick }) => {
   const dateFilterRef = useRef();
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -80,6 +80,7 @@ const Orders = () => {
           dateTo: endDate,
         }),
         ...(type && { type }),
+        ...(status && { status }),
       })}`
     )
       .then((res) => res.json())
@@ -101,7 +102,7 @@ const Orders = () => {
           </>
         );
       });
-  }, [type, search, page, perPage, dateFilter]);
+  }, [type, search, page, perPage, dateFilter, status]);
   useLayoutEffect(() => {
     if (dateFilterRef.current) {
       const {
@@ -129,112 +130,116 @@ const Orders = () => {
     }
   }, [batch]);
   return (
-    <>
-      <div className="benner">
-        <p>My Orders</p>
-      </div>
-      <div className="filters">
-        <section>
-          <label>Total:</label>
-          {total}
-        </section>
-        <section>
-          <label>Per Page:</label>
-          <Combobox
-            defaultValue={0}
-            options={[
-              { label: "20", value: 20 },
-              { label: "30", value: 30 },
-              { label: "50", value: 50 },
-            ]}
-            onChange={(e) => setPerPage(e.value)}
-          />
-        </section>
-        <section className="search">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="23"
-            height="23"
-            viewBox="0 0 23 23"
-          >
-            <path
-              id="Icon_ionic-ios-search"
-              data-name="Icon ionic-ios-search"
-              d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
-              transform="translate(-4.5 -4.493)"
-              fill="#707070"
-              opacity="0.74"
-            />
-          </svg>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search for Seller"
-          />
-          {search && (
-            <button onClick={() => setSearch("")}>
-              <X_svg />
-            </button>
-          )}
-        </section>
-        <section className="category">
-          <label>Type:</label>
-          <Combobox
-            defaultValue={0}
-            options={[
-              { label: "All", value: "" },
-              { label: "Product", value: "product" },
-              { label: "Service", value: "service" },
-              { label: "Other", value: "other" },
-            ]}
-            onChange={(e) => setType(e.value)}
-          />
-        </section>
-        <section
-          className={`date ${dateFilter ? "open" : ""}`}
-          ref={dateFilterRef}
-          onClick={() => setDateOpen(true)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="30.971"
-            height="30.971"
-            viewBox="0 0 30.971 30.971"
-          >
-            <path
-              id="Path_299"
-              data-name="Path 299"
-              d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
-              fill="#336cf9"
-            />
-          </svg>
-          {dateFilter && (
-            <>
-              <div className="dates">
-                <p>
-                  From:{" "}
-                  <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
-                </p>
-                <p>
-                  To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
-                </p>
-              </div>
-              <button
-                className="clearDateFilter"
-                onClick={() => {
-                  setDateRange({
-                    startDate: new Date(),
-                    endDate: new Date(),
-                  });
-                  setDateFilter(false);
-                }}
-              >
-                <X_svg />
-              </button>
-            </>
-          )}
-        </section>
-      </div>
+    <div className="productContainer">
+      {
+        //   <div className="benner">
+        //   <p>My Orders</p>
+        // </div>
+      }
+      {
+        //   <div className="filters">
+        //   <section>
+        //     <label>Total:</label>
+        //     {total}
+        //   </section>
+        //   <section>
+        //     <label>Per Page:</label>
+        //     <Combobox
+        //       defaultValue={0}
+        //       options={[
+        //         { label: "20", value: 20 },
+        //         { label: "30", value: 30 },
+        //         { label: "50", value: 50 },
+        //       ]}
+        //       onChange={(e) => setPerPage(e.value)}
+        //     />
+        //   </section>
+        //   <section className="search">
+        //     <svg
+        //       xmlns="http://www.w3.org/2000/svg"
+        //       width="23"
+        //       height="23"
+        //       viewBox="0 0 23 23"
+        //     >
+        //       <path
+        //         id="Icon_ionic-ios-search"
+        //         data-name="Icon ionic-ios-search"
+        //         d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
+        //         transform="translate(-4.5 -4.493)"
+        //         fill="#707070"
+        //         opacity="0.74"
+        //       />
+        //     </svg>
+        //     <input
+        //       value={search}
+        //       onChange={(e) => setSearch(e.target.value)}
+        //       placeholder="Search for Seller"
+        //     />
+        //     {search && (
+        //       <button onClick={() => setSearch("")}>
+        //         <X_svg />
+        //       </button>
+        //     )}
+        //   </section>
+        //   <section className="category">
+        //     <label>Type:</label>
+        //     <Combobox
+        //       defaultValue={0}
+        //       options={[
+        //         { label: "All", value: "" },
+        //         { label: "Product", value: "product" },
+        //         { label: "Service", value: "service" },
+        //         { label: "Other", value: "other" },
+        //       ]}
+        //       onChange={(e) => setType(e.value)}
+        //     />
+        //   </section>
+        //   <section
+        //     className={`date ${dateFilter ? "open" : ""}`}
+        //     ref={dateFilterRef}
+        //     onClick={() => setDateOpen(true)}
+        //   >
+        //     <svg
+        //       xmlns="http://www.w3.org/2000/svg"
+        //       width="30.971"
+        //       height="30.971"
+        //       viewBox="0 0 30.971 30.971"
+        //     >
+        //       <path
+        //         id="Path_299"
+        //         data-name="Path 299"
+        //         d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
+        //         fill="#336cf9"
+        //       />
+        //     </svg>
+        //     {dateFilter && (
+        //       <>
+        //         <div className="dates">
+        //           <p>
+        //             From:{" "}
+        //             <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
+        //           </p>
+        //           <p>
+        //             To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
+        //           </p>
+        //         </div>
+        //         <button
+        //           className="clearDateFilter"
+        //           onClick={() => {
+        //             setDateRange({
+        //               startDate: new Date(),
+        //               endDate: new Date(),
+        //             });
+        //             setDateFilter(false);
+        //           }}
+        //         >
+        //           <X_svg />
+        //         </button>
+        //       </>
+        //     )}
+        //   </section>
+        // </div>
+      }
       {batch.length > 0 && (
         <div className="batchAction">
           <button onClick={() => console.log("batch delete")}>Delete</button>
@@ -252,19 +257,23 @@ const Orders = () => {
               //   />
               // </th>
             }
-            <th className="date">Date</th>
-            <th>Seller</th>
-            <th>QTY</th>
-            <th>Refundable</th>
-            <th>Milestone</th>
+            <th>Order</th>
+            <th className="date">Purchase Date</th>
+            {
+              //   <th>Seller</th>
+              // <th>QTY</th>
+              // <th>Refundable</th>
+              // <th>Milestone</th>
+            }
+            <th>Total</th>
             <th>Status</th>
-            <th>Total Price</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {orders.map((order) => (
             <SingleOrder
+              onClick={onClick}
               key={order._id}
               order={order}
               setOrders={setOrders}
@@ -309,10 +318,17 @@ const Orders = () => {
           }}
         />
       </Modal>
-    </>
+    </div>
   );
 };
-const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
+const SingleOrder = ({
+  order,
+  setOrders,
+  selectAll,
+  setBatch,
+  batch,
+  onClick,
+}) => {
   const actionsRef = useRef();
   const checkRef = useRef();
   const history = useHistory();
@@ -433,7 +449,7 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
             batch.length > 0
           ) {
           } else {
-            history.push(`/account/myShopping/orders/${order._id}`);
+            onClick?.(order._id);
           }
         }}
       >
@@ -448,21 +464,24 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
           //   />
           // </td>
         }
+        <td>{order._id}</td>
         <td className="date">
-          <Moment format="DD MMM YYYY, hh:mm a">{order.createdAt}</Moment>
+          <Moment format="DD MMM YYYY">{order.createdAt}</Moment>
         </td>
-        <td>
-          <User user={order.seller} />
-        </td>
-        <td>{order.products.reduce((a, c) => a + c.qty, 0)}</td>
-        <td>{order.refundable || "N/A"}</td>
-        <td>{order.milestones.length || "N/A"}</td>
-        <td>{order.status}</td>
+        {
+          //   <td>
+          //   <User user={order.seller} />
+          // </td>
+          // <td>{order.products.reduce((a, c) => a + c.qty, 0)}</td>
+          // <td>{order.refundable || "N/A"}</td>
+          // <td>{order.milestones.length || "N/A"}</td>
+        }
         <td>₹{order.total}</td>
+        <td>{order.status}</td>
         <td ref={actionsRef}>
           {batch.length === 0 && (
             <Actions icon={<Chev_down_svg />}>
-              <Link to={`/account/myShopping/orders/${order._id}`}>
+              <Link to={`${history.location.pathname}${order._id}`}>
                 View Detail
               </Link>
               {order.status === "pending" && (
@@ -504,7 +523,7 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
     </>
   );
 };
-const FullOrder = ({ history, match }) => {
+export const FullOrder = ({ history, match }) => {
   const { userType } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [order, setOrder] = useState(null);
@@ -611,9 +630,13 @@ const FullOrder = ({ history, match }) => {
       <>
         <div className="actions">
           <Link
-            to={`/account/${
-              userType === "seller" ? "myShop" : "myShopping"
-            }/orders`}
+            to={`${
+              history.location.pathname.replace(match.params._id, "")
+                ? history.location.pathname.replace(match.params._id, "")
+                : userType === "seller"
+                ? "/account/orders"
+                : "/account/orders/current"
+            }`}
             className="back"
           >
             <Arrow_left_svg />
@@ -1731,7 +1754,547 @@ const FullRefund = ({ history, match }) => {
   return <>Loading</>;
 };
 
-const MyShopping = ({ history, location, match }) => {
+export const Disputes = ({ status, onClick }) => {
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+  const [search, setSearch] = useState("");
+  const [dateOpen, setDateOpen] = useState("");
+  const [sort, setSort] = useState({
+    column: "createdAt",
+    order: "dsc",
+  });
+  const [disputes, setDisputes] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [batch, setBatch] = useState([]);
+  const [msg, setMsg] = useState(null);
+  useEffect(() => {
+    fetch(
+      `/api/getDisputes?${new URLSearchParams({
+        ...(search && { q: search }),
+        page,
+        perPage,
+        sort: sort.column,
+        order: sort.order,
+        ...(status && { status }),
+      })}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setDisputes(data.disputes);
+          setTotal(data.total);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get orders.</h4>
+            </div>
+          </>
+        );
+      });
+  }, [search, page, perPage, status]);
+  useEffect(() => {
+    if (selectAll) {
+    } else {
+      setBatch([]);
+    }
+  }, [selectAll]);
+  useEffect(() => {
+    if (batch.length === 0) {
+      setSelectAll(false);
+    }
+  }, [batch]);
+  return (
+    <div className="productContainer">
+      {
+        //   <div className="benner">
+        //   <p>My Orders</p>
+        // </div>
+      }
+      {
+        //   <div className="filters">
+        //   <section>
+        //     <label>Total:</label>
+        //     {total}
+        //   </section>
+        //   <section>
+        //     <label>Per Page:</label>
+        //     <Combobox
+        //       defaultValue={0}
+        //       options={[
+        //         { label: "20", value: 20 },
+        //         { label: "30", value: 30 },
+        //         { label: "50", value: 50 },
+        //       ]}
+        //       onChange={(e) => setPerPage(e.value)}
+        //     />
+        //   </section>
+        //   <section className="search">
+        //     <svg
+        //       xmlns="http://www.w3.org/2000/svg"
+        //       width="23"
+        //       height="23"
+        //       viewBox="0 0 23 23"
+        //     >
+        //       <path
+        //         id="Icon_ionic-ios-search"
+        //         data-name="Icon ionic-ios-search"
+        //         d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
+        //         transform="translate(-4.5 -4.493)"
+        //         fill="#707070"
+        //         opacity="0.74"
+        //       />
+        //     </svg>
+        //     <input
+        //       value={search}
+        //       onChange={(e) => setSearch(e.target.value)}
+        //       placeholder="Search for Seller"
+        //     />
+        //     {search && (
+        //       <button onClick={() => setSearch("")}>
+        //         <X_svg />
+        //       </button>
+        //     )}
+        //   </section>
+        //   <section className="category">
+        //     <label>Type:</label>
+        //     <Combobox
+        //       defaultValue={0}
+        //       options={[
+        //         { label: "All", value: "" },
+        //         { label: "Product", value: "product" },
+        //         { label: "Service", value: "service" },
+        //         { label: "Other", value: "other" },
+        //       ]}
+        //       onChange={(e) => setType(e.value)}
+        //     />
+        //   </section>
+        //   <section
+        //     className={`date ${dateFilter ? "open" : ""}`}
+        //     ref={dateFilterRef}
+        //     onClick={() => setDateOpen(true)}
+        //   >
+        //     <svg
+        //       xmlns="http://www.w3.org/2000/svg"
+        //       width="30.971"
+        //       height="30.971"
+        //       viewBox="0 0 30.971 30.971"
+        //     >
+        //       <path
+        //         id="Path_299"
+        //         data-name="Path 299"
+        //         d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
+        //         fill="#336cf9"
+        //       />
+        //     </svg>
+        //     {dateFilter && (
+        //       <>
+        //         <div className="dates">
+        //           <p>
+        //             From:{" "}
+        //             <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
+        //           </p>
+        //           <p>
+        //             To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
+        //           </p>
+        //         </div>
+        //         <button
+        //           className="clearDateFilter"
+        //           onClick={() => {
+        //             setDateRange({
+        //               startDate: new Date(),
+        //               endDate: new Date(),
+        //             });
+        //             setDateFilter(false);
+        //           }}
+        //         >
+        //           <X_svg />
+        //         </button>
+        //       </>
+        //     )}
+        //   </section>
+        // </div>
+      }
+      {batch.length > 0 && (
+        <div className="batchAction">
+          <button onClick={() => console.log("batch delete")}>Delete</button>
+        </div>
+      )}
+      <table className="table disuptes">
+        <thead>
+          <tr>
+            <th className="date">Raised at</th>
+            <th>User</th>
+            <th>Issue</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {disputes.map((dispute) => (
+            <SingleDispute
+              onClick={onClick}
+              key={dispute._id}
+              dispute={dispute}
+              setDisputes={setDisputes}
+            />
+          ))}
+          {disputes.length === 0 && (
+            <tr className="placeholder">
+              <td>No Dispute yet.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      <Paginaiton
+        total={total}
+        btns={5}
+        currentPage={page}
+        perPage={perPage}
+        setPage={setPage}
+      />
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+    </div>
+  );
+};
+const SingleDispute = ({ dispute, setDisputes, onClick }) => {
+  const actionsRef = useRef();
+  const checkRef = useRef();
+  const history = useHistory();
+  const { user } = useContext(SiteContext);
+  const [edit, setEdit] = useState(false);
+  const [msg, setMsg] = useState(false);
+  const client = dispute.plaintiff._id === user._id ? "defendant" : "plaintiff";
+  return (
+    <>
+      <tr
+        className={`dispute`}
+        onClick={(e) => {
+          if (
+            e.nativeEvent.path.includes(actionsRef.current) ||
+            e.nativeEvent.path.includes(checkRef.current)
+          ) {
+          } else {
+            onClick?.(dispute._id);
+          }
+        }}
+      >
+        <td className="date">
+          <Moment format="DD MMM YYYY">{dispute.createdAt}</Moment>
+        </td>
+        <td>
+          <User user={dispute[client]} />
+        </td>
+        <td>{dispute.issue}</td>
+        <td>{dispute.status}</td>
+        <td ref={actionsRef}>
+          <Actions icon={<Chev_down_svg />}>
+            <Link to={`${history.location.pathname}${dispute._id}`}>
+              View Detail
+            </Link>
+          </Actions>
+        </td>
+      </tr>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+    </>
+  );
+};
+export const FullDispute = ({ history, location, match }) => {
+  const [data, setData] = useState(null);
+  const [msg, setMsg] = useState(null);
+  useEffect(() => {
+    fetch(`/api/singleDispute?_id=${match.params._id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setData(data.dispute);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get Dispute. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  }, []);
+  if (data) {
+    return (
+      <div className={`singleDispute ${data.status}`}>
+        <div className="disputeSummery">
+          <div className="benner">Dispute Summery</div>
+          <ul className="disputeDetail">
+            <li>
+              <label>Dispute ID:</label>
+              <div className="data">{data._id}</div>
+            </li>
+            <li>
+              <label>Status:</label>
+              <div className="data">{data.status}</div>
+            </li>
+            <li>
+              <label>Issue:</label>
+              <div className="data">{data.issue}</div>
+            </li>
+            <li>
+              <label>Issued by:</label>
+              <div className="data">{data.plaintiff.role}</div>
+            </li>
+            <li>
+              <label>Dispute filed:</label>
+              <div className="data">
+                <Moment format="hh:mm a, DD MMM, YYYY">{data.createdAt}</Moment>
+              </div>
+            </li>
+            <li>
+              <label>Milestone amount:</label>
+              <div className="data">₹ {data.milestone.amount}</div>
+            </li>
+            <li>
+              <label>Milestone description:</label>
+              <div className="data">{data.milestone.dscr}</div>
+            </li>
+            <li>
+              <label>Milestone products:</label>
+              <div className="data">
+                {data.milestone.products?.map((item, i) => (
+                  <li key={i}>{item.name}</li>
+                ))}
+                {data.milestone.products?.length ? null : "No product selected"}
+              </div>
+            </li>
+            <li>
+              <label>Milestone created:</label>
+              <div className="data">
+                <Moment format="hh:mm a, DD MMM, YYYY">
+                  {data.milestone.createdAt}
+                </Moment>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <Case role="plaintiff" dispute={data} setData={setData} />
+        <Case role="defendant" dispute={data} setData={setData} />
+        <Modal open={msg} className="msg">
+          {msg}
+        </Modal>
+      </div>
+    );
+  }
+  return (
+    <div className="singleDispute loading">
+      <div className="disputeSummery">
+        <div className="benner">Dispute Summery</div>
+        <ul>
+          <li>
+            <div />
+            <div />
+          </li>
+          <li>
+            <div />
+            <div />
+          </li>
+          <li>
+            <div />
+            <div />
+          </li>
+        </ul>
+      </div>
+      <div className="plaintiff">
+        <div className="benner">Plaintiff</div>
+        <div className="user">
+          <div className="img" />
+          <div className="name" />
+        </div>
+        <ul className="detail">
+          <li>
+            <div />
+            <div />
+          </li>
+          <li>
+            <div />
+            <div />
+          </li>
+          <li>
+            <div />
+            <div />
+          </li>
+        </ul>
+      </div>
+      <div className="defendant">
+        <div className="benner">Defendant</div>
+        <div className="user">
+          <div className="img" />
+          <div className="name" />
+        </div>
+        <ul className="detail">
+          <li>
+            <div />
+            <div />
+          </li>
+          <li>
+            <div />
+            <div />
+          </li>
+          <li>
+            <div />
+            <div />
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+const Case = ({ role, dispute, setData }) => {
+  const [msg, setMsg] = useState(null);
+  const resolveDispute = (winner) => {
+    fetch("/api/resolveDispute", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        _id: dispute._id,
+        winner,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Succ_svg />
+                <h4>Dispute Successfully resolved.</h4>
+              </div>
+            </>
+          );
+          setData((prev) => ({
+            ...prev,
+            winner: data.dispute.winner,
+            status: data.dispute.status,
+          }));
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>{data.message}</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>
+                Dispute Could not be resolved. Make sure you' a're online.
+              </h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <div
+      className={`${role} ${dispute[role].role} ${
+        dispute.winner === dispute[role]._id ? "winner" : ""
+      }`}
+    >
+      <div className="benner">
+        {role}
+        {dispute.status === "pendingVerdict" && dispute.defendant.case?.dscr && (
+          <button
+            onClick={() =>
+              Confirm({
+                className: "disputeResolveConfirm",
+                label: "Dispute resolve",
+                question: (
+                  <>
+                    Are you sure{" "}
+                    <span className="name">
+                      {dispute[role].firstName + " " + dispute[role].lastName}
+                    </span>{" "}
+                    <span className="role">({role})</span> is the winner of this
+                    dispute?
+                  </>
+                ),
+                callback: () => resolveDispute(dispute[role]._id),
+              })
+            }
+          >
+            Winner
+          </button>
+        )}
+        {dispute.winner === dispute[role]._id && (
+          <p className="winnerTag">Winner</p>
+        )}
+      </div>
+      <div className="content">
+        <div className="user">
+          <Img src={dispute[role].profileImg || "/profile-user.jpg"} />
+          <p className="name">
+            {dispute[role].firstName + " " + dispute[role].lastName}
+            <span className="phone">{dispute[role].phone}</span>
+          </p>
+        </div>
+        {dispute[role].case?.dscr ? (
+          <ul className="detail">
+            <li>
+              <label>Role:</label> <div>{dispute[role].role}</div>
+            </li>
+            <li>
+              <label>Current Balance:</label>{" "}
+              <div>₹ {dispute[role].balance?.fix()}</div>
+            </li>
+            <li>
+              <label>Case:</label>{" "}
+              <div>{dispute[role].case?.dscr || "N/A"}</div>
+            </li>
+            <li>
+              <label>Evidence:</label>{" "}
+              <div className="thumbs">
+                {dispute[role].case?.files?.length ? (
+                  <Media links={dispute[role].case?.files} />
+                ) : (
+                  "N/A"
+                )}
+              </div>
+            </li>
+          </ul>
+        ) : (
+          <p className="noRes">Has not responded yet.</p>
+        )}
+      </div>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
+    </div>
+  );
+};
+
+const MyShopping = () => {
   const { userType } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -1744,19 +2307,20 @@ const MyShopping = ({ history, location, match }) => {
   }, []);
   return (
     <>
-      {userType === "seller" && <Redirect to="/account/myShop/orders" />}
+      {userType === "seller" && <Redirect to="/account/orders/current" />}
       <div className="productContainer">
         <div style={{ display: "none" }}>
           <X_svg />
         </div>
-        <Tabs
-          basepath="/account/myShopping/"
-          tabs={[
-            { label: "Orders", path: "orders" },
-            { label: "Refunds", path: "refunds" },
-            // { label: "Settings", path: "settings" },
-          ]}
-        />
+        {
+          //   <Tabs
+          //   basepath="/account/myShopping/"
+          //   tabs={[
+          //     { label: "Orders", path: "orders" },
+          //     { label: "Refunds", path: "refunds" },
+          //   ]}
+          // />
+        }
         <Switch>
           <Route path="/account/myShopping/orders/:_id" component={FullOrder} />
           <Route path="/account/myShopping/orders" component={Orders} />

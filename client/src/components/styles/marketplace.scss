@@ -948,6 +948,193 @@
   }
 }
 
+.singleDispute {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 1rem;
+  .disputeSummery {
+    grid-column: 1/3;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: white;
+    .disputeDetail {
+      & > li {
+        padding: 1rem;
+        display: flex;
+        &:not(:last-child) {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+        }
+        label {
+          font-size: 0.8rem;
+          color: rgba(0, 0, 0, 0.6);
+          flex-basis: 20%;
+        }
+      }
+    }
+  }
+  .plaintiff,
+  .defendant,
+  .disputeSummery {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    .benner {
+      text-transform: capitalize;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(
+        176deg,
+        rgba(18, 159, 148, 1) 0%,
+        rgba(0, 0, 0, 0) 100%
+      );
+      button {
+        cursor: pointer;
+        background: white;
+        padding: 0.3rem 1rem;
+        font-weight: 600;
+        border-radius: 5px;
+        &:hover {
+          color: white;
+          background: $blue;
+          border-color: $blue;
+        }
+      }
+    }
+    .content {
+      display: grid;
+      grid-auto-rows: min-content;
+      grid-gap: 0;
+      padding: 0;
+      .user {
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        grid-gap: 1rem;
+        border-bottom: 1px dotted rgba(0, 0, 0, 0.3);
+        img {
+          height: 3rem;
+          width: 3rem;
+          object-fit: cover;
+          border-radius: 50%;
+        }
+        .name {
+          .phone {
+            display: block;
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.5);
+          }
+        }
+      }
+      .detail {
+        li {
+          &:not(:last-child) {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+          }
+          display: flex;
+          padding: 1rem;
+          align-items: center;
+          label {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.6);
+            flex-basis: 20%;
+          }
+          .thumbs {
+            margin: 0;
+            flex-wrap: wrap;
+          }
+        }
+      }
+      .noRes {
+        padding: 1.5rem;
+      }
+    }
+  }
+  .plaintiff {
+    .benner {
+      background: linear-gradient(
+        176deg,
+        rgba(223, 129, 42, 1) 0%,
+        rgba(0, 0, 0, 0) 100%
+      );
+    }
+  }
+  .defendant {
+    .benner {
+      background: linear-gradient(
+        176deg,
+        rgba($red, 1) 0%,
+        rgba(0, 0, 0, 0) 100%
+      );
+    }
+  }
+  &.resolved {
+    .plaintiff,
+    .defendant,
+    .disputeSummery {
+      .benner {
+        background: linear-gradient(
+          176deg,
+          rgba(0, 0, 0, 0.48) 0%,
+          rgba(0, 0, 0, 0) 100%
+        );
+      }
+    }
+    .winner {
+      .benner {
+        background: linear-gradient(
+          176deg,
+          rgba(70, 148, 74, 1) 0%,
+          rgba(0, 0, 0, 0) 100%
+        );
+      }
+    }
+  }
+  &.loading {
+    .disputeSummery,
+    .plaintiff,
+    .defendant {
+      .user {
+        padding: 1rem;
+        display: flex;
+        grid-gap: 1rem;
+        align-items: center;
+        .img {
+          height: 3rem;
+          width: 3rem;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.05);
+          animation: fade 0.8s ease-in-out alternate infinite;
+          animation-delay: 0.3s;
+        }
+        .name {
+          height: 1rem;
+          width: 10rem;
+          background: rgba(0, 0, 0, 0.05);
+          animation: fade 0.8s ease-in-out alternate infinite;
+          animation-delay: 0.1s;
+        }
+      }
+      ul {
+        display: grid;
+        li {
+          display: flex;
+          grid-gap: 1rem;
+          padding: 1rem;
+          div {
+            height: 1rem;
+            width: 10rem;
+            background: rgba(0, 0, 0, 0.05);
+            animation: fade 0.8s ease-in-out alternate infinite;
+          }
+        }
+      }
+    }
+  }
+}
+
 @media only screen and (max-width: 480px) {
   .generic.marketplace {
     .content {

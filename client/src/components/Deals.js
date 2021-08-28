@@ -36,7 +36,10 @@ const Deals = ({ history, location, match }) => {
   useEffect(() => {
     if (userCard) {
       setChat(userCard?.messages);
-      socket.emit("initiateChat", { client_id: userCard?._id });
+      socket.emit("initiateChat", {
+        client_id: userCard?._id,
+        ...(userCard.messages === undefined && { newChat: true }),
+      });
     }
   }, [userCard]);
   useEffect(() => {
@@ -269,7 +272,7 @@ const UserSearch = ({ setUserCard, setContacts }) => {
                     ...prev,
                     { client: user, messages: [], status: "" },
                   ]);
-                  history.push(`/account/home/deals/${user._id}`);
+                  history.push(`/account/deals/${user._id}`);
                   setShowUsers(false);
                 }}
               >
@@ -301,7 +304,7 @@ const Person = ({ client, messages, lastSeen, userCard, unread }) => {
     <li
       className={client._id === userCard?._id ? "active" : undefined}
       onClick={() => {
-        history.push(`/account/home/deals/${client._id}`);
+        history.push(`/account/deals/${client._id}`);
         setContacts((prev) =>
           prev.map((chat) => {
             if (client?._id === chat.client?._id) {
@@ -359,9 +362,26 @@ const Chat = ({
   const [page, setPage] = useState(2);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
-    socket.on("connectedToRoom", ({ rooms }) => {
-      setRooms(rooms);
-    });
+    socket.on(
+      "connectedToRoom",
+      ({ rooms, newChat, client, clientRoom_id }) => {
+        if (newChat) {
+          setContacts((prev) =>
+            prev.map((chat) => {
+              if (chat.client._id === client) {
+                return {
+                  ...chat,
+                  _id: clientRoom_id,
+                };
+              } else {
+                return chat;
+              }
+            })
+          );
+        }
+        setRooms(rooms);
+      }
+    );
   }, []);
   useEffect(() => {
     if (rooms.length) {
@@ -446,7 +466,7 @@ const Chat = ({
               <button
                 className="back"
                 onClick={() => {
-                  history.push("/account/home/deals");
+                  history.push("/account/deals");
                   setChat(null);
                   setUserCard(null);
                 }}
@@ -483,21 +503,29 @@ const Chat = ({
                 {userType === "seller" ? (
                   <Link
                     className="pay"
-                    to={`/account/home/deals/${userCard._id}/payment`}
+                    to={`/account/deals/${userCard._id}/payment`}
                   >
                     Request Milestone
                   </Link>
                 ) : (
                   <Link
                     className="pay"
-                    to={`/account/home/deals/${userCard._id}/payment`}
+                    to={`/account/deals/${userCard._id}/payment`}
                   >
                     Pay
                   </Link>
                 )}
                 <Actions>
-                  {userCard.status === "" && null}
-                  <Link to={`/account/home/deals/${userCard._id}/report`}>
+                  {
+                    userCard.status === "" && null
+                    // <Link
+                    //   className="pay"
+                    //   to={`/account/deals/${userCard._id}/pay`}
+                    // >
+                    //   Pay
+                    // </Link>
+                  }
+                  <Link to={`/account/deals/${userCard._id}/report`}>
                     Report
                   </Link>
                   <button
@@ -658,15 +686,15 @@ const Chat = ({
         head={true}
         label={userType === "seller" ? "Request Milestone" : "Create Milestone"}
         open={history.location.pathname.match(
-          /^\/account\/home\/deals\/.+\/payment$/
+          /^\/account\/deals\/.+\/payment$/
         )}
-        setOpen={() => history.push(`/account/home/deals/${userCard._id}`)}
+        setOpen={() => history.push(`/account/deals/${userCard._id}`)}
       >
         <MilestoneForm
           action={userType === "seller" ? "request" : "create"}
           client={userCard}
           onSuccess={(milestone) => {
-            history.push(`/account/home/deals/${userCard._id}`);
+            history.push(`/account/deals/${userCard._id}`);
             setMsg(
               <>
                 <button onClick={() => setMsg(null)}>Okay</button>
@@ -684,7 +712,7 @@ const Chat = ({
         />
       </Modal>
       <Route
-        path="/account/home/deals/:_id/report"
+        path="/account/deals/:_id/report"
         component={({ location }) => (
           <Modal
             open={true}
@@ -850,7 +878,16 @@ const ChatForm = ({ rooms, user, newChat }) => {
           setMsg,
         })
       : [];
-    if (files && !media) {
+    if (files.length && !media.length) {
+      setMsg(
+        <>
+          <button onClick={() => setMsg(null)}>Okay</button>
+          <div>
+            <Err_svg />
+            <h4>Could not send files. please try again.</h4>
+          </div>
+        </>
+      );
       return;
     }
     if (media.length) {

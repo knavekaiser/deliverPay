@@ -60,100 +60,100 @@ const Wallet = ({ history, location, match }) => {
   const [rewards, setRewards] = useState([]);
   const [addMoneySuccess, setAddMoneySuccess] = useState(false);
   const [addMoneyFailed, setAddMoneyFailed] = useState(false);
-  const [withdrawMoneyAmount, setWithdrawMoneyAmount] = useState("");
-  const [withdrawMoneyFail, setWithdrawMoneyFail] = useState(false);
-  const [withdrawOptions, setWithdrawOptions] = useState(false);
+  // const [withdrawMoneyAmount, setWithdrawMoneyAmount] = useState("");
+  // const [withdrawMoneyFail, setWithdrawMoneyFail] = useState(false);
+  // const [withdrawOptions, setWithdrawOptions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
-  const withdrawMoney = (method) => {
-    let url;
-    let options = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    };
-    switch (method.__t) {
-      case "BankCard":
-        options.body = JSON.stringify({
-          paymentMethod: method.__t,
-          amount: withdrawMoneyAmount,
-          accountDetail: {
-            number: +method.cardNumber,
-            name: method.nameOnCard,
-          },
-        });
-        break;
-      case "BankAccount":
-        options.body = JSON.stringify({
-          paymentMethod: method.__t,
-          amount: withdrawMoneyAmount,
-          accountDetail: {
-            name: method.name,
-            ifsc: method.ifsc,
-            account_number: method.accountNumber,
-          },
-        });
-        break;
-      case "VpaAccount":
-        options.body = JSON.stringify({
-          paymentMethod: method.__t,
-          amount: withdrawMoneyAmount,
-          accountDetail: {
-            address: method.address,
-          },
-        });
-      default:
-        return;
-    }
-    setLoading(true);
-    fetch("/api/withdrawMoney", options)
-      .then((res) => res.json())
-      .then((data) => {
-        setLoading(false);
-        if (data.code === "ok") {
-          setUser((prev) => ({
-            ...prev,
-            balance: prev.balance - data.transaction.amount,
-          }));
-          setBalance((prev) => prev - data.transaction.amount);
-          history.push("/account/wallet");
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Succ_svg />
-                <h4 className="amount">₹{data.transaction?.amount}</h4>
-                <h4>Money withdrawed!</h4>
-              </div>
-            </>
-          );
-        } else if (data.code === 403) {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Insufficient fun.</h4>
-              </div>
-            </>
-          );
-        } else {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not withdraw money. Please try again.</h4>
-              </div>
-            </>
-          );
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
-        setWithdrawMoneyFail(true);
-      });
-  };
+  // const withdrawMoney = (method) => {
+  //   let url;
+  //   let options = {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //   };
+  //   switch (method.__t) {
+  //     case "BankCard":
+  //       options.body = JSON.stringify({
+  //         paymentMethod: method.__t,
+  //         amount: withdrawMoneyAmount,
+  //         accountDetail: {
+  //           number: +method.cardNumber,
+  //           name: method.nameOnCard,
+  //         },
+  //       });
+  //       break;
+  //     case "BankAccount":
+  //       options.body = JSON.stringify({
+  //         paymentMethod: method.__t,
+  //         amount: withdrawMoneyAmount,
+  //         accountDetail: {
+  //           name: method.name,
+  //           ifsc: method.ifsc,
+  //           account_number: method.accountNumber,
+  //         },
+  //       });
+  //       break;
+  //     case "VpaAccount":
+  //       options.body = JSON.stringify({
+  //         paymentMethod: method.__t,
+  //         amount: withdrawMoneyAmount,
+  //         accountDetail: {
+  //           address: method.address,
+  //         },
+  //       });
+  //     default:
+  //       return;
+  //   }
+  //   setLoading(true);
+  //   fetch("/api/withdrawMoney", options)
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setLoading(false);
+  //       if (data.code === "ok") {
+  //         setUser((prev) => ({
+  //           ...prev,
+  //           balance: prev.balance - data.transaction.amount,
+  //         }));
+  //         setBalance((prev) => prev - data.transaction.amount);
+  //         history.push("/account/wallet");
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Succ_svg />
+  //               <h4 className="amount">₹{data.transaction?.amount}</h4>
+  //               <h4>Money withdrawed!</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       } else if (data.code === 403) {
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Err_svg />
+  //               <h4>Insufficient fun.</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       } else {
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Err_svg />
+  //               <h4>Could not withdraw money. Please try again.</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //       setLoading(false);
+  //       setWithdrawMoneyFail(true);
+  //     });
+  // };
   const handleOrder = (order, key) => {
     const Razorpay = window.Razorpay;
     if (Razorpay) {
@@ -179,7 +179,7 @@ const Wallet = ({ history, location, match }) => {
             .then((res) => res.json())
             .then(({ code, user, transaction, message }) => {
               if (code === "ok") {
-                history.push("/account/wallet");
+                history.push("/account/profile/wallet");
                 setAddMoneyFailed(false);
                 setAddMoneySuccess(transaction);
                 setBalance((prev) => prev + transaction.amount);
@@ -295,13 +295,16 @@ const Wallet = ({ history, location, match }) => {
   }, []);
   useEffect(() => {
     if (!addMoneyAmount) {
-      history.push("/account/wallet");
+      history.push("/account/profile/wallet");
     }
-    if (!withdrawMoneyAmount) {
-      history.push("/account/wallet");
-    }
+    // if (!withdrawMoneyAmount) {
+    //   history.push("/account/wallet");
+    // }
     setLoading(false);
-  }, [addMoneyAmount, withdrawMoneyAmount]);
+  }, [
+    addMoneyAmount,
+    // withdrawMoneyAmount
+  ]);
   return (
     <div className="walletContainer">
       <div className="leftSection">
@@ -473,38 +476,40 @@ const Wallet = ({ history, location, match }) => {
         head={true}
         label="Add Payment Method"
         setOpen={() => {
-          history.push("/account/wallet/addMoney");
+          history.push("/account/profile/wallet/addMoney");
         }}
         open={location.pathname.startsWith(
           "/account/wallet/addMoney/addPaymentMethod"
         )}
       >
         <PaymentMethodForm
-          onSuccess={() => history.push("/account/wallet/addMoney")}
+          onSuccess={() => history.push("/account/profile/wallet/addMoney")}
         />
       </Modal>
-      <Modal
-        className="addMoney"
-        head={true}
-        label="Withdraw Money"
-        setOpen={() => {
-          history.push("/account/wallet");
-        }}
-        open={location.pathname.startsWith("/account/wallet/withdrawMoney")}
-        style={
-          loading
-            ? {
-                filter: "grayscale(.4)",
-                pointerEvents: "none",
-              }
-            : {}
-        }
-      >
-        <PaymentOption
-          label="Where do you want to recieve your money?"
-          action={withdrawMoney}
-        />
-      </Modal>
+      {
+        //   <Modal
+        //   className="addMoney"
+        //   head={true}
+        //   label="Withdraw Money"
+        //   setOpen={() => {
+        //     history.push("/account/wallet");
+        //   }}
+        //   open={location.pathname.startsWith("/account/wallet/withdrawMoney")}
+        //   style={
+        //     loading
+        //       ? {
+        //           filter: "grayscale(.4)",
+        //           pointerEvents: "none",
+        //         }
+        //       : {}
+        //   }
+        // >
+        //   <PaymentOption
+        //     label="Where do you want to recieve your money?"
+        //     action={withdrawMoney}
+        //   />
+        // </Modal>
+      }
       <Modal open={addMoneySuccess} className="msg">
         <button onClick={() => setAddMoneySuccess(null)}>Okay</button>
         <div>
@@ -577,59 +582,61 @@ const Wallet = ({ history, location, match }) => {
           <h4>Money added!</h4>
         </div>
       </Modal>
-      <Modal open={withdrawMoneyFail} className="msg">
-        <button
-          onClick={() => {
-            setLoading(false);
-            setWithdrawMoneyFail(null);
-          }}
-        >
-          Okay
-        </button>
-        <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="158"
-            height="158"
-            viewBox="0 0 158 158"
-          >
-            <defs>
-              <linearGradient
-                id="linear-gradient-red"
-                x1="-0.298"
-                y1="-0.669"
-                x2="1.224"
-                y2="1.588"
-                gradientUnits="objectBoundingBox"
-              >
-                <stop offset="0" stopColor="#f93389" />
-                <stop offset="1" stopColor="#e3003e" />
-              </linearGradient>
-            </defs>
-            <rect
-              id="Rectangle_1104"
-              data-name="Rectangle 1104"
-              width="158"
-              height="158"
-              rx="79"
-              fill="url(#linear-gradient-red)"
-            />
-            <g
-              id="Component_85_8"
-              data-name="Component 85 – 8"
-              transform="translate(49.472 49.472)"
-            >
-              <path
-                id="Union_3"
-                data-name="Union 3"
-                d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
-                fill="#fff"
-              />
-            </g>
-          </svg>
-          <h4>Could not withdraw money.</h4>
-        </div>
-      </Modal>
+      {
+        //   <Modal open={withdrawMoneyFail} className="msg">
+        //   <button
+        //     onClick={() => {
+        //       setLoading(false);
+        //       setWithdrawMoneyFail(null);
+        //     }}
+        //   >
+        //     Okay
+        //   </button>
+        //   <div>
+        //     <svg
+        //       xmlns="http://www.w3.org/2000/svg"
+        //       width="158"
+        //       height="158"
+        //       viewBox="0 0 158 158"
+        //     >
+        //       <defs>
+        //         <linearGradient
+        //           id="linear-gradient-red"
+        //           x1="-0.298"
+        //           y1="-0.669"
+        //           x2="1.224"
+        //           y2="1.588"
+        //           gradientUnits="objectBoundingBox"
+        //         >
+        //           <stop offset="0" stopColor="#f93389" />
+        //           <stop offset="1" stopColor="#e3003e" />
+        //         </linearGradient>
+        //       </defs>
+        //       <rect
+        //         id="Rectangle_1104"
+        //         data-name="Rectangle 1104"
+        //         width="158"
+        //         height="158"
+        //         rx="79"
+        //         fill="url(#linear-gradient-red)"
+        //       />
+        //       <g
+        //         id="Component_85_8"
+        //         data-name="Component 85 – 8"
+        //         transform="translate(49.472 49.472)"
+        //       >
+        //         <path
+        //           id="Union_3"
+        //           data-name="Union 3"
+        //           d="M29.527,34.9,5.368,59.057,0,53.686,24.158,29.527,0,5.368,5.368,0l24.16,24.158L53.686,0l5.371,5.368L34.9,29.527l24.16,24.158-5.371,5.371Z"
+        //           fill="#fff"
+        //         />
+        //       </g>
+        //     </svg>
+        //     <h4>Could not withdraw money.</h4>
+        //   </div>
+        // </Modal>
+      }
       <Modal open={false} className="msg">
         <button onClick={() => setAddMoneyFailed(null)}>Okay</button>
         <div>

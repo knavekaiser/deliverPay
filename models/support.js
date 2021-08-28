@@ -82,7 +82,8 @@ global.Report = mongoose.model("Report", reportModel);
 
 const configModel = new Schema(
   {
-    fee: { type: Number, required: true },
+    fee: { type: Number },
+    gst: { type: Number },
   },
   { timestamps: true }
 );

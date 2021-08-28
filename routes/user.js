@@ -185,7 +185,7 @@ app.get(
       },
     ]);
     if (user.length) {
-      signingIn(user[0], res);
+      signingIn(user[0], req, res);
     } else {
       res.status(401).json({ message: "not logged in" });
     }
@@ -200,7 +200,7 @@ app.post("/api/userLoginUsingSocial", async (req, res) => {
   if (googleId || facebookId) {
     const query = {
       ...(googleId && { googleId }),
-      ...(req.body.facebookId && { facebookId }),
+      ...(facebookId && { facebookId }),
     };
     User.aggregate([
       { $match: query },
@@ -215,7 +215,7 @@ app.post("/api/userLoginUsingSocial", async (req, res) => {
     ])
       .then((user) => {
         if (user.length) {
-          signingIn(user[0], res);
+          signingIn(user[0], req, res);
         } else {
           res.status(401).json({ code: 401, message: "User does not exist." });
         }

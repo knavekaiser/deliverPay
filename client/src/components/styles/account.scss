@@ -57,11 +57,14 @@
       grid-gap: 1rem;
       grid-auto-rows: min-content;
       overflow-y: auto;
-      li {
+      & > li {
+        flex-wrap: wrap;
         height: min-content;
         font-weight: 500;
         font-size: 0.95rem;
-        a {
+        color: rgba(0, 0, 0, 0.7);
+        & > a {
+          width: 100%;
           padding: 0.7rem;
           .icon {
             flex-shrink: 0;
@@ -159,6 +162,28 @@
   .mobileMenu {
     z-index: 100;
     display: none;
+  }
+}
+.accordion {
+  display: flex;
+  grid-gap: 0.75rem;
+  ul {
+    padding: 0.5rem 0;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 0.5rem;
+    flex-basis: 100%;
+    color: rgba(0, 0, 0, 0.7);
+    text-align: center;
+    li {
+      a {
+        display: block;
+        padding: 0.5rem 1rem;
+        background: none !important;
+      }
+      &.active {
+        color: $blue;
+      }
+    }
   }
 }
 .modal.invite {
@@ -430,7 +455,8 @@
       }
     }
   }
-  .recentPayments {
+  .recentPayments,
+  .recentOrders {
     padding: 2rem 4rem;
     .label {
       font-size: 1.25rem;
@@ -2388,7 +2414,8 @@
             }
           }
         }
-        .recentPayments {
+        .recentPayments,
+        .recentOrders {
           padding: 1.5rem;
         }
       }

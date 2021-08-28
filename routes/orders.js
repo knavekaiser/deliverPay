@@ -14,10 +14,21 @@ app.get("/api/getOrders", passport.authenticate("userPrivate"), (req, res) => {
   const query = {
     [`${user || "none"}._id`]: req.user._id,
     ...(q && {
-      [`${user === "seller" ? "buyer" : "seller"}.firstName`]: new RegExp(
-        q,
-        "gi"
-      ),
+      $expr: {
+        $regexMatch: {
+          input: {
+            $concat: [
+              `$${user === "seller" ? "buyer" : "seller"}.firstName`,
+              " ",
+              `$${user === "seller" ? "buyer" : "seller"}.lastName`,
+              " ",
+              `$${user === "seller" ? "buyer" : "seller"}.phone`,
+            ],
+          },
+          regex: new RegExp(q.replace(/[#-.]|[[-^]|[?|{}]/g, "\\$&")),
+          options: "i",
+        },
+      },
     }),
     ...(dateFrom &&
       dateTo && {
@@ -26,7 +37,7 @@ app.get("/api/getOrders", passport.authenticate("userPrivate"), (req, res) => {
           $lt: new Date(dateTo),
         },
       }),
-    ...(status && { status }),
+    ...(status && { $or: status.split("|").map((status) => ({ status })) }),
   };
   const sortOrder = {
     [sort || "createdAt"]: order === "asc" ? 1 : -1,

@@ -23,17 +23,23 @@ import {
   calculatePrice,
   Img,
   Moment,
+  Chev_down_svg,
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import Hold from "./Hold.js";
-import Transactions from "./Transactions";
+import Transactions, { StartTransaction } from "./Transactions";
 import Wallet from "./Wallet";
 import MyShop from "./MyShop";
 import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
 import Marketplace, { SingleProduct, Cart, CartItem } from "./Marketplace";
-import Deals, { socket } from "./_Deals_old";
-import MyShopping from "./myShopping";
+import Deals, { socket } from "./Deals";
+import MyShopping, {
+  Orders,
+  FullOrder,
+  Disputes,
+  FullDispute,
+} from "./myShopping";
 import OrderManagement from "./OrderManagement";
 import { GoogleLogout } from "react-google-login";
 import {
@@ -87,15 +93,15 @@ require("./styles/account.scss");
 require("./styles/generic.scss");
 
 const Home = () => {
-  const { userType, setUserType, cart } = useContext(SiteContext);
+  const { userType, setUserType } = useContext(SiteContext);
   const history = useHistory();
   const [value, setValue] = useState("");
   const [users, setUsers] = useState([]);
   const [recentPayments, setRecentPayments] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
   const [client, setClient] = useState(null);
   const [msg, setMsg] = useState(null);
   const milestoneTimeout = useRef();
-  const [step, setStep] = useState(3);
   useEffect(() => {
     fetch("/api/recentPayments")
       .then((res) => res.json())
@@ -104,6 +110,18 @@ const Home = () => {
       })
       .catch((err) => {
         console.log(err);
+      });
+    fetch(
+      `/api/getOrders?${new URLSearchParams({
+        user: "buyer",
+        perPage: 5,
+      })}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setRecentOrders(data.orders);
+        }
       });
   }, []);
   useEffect(() => {
@@ -140,69 +158,62 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <div className="navigate">
-        {step > 1 && (
-          <button onClick={() => setStep((prev) => prev - 1)}>Previous</button>
-        )}
-        <button
-          disabled={
-            (step === 1 && !client) || (step === 2 && cart.length === 0)
-          }
-          onClick={() => setStep((prev) => prev + 1)}
-          className="next"
-        >
-          Next
-        </button>
+      <UserSearch setClient={setClient} />
+      <div className="recentPayments">
+        <p className="label">
+          Recently Contacted
+          <span className="note">
+            {userType === "buyer"
+              ? "Click to start chatting."
+              : "Click to request a milestone."}
+          </span>
+        </p>
+        <ul className="payments">
+          {recentPayments.map((user) => (
+            <li key={user._id}>
+              <Link
+                // target={userType === "buyer" ? "_blank" : ""}
+                // to={`/account/marketplace?seller=${user._id}`}
+                to={
+                  userType === "buyer"
+                    ? `/account/deals/${user._id}`
+                    : "/account/home/requestMilestone"
+                }
+                onClick={() => {
+                  setClient(user);
+                }}
+              >
+                <Img src={user.profileImg} />
+                <p className="name">{user.firstName + " " + user.lastName}</p>
+              </Link>
+            </li>
+          ))}
+          {recentPayments.length === 0 && <p>Nothing for now.</p>}
+        </ul>
       </div>
-      {step === 1 && (
-        <>
-          <UserSearch setClient={setClient} setStep={setStep} />
-          {recentPayments.length > 0 && userType && (
-            <div className="recentPayments">
-              <p className="label">
-                Recent Payments
-                <span className="note">
-                  {userType === "buyer"
-                    ? "Click to view all their products."
-                    : "Click to request a milestone."}
-                </span>
-              </p>
-              <ul className="payments">
-                {recentPayments.map((user) => (
-                  <li key={user._id}>
-                    <Link
-                      to={"#"}
-                      onClick={() => {
-                        setStep(2);
-                        setClient(user);
-                      }}
-                    >
-                      <Img src={user.profileImg} />
-                      <p className="name">
-                        {user.firstName + " " + user.lastName}
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
-      )}
-      {step === 2 && (
-        <>
-          <Switch>
-            <Route
-              path="/account/home/product/:_id"
-              component={SingleProduct}
-            />
-            <Marketplace />
-          </Switch>
-        </>
-      )}
-      {step === 3 && (
-        <Route path="/account/home/deals/:_id?" component={Deals} />
-      )}
+      <div className="recentOrders">
+        <p className="label">
+          Recent Orders
+          <span className="note">Click to view order details.</span>
+        </p>
+        <ul className="payments">
+          {recentOrders.map((order) => (
+            <li key={order._id}>
+              <Link
+                to={`/account/orders/${
+                  order.status === "pending" ? "pending" : "current"
+                }/${order._id}`}
+              >
+                <h3>₹{order.total}</h3>
+                {
+                  // <p className="name">{user.firstName + " " + user.lastName}</p>
+                }
+              </Link>
+            </li>
+          ))}
+          {recentOrders.length === 0 && <p>Nothing for now.</p>}
+        </ul>
+      </div>
       <Footer />
       <Route path={"/account/home/createMilestone"}>
         <Modal
@@ -277,7 +288,7 @@ const Home = () => {
   );
 };
 
-const UserSearch = ({ setClient, setStep }) => {
+export const UserSearch = ({ setClient }) => {
   const { userType } = useContext(SiteContext);
   const history = useHistory();
   const [msg, setMsg] = useState(null);
@@ -382,7 +393,6 @@ const UserSearch = ({ setClient, setStep }) => {
   }, [value]);
   return (
     <div className="search">
-      <p>Select existing contact / Add new contact / Invite new contact</p>
       <form onSubmit={(e) => e.preventDefault()} ref={formRef}>
         <section>
           <svg
@@ -422,15 +432,13 @@ const UserSearch = ({ setClient, setStep }) => {
             {users.map((user, i) => (
               <Link
                 key={i}
-                onClick={() => {
-                  setStep(2);
-                  setClient(user);
-                }}
+                target={userType === "buyer" ? "_blank" : ""}
+                onClick={() => setClient(user)}
                 to={{
                   pathname:
                     userType === "seller"
                       ? "/account/home/createMilestone"
-                      : `/account/home?seller=${user._id}`,
+                      : `/marketplace?seller=${user._id}`,
                 }}
               >
                 <li key={i}>
@@ -462,6 +470,7 @@ const UserSearch = ({ setClient, setStep }) => {
 function Account() {
   const { user, userType } = useContext(SiteContext);
   const { unread } = useContext(ChatContext);
+  const history = useHistory();
   const location = useLocation();
   useEffect(() => {
     if (!socket.connected) {
@@ -487,7 +496,6 @@ function Account() {
           <Link to="/" className="home">
             Home
           </Link>
-          {userType === "buyer" && <Link to="/marketplace">Browse</Link>}
         </div>
         <UserTypeSwitch />
         <ProfileAvatar />
@@ -522,156 +530,363 @@ function Account() {
               Home
             </Link>
           </li>
-          <li
-            className={
-              location.pathname.startsWith("/account/wallet")
+          {
+            //   <li
+            //   className={
+            //     location.pathname.startsWith("/account/wallet")
+            //       ? "active"
+            //       : undefined
+            //   }
+            // >
+            //   <Link to="/account/wallet">
+            //     <div className="icon">
+            //       <svg
+            //         xmlns="http://www.w3.org/2000/svg"
+            //         width="20.886"
+            //         height="22.948"
+            //         viewBox="0 0 20.886 22.948"
+            //       >
+            //         <g
+            //           id="Rectangle_2"
+            //           data-name="Rectangle 2"
+            //           fill="none"
+            //           stroke="#fff"
+            //           strokeWidth="2"
+            //         >
+            //           <rect width="20.886" height="16.244" rx="2" stroke="none" />
+            //           <rect
+            //             x="1"
+            //             y="1"
+            //             width="18.886"
+            //             height="14.244"
+            //             rx="1"
+            //             fill="none"
+            //           />
+            //         </g>
+            //         <g
+            //           id="Rectangle_3"
+            //           data-name="Rectangle 3"
+            //           transform="translate(0 9.283)"
+            //           fill="none"
+            //           stroke="#fff"
+            //           strokeWidth="2"
+            //         >
+            //           <rect width="20.886" height="6.962" rx="2" stroke="none" />
+            //           <rect
+            //             x="1"
+            //             y="1"
+            //             width="18.886"
+            //             height="4.962"
+            //             rx="1"
+            //             fill="none"
+            //           />
+            //         </g>
+            //         <path
+            //           id="Path_2"
+            //           data-name="Path 2"
+            //           d="M-180.174-182v7.923l4.1-4.653,3.932,4.653V-182Z"
+            //           transform="translate(186.6 197.025)"
+            //           fill="#fff"
+            //         />
+            //       </svg>
+            //     </div>
+            //     Wallet
+            //   </Link>
+            // </li>
+          }
+          <Accordion
+            className={`${
+              location.pathname.startsWith("/account/transaction")
                 ? "active"
-                : undefined
-            }
-          >
-            <Link to="/account/wallet">
-              <div className="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20.886"
-                  height="22.948"
-                  viewBox="0 0 20.886 22.948"
-                >
-                  <g
-                    id="Rectangle_2"
-                    data-name="Rectangle 2"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="2"
-                  >
-                    <rect width="20.886" height="16.244" rx="2" stroke="none" />
-                    <rect
-                      x="1"
-                      y="1"
-                      width="18.886"
-                      height="14.244"
-                      rx="1"
-                      fill="none"
-                    />
-                  </g>
-                  <g
-                    id="Rectangle_3"
-                    data-name="Rectangle 3"
-                    transform="translate(0 9.283)"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="2"
-                  >
-                    <rect width="20.886" height="6.962" rx="2" stroke="none" />
-                    <rect
-                      x="1"
-                      y="1"
-                      width="18.886"
-                      height="4.962"
-                      rx="1"
-                      fill="none"
-                    />
-                  </g>
-                  <path
-                    id="Path_2"
-                    data-name="Path 2"
-                    d="M-180.174-182v7.923l4.1-4.653,3.932,4.653V-182Z"
-                    transform="translate(186.6 197.025)"
-                    fill="#fff"
-                  />
-                </svg>
-              </div>
-              Wallet
-            </Link>
-          </li>
-          <li
-            className={`deals ${
-              location.pathname.startsWith("/account/deals")
-                ? "active"
-                : undefined
+                : ""
             }`}
+            location={location}
+            label={
+              <>
+                <div className="icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20.886"
+                    height="22.948"
+                    viewBox="0 0 20.886 22.948"
+                  >
+                    <g
+                      id="Rectangle_2"
+                      data-name="Rectangle 2"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <rect
+                        width="20.886"
+                        height="16.244"
+                        rx="2"
+                        stroke="none"
+                      />
+                      <rect
+                        x="1"
+                        y="1"
+                        width="18.886"
+                        height="14.244"
+                        rx="1"
+                        fill="none"
+                      />
+                    </g>
+                    <g
+                      id="Rectangle_3"
+                      data-name="Rectangle 3"
+                      transform="translate(0 9.283)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <rect
+                        width="20.886"
+                        height="6.962"
+                        rx="2"
+                        stroke="none"
+                      />
+                      <rect
+                        x="1"
+                        y="1"
+                        width="18.886"
+                        height="4.962"
+                        rx="1"
+                        fill="none"
+                      />
+                    </g>
+                    <path
+                      id="Path_2"
+                      data-name="Path 2"
+                      d="M-180.174-182v7.923l4.1-4.653,3.932,4.653V-182Z"
+                      transform="translate(186.6 197.025)"
+                      fill="#fff"
+                    />
+                  </svg>
+                </div>
+                <p className="label">Start Transaction</p>
+              </>
+            }
+            link="/account/transaction"
+            path="/account/transaction/new"
           >
-            <Link to="/account/deals">
-              <div className="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="26.55"
-                  height="25.219"
-                  viewBox="0 0 26.55 25.219"
-                >
-                  <path
-                    id="Path_1"
-                    data-name="Path 1"
-                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-                    transform="translate(255.198 195.071)"
-                    fill="#fff"
-                  />
-                </svg>
-              </div>
-              Open Chat
-            </Link>
-            {unread ? <span className="unred">{unread}</span> : null}
-          </li>
-          {userType === "buyer" && (
-            <>
-              {
-                //   <li
-                //   className={`${
-                //     location.pathname.startsWith("/account/marketplace")
-                //       ? "active"
-                //       : undefined
-                //   }`}
-                // >
-                //   <Link to="/account/marketplace">
-                //     <div className="icon">
-                //       <svg
-                //         xmlns="http://www.w3.org/2000/svg"
-                //         width="26.55"
-                //         height="25.219"
-                //         viewBox="0 0 26.55 25.219"
-                //       >
-                //         <path
-                //           id="Path_1"
-                //           data-name="Path 1"
-                //           d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-                //           transform="translate(255.198 195.071)"
-                //           fill="#fff"
-                //         />
-                //       </svg>
-                //     </div>
-                //     Browse
-                //   </Link>
-                // </li>
+            <li
+              className={
+                location.pathname.startsWith("/account/transaction/new")
+                  ? "active"
+                  : undefined
               }
-              <li
-                className={`${
-                  location.pathname.startsWith("/account/myShopping")
-                    ? "active"
-                    : undefined
-                }`}
-              >
-                <Link to="/account/myShopping/orders">
+            >
+              <Link to="/account/transaction/new">Start New</Link>
+            </li>
+            <li
+              className={
+                location.pathname.startsWith("/account/transaction/history")
+                  ? "active"
+                  : undefined
+              }
+            >
+              <Link to="/account/transaction/history">Transaction History</Link>
+            </li>
+          </Accordion>
+          {userType === "buyer" && (
+            <Accordion
+              className={`${
+                location.pathname.startsWith("/account/orders") ? "active" : ""
+              }`}
+              location={location}
+              label={
+                <>
                   <div className="icon">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="26.55"
-                      height="25.219"
-                      viewBox="0 0 26.55 25.219"
+                      width="20.886"
+                      height="22.948"
+                      viewBox="0 0 20.886 22.948"
                     >
+                      <g
+                        id="Rectangle_2"
+                        data-name="Rectangle 2"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="2"
+                      >
+                        <rect
+                          width="20.886"
+                          height="16.244"
+                          rx="2"
+                          stroke="none"
+                        />
+                        <rect
+                          x="1"
+                          y="1"
+                          width="18.886"
+                          height="14.244"
+                          rx="1"
+                          fill="none"
+                        />
+                      </g>
+                      <g
+                        id="Rectangle_3"
+                        data-name="Rectangle 3"
+                        transform="translate(0 9.283)"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="2"
+                      >
+                        <rect
+                          width="20.886"
+                          height="6.962"
+                          rx="2"
+                          stroke="none"
+                        />
+                        <rect
+                          x="1"
+                          y="1"
+                          width="18.886"
+                          height="4.962"
+                          rx="1"
+                          fill="none"
+                        />
+                      </g>
                       <path
-                        id="Path_1"
-                        data-name="Path 1"
-                        d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-                        transform="translate(255.198 195.071)"
+                        id="Path_2"
+                        data-name="Path 2"
+                        d="M-180.174-182v7.923l4.1-4.653,3.932,4.653V-182Z"
+                        transform="translate(186.6 197.025)"
                         fill="#fff"
                       />
                     </svg>
                   </div>
-                  Open Order Ledger
-                </Link>
+                  <p className="label">My Orders</p>
+                </>
+              }
+              link="/account/orders"
+              path="/account/orders/current"
+            >
+              <li
+                className={
+                  location.pathname.startsWith("/account/orders/current")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/orders/current">Current Order</Link>
               </li>
-            </>
+              <li
+                className={
+                  location.pathname.startsWith("/account/orders/pending")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/orders/pending">Pending Order</Link>
+              </li>
+              <li
+                className={
+                  location.pathname.startsWith("/account/orders/history")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/orders/history">Order History</Link>
+              </li>
+              <li
+                className={
+                  location.pathname.startsWith("/account/orders/dispute")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/orders/dispute">Dispute Resolution</Link>
+              </li>
+              {
+                //   <li
+                //   className={
+                //     location.pathname.startsWith("/account/orders/track")
+                //       ? "active"
+                //       : undefined
+                //   }
+                // >
+                //   <Link to="/account/orders/track">Track Order</Link>
+                // </li>
+              }
+            </Accordion>
           )}
+          <li
+            className={`hold ${
+              location.pathname.startsWith("/account/hold")
+                ? "active"
+                : undefined
+            }`}
+          >
+            <Link to="/account/hold">
+              <div className="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="27"
+                  viewBox="0 0 22 27"
+                >
+                  <text
+                    id="_3"
+                    data-name="3"
+                    transform="translate(14 14) rotate(180)"
+                    fill="#fff"
+                    fontSize="10"
+                    fontFamily="Ebrima-Bold, Ebrima"
+                    fontWeight="700"
+                  >
+                    <tspan x="0" y="0">
+                      3
+                    </tspan>
+                  </text>
+                  <g
+                    id="Group_166"
+                    data-name="Group 166"
+                    transform="translate(-534.967 -611.816)"
+                  >
+                    <g
+                      id="Rectangle_1132"
+                      data-name="Rectangle 1132"
+                      transform="translate(534.967 620.816)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <rect width="22" height="18" rx="4" stroke="none" />
+                      <rect
+                        x="1"
+                        y="1"
+                        width="20"
+                        height="16"
+                        rx="3"
+                        fill="none"
+                      />
+                    </g>
+                    <g
+                      id="Rectangle_1133"
+                      data-name="Rectangle 1133"
+                      transform="translate(539.967 611.816)"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <path
+                        d="M6.5,0h0A6.5,6.5,0,0,1,13,6.5V11a0,0,0,0,1,0,0H0a0,0,0,0,1,0,0V6.5A6.5,6.5,0,0,1,6.5,0Z"
+                        stroke="none"
+                      />
+                      <path
+                        d="M6.5,1h0A5.5,5.5,0,0,1,12,6.5V9.214a.786.786,0,0,1-.786.786H1.786A.786.786,0,0,1,1,9.214V6.5A5.5,5.5,0,0,1,6.5,1Z"
+                        fill="none"
+                      />
+                    </g>
+                  </g>
+                </svg>
+              </div>
+              Milestones
+            </Link>
+          </li>
           {userType === "seller" && (
             <li
               className={`products ${
@@ -755,176 +970,104 @@ function Account() {
               </Link>
             </li>
           )}
-          <li
-            className={`hold ${
-              location.pathname.startsWith("/account/hold")
-                ? "active"
-                : undefined
-            }`}
-          >
-            <Link to="/account/hold">
-              <div className="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="22"
-                  height="27"
-                  viewBox="0 0 22 27"
-                >
-                  <text
-                    id="_3"
-                    data-name="3"
-                    transform="translate(14 14) rotate(180)"
-                    fill="#fff"
-                    fontSize="10"
-                    fontFamily="Ebrima-Bold, Ebrima"
-                    fontWeight="700"
-                  >
-                    <tspan x="0" y="0">
-                      3
-                    </tspan>
-                  </text>
-                  <g
-                    id="Group_166"
-                    data-name="Group 166"
-                    transform="translate(-534.967 -611.816)"
-                  >
-                    <g
-                      id="Rectangle_1132"
-                      data-name="Rectangle 1132"
-                      transform="translate(534.967 620.816)"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    >
-                      <rect width="22" height="18" rx="4" stroke="none" />
-                      <rect
-                        x="1"
-                        y="1"
-                        width="20"
-                        height="16"
-                        rx="3"
-                        fill="none"
-                      />
-                    </g>
-                    <g
-                      id="Rectangle_1133"
-                      data-name="Rectangle 1133"
-                      transform="translate(539.967 611.816)"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    >
-                      <path
-                        d="M6.5,0h0A6.5,6.5,0,0,1,13,6.5V11a0,0,0,0,1,0,0H0a0,0,0,0,1,0,0V6.5A6.5,6.5,0,0,1,6.5,0Z"
-                        stroke="none"
-                      />
-                      <path
-                        d="M6.5,1h0A5.5,5.5,0,0,1,12,6.5V9.214a.786.786,0,0,1-.786.786H1.786A.786.786,0,0,1,1,9.214V6.5A5.5,5.5,0,0,1,6.5,1Z"
-                        fill="none"
-                      />
-                    </g>
-                  </g>
-                </svg>
-              </div>
-              Delivery pay Hold
-            </Link>
-          </li>
-          <li
-            className={`trans ${
-              location.pathname.startsWith("/account/transactions")
-                ? "active"
-                : undefined
-            }`}
-          >
-            <Link to="/account/transactions">
-              <div className="icon">
-                <svg
-                  id="Group_283"
-                  data-name="Group 283"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="28.407"
-                  height="25.407"
-                  viewBox="0 0 28.407 25.407"
-                >
-                  <g
-                    id="Path_4"
-                    data-name="Path 4"
-                    transform="translate(3)"
-                    fill="none"
-                  >
-                    <path
-                      d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
-                      stroke="none"
-                    />
-                    <path
-                      d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
-                      stroke="none"
-                      fill="#fff"
-                    />
-                  </g>
-                  <g
-                    id="Polygon_1"
-                    data-name="Polygon 1"
-                    transform="translate(6.001 12.353) rotate(-150)"
-                    fill="#fff"
-                  >
-                    <path
-                      d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
-                      stroke="none"
-                    />
-                    <path
-                      d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
-                      stroke="none"
-                      fill="#fff"
-                    />
-                  </g>
-                  <g
-                    id="Rectangle_4"
-                    data-name="Rectangle 4"
-                    transform="translate(0 11.86) rotate(-22)"
-                    fill="#3b2ab4"
-                    stroke="#3b2ab4"
-                    strokeWidth="1"
-                  >
-                    <rect width="6.929" height="4.619" stroke="none" />
-                    <rect
-                      x="0.5"
-                      y="0.5"
-                      width="5.929"
-                      height="3.619"
-                      fill="none"
-                    />
-                  </g>
-                  <g
-                    id="Group_5"
-                    data-name="Group 5"
-                    transform="translate(15.704 4.888)"
-                  >
-                    <line
-                      id="Line_3"
-                      data-name="Line 3"
-                      y2="9.239"
-                      transform="translate(0 0)"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                    <line
-                      id="Line_4"
-                      data-name="Line 4"
-                      x2="6.929"
-                      y2="2.31"
-                      transform="translate(0 9.239)"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                  </g>
-                </svg>
-              </div>
-              Delivery pay Transactions
-            </Link>
-          </li>
+          {
+            //   <li
+            //   className={`trans ${
+            //     location.pathname.startsWith("/account/transactions")
+            //       ? "active"
+            //       : undefined
+            //   }`}
+            // >
+            //   <Link to="/account/transactions">
+            //     <div className="icon">
+            //       <svg
+            //         id="Group_283"
+            //         data-name="Group 283"
+            //         xmlns="http://www.w3.org/2000/svg"
+            //         width="28.407"
+            //         height="25.407"
+            //         viewBox="0 0 28.407 25.407"
+            //       >
+            //         <g
+            //           id="Path_4"
+            //           data-name="Path 4"
+            //           transform="translate(3)"
+            //           fill="none"
+            //         >
+            //           <path
+            //             d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
+            //             stroke="none"
+            //           />
+            //           <path
+            //             d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
+            //             stroke="none"
+            //             fill="#fff"
+            //           />
+            //         </g>
+            //         <g
+            //           id="Polygon_1"
+            //           data-name="Polygon 1"
+            //           transform="translate(6.001 12.353) rotate(-150)"
+            //           fill="#fff"
+            //         >
+            //           <path
+            //             d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
+            //             stroke="none"
+            //           />
+            //           <path
+            //             d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
+            //             stroke="none"
+            //             fill="#fff"
+            //           />
+            //         </g>
+            //         <g
+            //           id="Rectangle_4"
+            //           data-name="Rectangle 4"
+            //           transform="translate(0 11.86) rotate(-22)"
+            //           fill="#3b2ab4"
+            //           stroke="#3b2ab4"
+            //           strokeWidth="1"
+            //         >
+            //           <rect width="6.929" height="4.619" stroke="none" />
+            //           <rect
+            //             x="0.5"
+            //             y="0.5"
+            //             width="5.929"
+            //             height="3.619"
+            //             fill="none"
+            //           />
+            //         </g>
+            //         <g
+            //           id="Group_5"
+            //           data-name="Group 5"
+            //           transform="translate(15.704 4.888)"
+            //         >
+            //           <line
+            //             id="Line_3"
+            //             data-name="Line 3"
+            //             y2="9.239"
+            //             transform="translate(0 0)"
+            //             fill="none"
+            //             stroke="#fff"
+            //             strokeWidth="2"
+            //           />
+            //           <line
+            //             id="Line_4"
+            //             data-name="Line 4"
+            //             x2="6.929"
+            //             y2="2.31"
+            //             transform="translate(0 9.239)"
+            //             fill="none"
+            //             stroke="#fff"
+            //             strokeWidth="2"
+            //           />
+            //         </g>
+            //       </svg>
+            //     </div>
+            //     Delivery pay Transactions
+            //   </Link>
+            // </li>
+          }
           {
             //     <li
             //       className={`products ${
@@ -1011,6 +1154,96 @@ function Account() {
             // )
           }
           <li
+            className={`deals ${
+              location.pathname.startsWith("/account/deals")
+                ? "active"
+                : undefined
+            }`}
+          >
+            <Link to="/account/deals">
+              <div className="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="26.55"
+                  height="25.219"
+                  viewBox="0 0 26.55 25.219"
+                >
+                  <path
+                    id="Path_1"
+                    data-name="Path 1"
+                    d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+                    transform="translate(255.198 195.071)"
+                    fill="#fff"
+                  />
+                </svg>
+              </div>
+              My Chat
+            </Link>
+            {unread ? <span className="unred">{unread}</span> : null}
+          </li>
+          {
+            //   <li
+            //   className={
+            //     location.pathname.startsWith("/account/profile")
+            //       ? "active"
+            //       : undefined
+            //   }
+            // >
+            //   <Link to="/account/profile">
+            //     <div className="icon acc">
+            //       <Img src={user?.profileImg || "/profile-user.jpg"} />
+            //     </div>
+            //     Account
+            //   </Link>
+            // </li>
+          }
+          <Accordion
+            className={`profile ${
+              location.pathname.startsWith("/account/profile") ? "active" : ""
+            }`}
+            location={location}
+            label={
+              <>
+                <div className="icon acc">
+                  <Img src={user?.profileImg || "/profile-user.jpg"} />
+                </div>
+                <p className="label">Account</p>
+              </>
+            }
+            link="/account/profile"
+            path="/account/profile/edit"
+          >
+            <>
+              <li
+                className={
+                  location.pathname.startsWith("/account/profile/edit")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/profile/edit">Edit Profile</Link>
+              </li>
+              <li
+                className={
+                  location.pathname.startsWith("/account/profile/kyc")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/profile/kyc">KYC</Link>
+              </li>
+              <li
+                className={
+                  location.pathname.startsWith("/account/profile/wallet")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/profile/wallet">Wallet</Link>
+              </li>
+            </>
+          </Accordion>
+          <li
             className={`support ${
               location.pathname.startsWith("/account/support")
                 ? "active"
@@ -1088,27 +1321,49 @@ function Account() {
                   </g>
                 </svg>
               </div>
-              Customer Care
-            </Link>
-          </li>
-          <li
-            className={
-              location.pathname.startsWith("/account/profile")
-                ? "active"
-                : undefined
-            }
-          >
-            <Link to="/account/profile">
-              <div className="icon acc">
-                <Img src={user?.profileImg || "/profile-user.jpg"} />
-              </div>
-              Account
+              Customer Support
             </Link>
           </li>
         </ul>
         <main>
           <Switch>
             <Route path="/account/deals/:_id?" component={Deals} />
+            <Route
+              path="/account/transaction/history"
+              component={Transactions}
+            />
+            <Route path="/account/transaction" component={StartTransaction} />
+            <Route path="/account/orders/current/:_id" component={FullOrder} />
+            <Route path="/account/orders/current">
+              <Orders
+                status="approved|shipped|refundPending"
+                onClick={(_id) =>
+                  history.push(`/account/orders/current/${_id}`)
+                }
+              />
+            </Route>
+            <Route path="/account/orders/pending/:_id" component={FullOrder} />
+            <Route path="/account/orders/pending">
+              <Orders
+                status="pending"
+                onClick={(_id) =>
+                  history.push(`/account/orders/pending/${_id}`)
+                }
+              />
+            </Route>
+            <Route path="/account/orders/history">
+              <Orders
+                status="delivered|cancelled|declined|refunded"
+                onClick={(_id) =>
+                  history.push(`/account/orders/history/${_id}`)
+                }
+              />
+            </Route>
+            <Route
+              path="/account/orders/dispute/:_id"
+              component={FullDispute}
+            />
+            <Route path="/account/orders/dispute" component={Disputes} />
             <Route path="/account/wallet" component={Wallet} />
             <Route path="/account/hold" component={Hold} />
             {
@@ -1128,7 +1383,10 @@ function Account() {
               component={SingleTicket}
             />
             <Route path="/account/support" component={Support} />
-            <Route path="/account/profile" component={Profile} />
+            <Route path="/account/profile/edit" component={Profile} />
+            <Route path="/account/profile/kyc" component={Profile} />
+            <Route path="/account/profile/wallet" component={Wallet} />
+            <Route path="/account/profile/customerCare" component={Profile} />
             <Route path="/" component={Home} />
           </Switch>
         </main>
@@ -1897,6 +2155,25 @@ export const ProfileAvatar = () => {
         </div>
       </Modal>
     </>
+  );
+};
+const Accordion = ({ label, className, location, link, path, children }) => {
+  return (
+    <li
+      className={`accordion ${className || ""} ${
+        location.pathname.startsWith(link) && "open"
+      }`}
+    >
+      <Link to={path}>{label}</Link>
+      {location.pathname.startsWith(link) && (
+        <ul>
+          <li>
+            <Chev_down_svg />
+          </li>
+          {children}
+        </ul>
+      )}
+    </li>
   );
 };
 
