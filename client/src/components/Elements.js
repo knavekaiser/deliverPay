@@ -816,7 +816,7 @@ export const Combobox = ({
     } else if (options.find((item) => item.value === defaultValue)) {
       return options.find((item) => item.value === defaultValue).label;
     } else if (typeof defaultValue === "object") {
-      return defaultValue;
+      return defaultValue.label;
     } else {
       return "";
     }
@@ -1076,7 +1076,26 @@ export const FileInput = ({
   );
 };
 
-export const Paginaiton = ({
+export const useOnScreen = (options) => {
+  const ref = useRef();
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setVisible(entry.isIntersecting);
+    }, options);
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, [ref, options]);
+  return [ref, visible];
+};
+
+export const Pagination = ({
   total,
   btns,
   perPage,
@@ -1096,7 +1115,7 @@ export const Paginaiton = ({
     return <></>;
   }
   return (
-    <div className="paginaiton">
+    <div className="pagination">
       <button
         disabled={currentPage <= 1}
         onClick={() => setPage((prev) => prev - 1)}
@@ -1167,7 +1186,6 @@ export const Header = () => {
         <Link to="/" className="home">
           Home
         </Link>
-        <Link to="/marketplace">Browse</Link>
       </div>
       <div className="clas">
         {user ? (

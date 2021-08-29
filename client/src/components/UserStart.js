@@ -507,25 +507,27 @@ const RegisterFormNew = () => {
 const LoginForm = () => {
   const { user, setUser } = useContext(SiteContext);
   const history = useHistory();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState("+91");
   const [pass, setPass] = useState("");
   const [errMsg, setErrMsg] = useState(false);
   const submit = (e) => {
     e.preventDefault();
     if (errMsg) return;
     e.preventDefault();
-    const emailReg = new RegExp(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    );
+    // const emailReg = new RegExp(
+    //   /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    // );
     const phoneReg = new RegExp(
       /((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}/
     );
     let user;
     if (phoneReg.test(username.toLowerCase())) {
       user = "+91" + username.replace(/^(\+91|91|1|)(?=\d{10}$)/g, "");
-    } else if (emailReg.test(username.toLowerCase())) {
-      user = username.toLowerCase();
-    } else {
+    }
+    //  else if (emailReg.test(username.toLowerCase())) {
+    //   user = username.toLowerCase();
+    // }
+    else {
       setErrMsg("Enter valid Phone number");
       return;
     }
@@ -587,6 +589,7 @@ const LoginForm = () => {
           required={true}
           placeholder="Phone Number"
           value={username}
+          pattern="^(\+91|91|1|)\d{10}$"
           onChange={(e) => {
             setErrMsg(false);
             setUsername(e.target.value);

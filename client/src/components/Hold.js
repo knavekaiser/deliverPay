@@ -20,7 +20,7 @@ import {
   Succ_svg,
   X_svg,
   Combobox,
-  Paginaiton,
+  Pagination,
   Img,
   Moment,
   moment,
@@ -272,7 +272,7 @@ const Hold = ({ history, location, match }) => {
           <p className="placeholder">No transaction yet.</p>
         )}
       </ul>
-      <Paginaiton
+      <Pagination
         total={total}
         perPage={perPage}
         currentPage={page}

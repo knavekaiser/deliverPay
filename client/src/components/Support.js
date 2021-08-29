@@ -15,7 +15,7 @@ import {
   X_svg,
   Err_svg,
   Succ_svg,
-  Paginaiton,
+  Pagination,
   Chev_down_svg,
   Media,
   Moment,
@@ -367,7 +367,7 @@ export const Tickets = ({ history, location, pathname }) => {
         </tbody>
         <tfoot>
           <tr>
-            <Paginaiton
+            <Pagination
               total={total}
               perPage={perPage}
               currentPage={page}

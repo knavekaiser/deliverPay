@@ -20,7 +20,7 @@ import {
   Checkbox,
   Chev_down_svg,
   Actions,
-  Paginaiton,
+  Pagination,
   calculateDiscount,
   calculatePrice,
   Tip,
@@ -39,8 +39,9 @@ import FBMarket from "./fbMarketplace";
 import { updateProfileInfo } from "./Profile";
 import { Step } from "./fbMarketplace";
 import { CSVLink } from "react-csv";
+import XLSX from "xlsx";
 
-const XLSX = lazy(() => import("xlsx"));
+// const XLSX = lazy(() => import("xlsx"));
 require("./styles/products.scss");
 
 const parseXLSXtoJSON = (file, cb) => {
@@ -1055,7 +1056,7 @@ const Products = ({ categories, shopSetupComplete }) => {
           )}
         </tbody>
       </table>
-      <Paginaiton
+      <Pagination
         total={total}
         btns={5}
         currentPage={page}

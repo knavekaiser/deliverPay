@@ -12,7 +12,7 @@ import {
   Plus_svg,
   X_svg,
   Combobox,
-  Paginaiton,
+  Pagination,
   Checkbox,
   calculateDiscount,
   calculatePrice,
@@ -37,6 +37,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "react-toastify";
 
 export const Orders = ({ status, onClick }) => {
+  const { cart } = useContext(SiteContext);
   const dateFilterRef = useRef();
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -58,6 +59,7 @@ export const Orders = ({ status, onClick }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [batch, setBatch] = useState([]);
   const [msg, setMsg] = useState(null);
+  const [carts, setCarts] = useState([]);
   useEffect(() => {
     const startDate = moment({
       time: dateRange?.startDate,
@@ -103,6 +105,31 @@ export const Orders = ({ status, onClick }) => {
         );
       });
   }, [type, search, page, perPage, dateFilter, status]);
+  useEffect(() => {
+    fetch("/api/getCartDetail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cart }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setCarts(data.carts);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get cart detail. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  }, [cart]);
   useLayoutEffect(() => {
     if (dateFilterRef.current) {
       const {
@@ -132,9 +159,9 @@ export const Orders = ({ status, onClick }) => {
   return (
     <div className="productContainer">
       {
-        //   <div className="benner">
-        //   <p>My Orders</p>
-        // </div>
+        <div className="benner">
+          <p>My Orders</p>
+        </div>
       }
       {
         //   <div className="filters">
@@ -282,6 +309,10 @@ export const Orders = ({ status, onClick }) => {
               batch={batch}
             />
           ))}
+          {status.includes("pending") &&
+            carts.map((order) => (
+              <OrderDraft order={order} key={order.seller._id} />
+            ))}
           {orders.length === 0 && (
             <tr className="placeholder">
               <td>No order yet.</td>
@@ -289,7 +320,7 @@ export const Orders = ({ status, onClick }) => {
           )}
         </tbody>
       </table>
-      <Paginaiton
+      <Pagination
         total={total}
         btns={5}
         currentPage={page}
@@ -319,6 +350,47 @@ export const Orders = ({ status, onClick }) => {
         />
       </Modal>
     </div>
+  );
+};
+const OrderDraft = ({ order, setOrder }) => {
+  const actionsRef = useRef();
+  const checkRef = useRef();
+  const history = useHistory();
+  const total = +(
+    order.products.reduce(
+      (a, c) =>
+        (
+          a +
+          calculatePrice({ product: c.product, gst: order.seller.gst }) * c.qty
+        ).fix(),
+      0
+    ) + (order.seller.shopInfo?.shippingCost || 0)
+  ).fix();
+  return (
+    <tr
+      className="order"
+      onClick={(e) => {
+        if (
+          e.nativeEvent.path.includes(actionsRef.current) ||
+          e.nativeEvent.path.includes(checkRef.current)
+        ) {
+        } else {
+          history.push("/account/cart");
+        }
+      }}
+    >
+      <td>-</td>
+      <td className="date">
+        <Moment format="DD MMM YYYY">{new Date()}</Moment>
+      </td>
+      <td>₹{total}</td>
+      <td>Draft</td>
+      <td ref={actionsRef}>
+        <Actions icon={<Chev_down_svg />}>
+          <Link to="/account/cart">View Detail</Link>
+        </Actions>
+      </td>
+    </tr>
   );
 };
 const SingleOrder = ({
@@ -481,7 +553,7 @@ const SingleOrder = ({
         <td ref={actionsRef}>
           {batch.length === 0 && (
             <Actions icon={<Chev_down_svg />}>
-              <Link to={`${history.location.pathname}${order._id}`}>
+              <Link to={`${history.location.pathname}/${order._id}`}>
                 View Detail
               </Link>
               {order.status === "pending" && (
@@ -631,8 +703,8 @@ export const FullOrder = ({ history, match }) => {
         <div className="actions">
           <Link
             to={`${
-              history.location.pathname.replace(match.params._id, "")
-                ? history.location.pathname.replace(match.params._id, "")
+              history.location.pathname.replace("/" + match.params._id, "")
+                ? history.location.pathname.replace("/" + match.params._id, "")
                 : userType === "seller"
                 ? "/account/orders"
                 : "/account/orders/current"
@@ -663,7 +735,7 @@ export const FullOrder = ({ history, match }) => {
                 {order.status}
               </li>
               <li>
-                <label>Submitted at</label>
+                <label>Order placed</label>
                 <Moment format="DD MMM YYYY, hh:mma">{order.createdAt}</Moment>
               </li>
               {order.status === "delivered" && (
@@ -1238,7 +1310,7 @@ const Refunds = ({ history, location }) => {
           )}
         </tbody>
       </table>
-      <Paginaiton
+      <Pagination
         total={total}
         btns={5}
         currentPage={page}
@@ -1754,7 +1826,7 @@ const FullRefund = ({ history, match }) => {
   return <>Loading</>;
 };
 
-export const Disputes = ({ status, onClick }) => {
+export const Disputes = ({ status }) => {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
@@ -1813,9 +1885,9 @@ export const Disputes = ({ status, onClick }) => {
   return (
     <div className="productContainer">
       {
-        //   <div className="benner">
-        //   <p>My Orders</p>
-        // </div>
+        <div className="benner">
+          <p>My Disputes</p>
+        </div>
       }
       {
         //   <div className="filters">
@@ -1939,7 +2011,6 @@ export const Disputes = ({ status, onClick }) => {
         <tbody>
           {disputes.map((dispute) => (
             <SingleDispute
-              onClick={onClick}
               key={dispute._id}
               dispute={dispute}
               setDisputes={setDisputes}
@@ -1952,7 +2023,7 @@ export const Disputes = ({ status, onClick }) => {
           )}
         </tbody>
       </table>
-      <Paginaiton
+      <Pagination
         total={total}
         btns={5}
         currentPage={page}
@@ -1965,7 +2036,7 @@ export const Disputes = ({ status, onClick }) => {
     </div>
   );
 };
-const SingleDispute = ({ dispute, setDisputes, onClick }) => {
+const SingleDispute = ({ dispute, setDisputes }) => {
   const actionsRef = useRef();
   const checkRef = useRef();
   const history = useHistory();
@@ -1983,7 +2054,7 @@ const SingleDispute = ({ dispute, setDisputes, onClick }) => {
             e.nativeEvent.path.includes(checkRef.current)
           ) {
           } else {
-            onClick?.(dispute._id);
+            history.push(`${history.location.pathname}/${dispute._id}`);
           }
         }}
       >
@@ -1997,7 +2068,7 @@ const SingleDispute = ({ dispute, setDisputes, onClick }) => {
         <td>{dispute.status}</td>
         <td ref={actionsRef}>
           <Actions icon={<Chev_down_svg />}>
-            <Link to={`${history.location.pathname}${dispute._id}`}>
+            <Link to={`${history.location.pathname}/${dispute._id}`}>
               View Detail
             </Link>
           </Actions>

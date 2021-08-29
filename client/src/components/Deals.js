@@ -8,7 +8,7 @@ import {
   lazy,
 } from "react";
 import { Link, useHistory, Route } from "react-router-dom";
-import { SiteContext, ChatContext } from "../SiteContext";
+import { SiteContext, socket, ChatContext } from "../SiteContext";
 import { Modal, Confirm } from "./Modal";
 import {
   Succ_svg,
@@ -20,26 +20,27 @@ import {
   Moment,
   moment,
 } from "./Elements";
-import { io } from "socket.io-client";
 import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
 
 require("./styles/deals.scss");
 
-export const socket = io();
-
 const Deals = ({ history, location, match }) => {
   const { user, setUser } = useContext(SiteContext);
   const { contacts, setContacts } = useContext(ChatContext);
+  const user_id = useRef();
   const [userCard, setUserCard] = useState(null);
   const [chat, setChat] = useState(null);
   useEffect(() => {
-    if (userCard) {
-      setChat(userCard?.messages);
+    if (userCard?._id !== user_id.current) {
       socket.emit("initiateChat", {
         client_id: userCard?._id,
         ...(userCard.messages === undefined && { newChat: true }),
       });
+      user_id.current = userCard._id;
+    }
+    if (userCard) {
+      setChat(userCard?.messages);
     }
   }, [userCard]);
   useEffect(() => {
@@ -57,37 +58,39 @@ const Deals = ({ history, location, match }) => {
     <div className={`chatContainer ${userCard ? "chatOpen" : ""}`}>
       <div className="contactsContainer">
         <UserSearch setUserCard={setUserCard} setContacts={setContacts} />
-        <div className="userCard">
-          {userCard ? (
-            <>
-              <div className="profile">
-                <Img src={userCard.profileImg || "/profile-user.jpg"} />
-                <div className="details">
-                  <p className="name">
-                    {userCard.firstName
-                      ? userCard.firstName + " " + userCard.lastName
-                      : "Deleted user"}
-                  </p>
-                  <a className="phone">{userCard.phone}</a>
-                  <a href={`mailto:${userCard.email}`} className="email">
-                    {userCard.email}
-                  </a>
-                  <p className="add">
-                    {`${userCard.address?.city || ""} ${
-                      userCard.address?.country || ""
-                    }`}
-                  </p>
-                </div>
-              </div>
-              <div className="clas">
-                <p className="status">{userCard.status}</p>
-                <button>Chat</button>
-              </div>
-            </>
-          ) : (
-            <p className="userCard placeholder">User card</p>
-          )}
-        </div>
+        {
+          //   <div className="userCard">
+          //   {userCard ? (
+          //     <>
+          //       <div className="profile">
+          //         <Img src={userCard.profileImg || "/profile-user.jpg"} />
+          //         <div className="details">
+          //           <p className="name">
+          //             {userCard.firstName
+          //               ? userCard.firstName + " " + userCard.lastName
+          //               : "Deleted user"}
+          //           </p>
+          //           <a className="phone">{userCard.phone}</a>
+          //           <a href={`mailto:${userCard.email}`} className="email">
+          //             {userCard.email}
+          //           </a>
+          //           <p className="add">
+          //             {`${userCard.address?.city || ""} ${
+          //               userCard.address?.country || ""
+          //             }`}
+          //           </p>
+          //         </div>
+          //       </div>
+          //       <div className="clas">
+          //         <p className="status">{userCard.status}</p>
+          //         <button>Chat</button>
+          //       </div>
+          //     </>
+          //   ) : (
+          //     <p className="userCard placeholder">Select a user</p>
+          //   )}
+          // </div>
+        }
         <p className="label">Messages</p>
         <div className="peopleWrapper">
           <ul className="people">
@@ -114,7 +117,6 @@ const Deals = ({ history, location, match }) => {
         userCard={userCard}
         setUserCard={setUserCard}
         user={user}
-        socket={socket}
         setChat={setChat}
       />
     </div>
@@ -341,48 +343,25 @@ const Person = ({ client, messages, lastSeen, userCard, unread }) => {
   );
 };
 
-const Chat = ({
+export const Chat = ({
   chat,
   setChat,
   userCard,
   setUserCard,
   user,
-  socket,
   setContacts,
 }) => {
   const { setUser, userType } = useContext(SiteContext);
+  const { rooms, setRooms } = useContext(ChatContext);
   const chatWrapper = useRef(null);
   const loading = useRef(null);
   const history = useHistory();
-  const [rooms, setRooms] = useState([]);
   const [msgLoading, setMsgLoading] = useState(false);
   const [allMessages, setAllMessages] = useState(
     chat?.length >= 50 ? false : true
   );
   const [page, setPage] = useState(2);
   const [msg, setMsg] = useState(null);
-  useEffect(() => {
-    socket.on(
-      "connectedToRoom",
-      ({ rooms, newChat, client, clientRoom_id }) => {
-        if (newChat) {
-          setContacts((prev) =>
-            prev.map((chat) => {
-              if (chat.client._id === client) {
-                return {
-                  ...chat,
-                  _id: clientRoom_id,
-                };
-              } else {
-                return chat;
-              }
-            })
-          );
-        }
-        setRooms(rooms);
-      }
-    );
-  }, []);
   useEffect(() => {
     if (rooms.length) {
       fetch("/api/updateLastSeen", {
@@ -399,18 +378,6 @@ const Chat = ({
           body: JSON.stringify({ rooms }),
         });
       }
-      // setContacts((prev) =>
-      //   prev.map((chat) => {
-      //     if (userCard?._id === chat.client?._id) {
-      //       return {
-      //         ...chat,
-      //         lastSeen: new Date().toISOString(),
-      //         unread: null,
-      //       };
-      //     }
-      //     return chat;
-      //   })
-      // );
     };
   }, [rooms]);
   const loadChat = () => {
@@ -508,12 +475,20 @@ const Chat = ({
                     Request Milestone
                   </Link>
                 ) : (
-                  <Link
-                    className="pay"
-                    to={`/account/deals/${userCard._id}/payment`}
-                  >
-                    Pay
-                  </Link>
+                  <>
+                    <Link
+                      className="pay"
+                      to={`/account/deals/${userCard._id}/payment`}
+                    >
+                      Pay
+                    </Link>
+                    <Link
+                      className="viewShop"
+                      to={`/marketplace?seller=${userCard._id}`}
+                    >
+                      View Shop
+                    </Link>
+                  </>
                 )}
                 <Actions>
                   {
@@ -685,9 +660,10 @@ const Chat = ({
         className="milestoneRequest"
         head={true}
         label={userType === "seller" ? "Request Milestone" : "Create Milestone"}
-        open={history.location.pathname.match(
-          /^\/account\/deals\/.+\/payment$/
-        )}
+        open={
+          userCard &&
+          history.location.pathname.match(/^\/account\/deals\/.+\/payment$/)
+        }
         setOpen={() => history.push(`/account/deals/${userCard._id}`)}
       >
         <MilestoneForm

@@ -487,6 +487,33 @@
         }
       }
     }
+    .orders {
+      display: grid;
+      a {
+        padding: 1rem 0.5rem;
+        border-radius: 0.5rem;
+        &:hover {
+          background: rgba(0, 0, 0, 0.03);
+        }
+      }
+      li {
+        ul {
+          display: grid;
+          grid-template-columns: 1fr 4rem 6rem;
+          li {
+            &:last-child {
+              text-align: right;
+            }
+            align-items: center;
+            display: grid;
+            label {
+              font-size: 0.8rem;
+              color: rgba(0, 0, 0, 0.6);
+            }
+          }
+        }
+      }
+    }
   }
   .benner {
     margin-bottom: 2rem;
@@ -499,7 +526,7 @@
     margin-bottom: 0;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     padding: 2rem;
-    padding-bottom: 1rem;
+    padding-bottom: 2rem;
     .links {
       font-size: 0.9rem;
       color: rgba(0, 0, 0, 0.5);

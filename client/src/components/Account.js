@@ -6,7 +6,7 @@ import {
   useRef,
   lazy,
 } from "react";
-import { SiteContext, ChatContext } from "../SiteContext";
+import { SiteContext, ChatContext, socket } from "../SiteContext";
 import { Route, Switch, useHistory, Link, useLocation } from "react-router-dom";
 import { Modal } from "./Modal.js";
 import {
@@ -33,7 +33,7 @@ import MyShop from "./MyShop";
 import Support, { SingleTicket } from "./Support";
 import Profile from "./Profile";
 import Marketplace, { SingleProduct, Cart, CartItem } from "./Marketplace";
-import Deals, { socket } from "./Deals";
+import Deals from "./Deals";
 import MyShopping, {
   Orders,
   FullOrder,
@@ -196,20 +196,33 @@ const Home = () => {
           Recent Orders
           <span className="note">Click to view order details.</span>
         </p>
-        <ul className="payments">
+        <ul className="orders">
           {recentOrders.map((order) => (
-            <li key={order._id}>
-              <Link
-                to={`/account/orders/${
-                  order.status === "pending" ? "pending" : "current"
-                }/${order._id}`}
-              >
-                <h3>₹{order.total}</h3>
-                {
-                  // <p className="name">{user.firstName + " " + user.lastName}</p>
-                }
-              </Link>
-            </li>
+            <Link
+              key={order._id}
+              to={`/account/orders/${
+                order.status === "pending" ? "pending" : "current"
+              }/${order._id}`}
+            >
+              <li>
+                <ul>
+                  <li>
+                    <label>Seller</label>
+                    <p>
+                      {order.seller.firstName + " " + order.seller.lastName}
+                    </p>
+                  </li>
+                  <li>
+                    <label>QTY</label>
+                    <p>{order.products.length}</p>
+                  </li>
+                  <li>
+                    <label>Total</label>
+                    <h3>₹{order.total}</h3>
+                  </li>
+                </ul>
+              </li>
+            </Link>
           ))}
           {recentOrders.length === 0 && <p>Nothing for now.</p>}
         </ul>
@@ -1229,9 +1242,7 @@ function Account() {
                     ? "active"
                     : undefined
                 }
-              >
-                <Link to="/account/profile/kyc">KYC</Link>
-              </li>
+              ></li>
               <li
                 className={
                   location.pathname.startsWith("/account/profile/wallet")
@@ -1351,6 +1362,7 @@ function Account() {
                 }
               />
             </Route>
+            <Route path="/account/orders/history/:_id" component={FullOrder} />
             <Route path="/account/orders/history">
               <Orders
                 status="delivered|cancelled|declined|refunded"

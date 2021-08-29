@@ -22,12 +22,15 @@ import {
   Cart_svg,
   Img,
   Moment,
+  useOnScreen,
+  Arrow_left_svg,
 } from "./Elements";
 import { AddressForm } from "./Forms";
-import { SiteContext } from "../SiteContext";
+import { SiteContext, ChatContext, socket } from "../SiteContext";
 import { Link, Redirect } from "react-router-dom";
 import { Modal, Confirm } from "./Modal";
 import { MilestoneForm } from "./Account";
+import { Chat } from "./Deals";
 import queryString from "query-string";
 import { toast } from "react-toastify";
 
@@ -35,6 +38,25 @@ require("./styles/marketplace.scss");
 
 const Marketplace = ({ history, location, match }) => {
   const { userType } = useContext(SiteContext);
+  const [loadingRef, loadingVisible] = useOnScreen({ rootMargin: "100px" });
+  const sortOptions = useRef([
+    {
+      label: "Newest first",
+      value: { column: "createdAt", order: "dsc" },
+    },
+    {
+      label: "Oldest first",
+      value: { column: "createdAt", order: "asc" },
+    },
+    {
+      label: "Price high-low",
+      value: { column: "price", order: "dsc" },
+    },
+    {
+      label: "Price low-high",
+      value: { column: "price", order: "asc" },
+    },
+  ]);
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -44,14 +66,12 @@ const Marketplace = ({ history, location, match }) => {
   const [perPage, setPerPage] = useState(
     queryString.parse(location.search).perPage || 20
   );
-  const [page, setPage] = useState(
-    queryString.parse(location.search).page || 1
-  );
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState(
     queryString.parse(location.search).q || ""
   );
   const [sort, setSort] = useState({
-    column: queryString.parse(location.search).sort || "popularity",
+    column: queryString.parse(location.search).sort || "createdAt",
     order: queryString.parse(location.search).order || "dsc",
   });
   const [products, setProducts] = useState([]);
@@ -61,8 +81,48 @@ const Marketplace = ({ history, location, match }) => {
     queryString.parse(location.search).seller
   );
   const [sellerDetail, setSellerDetail] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const loadMore = () => {
+    setLoadingMore(true);
+    fetch(`/api/getProducts${location.search}&page=${page + 1}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setLoadingMore(false);
+        if (data.code === "ok") {
+          if (data.products.length) {
+            setProducts((prev) => [...prev, ...data.products]);
+            setPage((prev) => prev + 1);
+          } else {
+          }
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not get products. Please try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoadingMore(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get products. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
   useEffect(() => {
-    fetch(`/api/getProducts${location.search}`)
+    fetch(`/api/getProducts${location.search}&page=${1}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "ok") {
@@ -108,8 +168,7 @@ const Marketplace = ({ history, location, match }) => {
         "?" +
         new URLSearchParams({
           ...(seller && { seller }),
-          q: search,
-          page,
+          ...(search.length >= 4 && { q: search }),
           perPage,
           sort: sort.column,
           order: sort.order,
@@ -117,9 +176,15 @@ const Marketplace = ({ history, location, match }) => {
           ...(category && { category }),
         }).toString(),
     });
-  }, [perPage, page, search, sort, seller, type, category]);
+  }, [page, search, sort, seller, type, category]);
+  useEffect(() => {
+    if (loadingVisible && total > products.length) {
+      loadMore();
+    }
+  }, [loadingVisible]);
+  useEffect(() => {}, []);
   return (
-    <div className="generic marketplace">
+    <div className={`generic marketplace ${chatOpen ? "chatOpen" : ""}`}>
       <Header />
       {userType === "seller" && <Redirect to="/account/myShop/products" />}
       <div style={{ display: "none" }}>
@@ -129,67 +194,30 @@ const Marketplace = ({ history, location, match }) => {
         <h1>Delivery Pay Marketplace</h1>
       </div>
       <div className="content">
-        <div className="sidebar">
-          <div className="categories">
-            <p className="label">
-              Categories{" "}
-              {category && (
-                <button className="clear" onClick={() => setCategory("")}>
-                  <X_svg />
-                </button>
-              )}
-            </p>
-            <ul>
-              {categories.map((item) => (
-                <li
-                  key={item}
-                  className={item === category ? "active" : ""}
-                  onClick={() => setCategory(item)}
-                >
-                  {item}
-                </li>
-              ))}
-              {categories.length === 0 && (
-                <li className="placeholder">No category found.</li>
-              )}
-            </ul>
-          </div>
-        </div>
         <div className="mainContent">
           {sellerDetail && (
             <div className="sellerDetail">
-              Products from{" "}
-              <div className="profile">
-                <Img src={sellerDetail.profileImg || "/profile-user.jpg"} />
-                <p className="name">
-                  {sellerDetail.firstName} {sellerDetail.lastName}
-                  <span className="contact">{sellerDetail.phone}</span>
-                </p>
-              </div>
-              {
-                //   <button className="close" onClick={() => setSeller(null)}>
-                //   <X_svg />
-                // </button>
-              }
+              {sellerDetail.profileImg && (
+                <Img className="logo" src={"/profile-user.jpg"} />
+              )}
+              <p>
+                {seller.shopInfo?.shopName ||
+                  sellerDetail.firstName + " " + sellerDetail.lastName}
+              </p>
             </div>
           )}
           <div className="filters">
-            {
-              //   <section>
-              //   <label>Total:</label>
-              //   {total}
-              // </section>
-            }
-            <section>
-              <label>Per Page:</label>
+            <section className="categories">
+              <label>Category</label>
               <Combobox
                 defaultValue={0}
                 options={[
-                  { label: "20", value: 20 },
-                  { label: "30", value: 30 },
-                  { label: "50", value: 50 },
+                  { label: "All", value: "" },
+                  ...categories.map((item) => ({ label: item, value: item })),
                 ]}
-                onChange={(e) => setPerPage(e.value)}
+                onChange={(e) => {
+                  setCategory(e.value);
+                }}
               />
             </section>
             <section className="search">
@@ -221,37 +249,15 @@ const Marketplace = ({ history, location, match }) => {
                 </button>
               )}
             </section>
-            <section className="type">
-              <label>Type:</label>
-              <Combobox
-                defaultValue={type}
-                options={[
-                  { label: "All", value: "" },
-                  { label: "Product", value: "product" },
-                  { label: "Service", value: "service" },
-                  { label: "Other", value: "other" },
-                ]}
-                onChange={(e) => setType(e.value)}
-              />
-            </section>
             <section className="sort">
               <label>Sort by:</label>
               <Combobox
-                defaultValue={0}
-                options={[
-                  {
-                    label: "popularity",
-                    value: { column: "popularity", order: "dsc" },
-                  },
-                  {
-                    label: "Price high-low",
-                    value: { column: "price", order: "dsc" },
-                  },
-                  {
-                    label: "Price low-high",
-                    value: { column: "price", order: "asc" },
-                  },
-                ]}
+                defaultValue={sortOptions.current.find(
+                  (item) =>
+                    item.value.column === sort.column &&
+                    item.value.order === sort.order
+                )}
+                options={sortOptions.current}
                 onChange={(e) => setSort(e.value)}
               />
             </section>
@@ -260,6 +266,9 @@ const Marketplace = ({ history, location, match }) => {
             {products.map((item) => (
               <Product key={item._id} data={item} />
             ))}
+            {total > products.length && (
+              <div className="placeholder">Loading</div>
+            )}
             {products.length === 0 && (
               <div className="placeholder">
                 <Img src="/open_box.png" />
@@ -272,7 +281,73 @@ const Marketplace = ({ history, location, match }) => {
           {msg}
         </Modal>
       </div>
+      <div ref={loadingRef} />
+      {sellerDetail && (
+        <MiniChat client={sellerDetail} onToggle={setChatOpen} />
+      )}
       <Footer />
+    </div>
+  );
+};
+
+const MiniChat = ({ client, onToggle }) => {
+  const { user } = useContext(SiteContext);
+  const { contacts, setContacts } = useContext(ChatContext);
+  const [open, setOpen] = useState(false);
+  const [userCard, setUserCard] = useState(null);
+  const [chat, setChat] = useState(null);
+  useEffect(() => {
+    const clientChat = contacts.find(
+      (contact) => contact.client._id === client._id
+    );
+    if (clientChat) {
+      setUserCard({
+        ...clientChat.client,
+        status: clientChat.userBlock ? "blocked" : "",
+      });
+      setChat(clientChat.messages);
+      socket.emit("initiateChat", {
+        client_id: client._id,
+        ...(clientChat.messages === undefined && { newChat: true }),
+      });
+    }
+  }, [client, contacts]);
+  useEffect(() => {
+    onToggle?.(open);
+  }, [open]);
+  if (!open) {
+    return (
+      <button className="chatBtn" onClick={() => setOpen(true)}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="26.55"
+          height="25.219"
+          viewBox="0 0 26.55 25.219"
+        >
+          <path
+            id="Path_1"
+            data-name="Path 1"
+            d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+            transform="translate(255.198 195.071)"
+            fill="#fff"
+          />
+        </svg>
+      </button>
+    );
+  }
+  return (
+    <div className="chatWrapper">
+      <button className="closeChat" onClick={() => setOpen(false)}>
+        <Arrow_left_svg />
+      </button>
+      <Chat
+        chat={chat}
+        setContacts={setContacts}
+        userCard={userCard}
+        setUserCard={setUserCard}
+        user={user}
+        setChat={setChat}
+      />
     </div>
   );
 };
@@ -330,6 +405,7 @@ export const SingleProduct = ({ match }) => {
   const { user, setCart, userType } = useContext(SiteContext);
   const [product, setProduct] = useState(null);
   const [msg, setMsg] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
   useEffect(() => {
     fetch(`/api/singleProduct?_id=${match.params._id}`)
       .then((res) => res.json())
@@ -363,7 +439,7 @@ export const SingleProduct = ({ match }) => {
   }, []);
   if (product) {
     return (
-      <div className="generic singleProduct">
+      <div className={`generic singleProduct ${chatOpen ? "chatOpen" : ""}`}>
         <Header />
         <div className="content">
           <Gallery images={product.images} />
@@ -451,12 +527,13 @@ export const SingleProduct = ({ match }) => {
             {msg}
           </Modal>
         </div>
+        {product && <MiniChat client={product.user} onToggle={setChatOpen} />}
         <Footer />
       </div>
     );
   }
   return (
-    <div className="generic singleProduct">
+    <div className={`generic singleProduct ${chatOpen ? "chatOpen" : ""}`}>
       <Header />
       loading
       <Modal className="msg" open={msg}>

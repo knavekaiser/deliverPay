@@ -31,8 +31,6 @@ const ShippingPolicy = lazy(() => import("./components/shippingPolicy"));
 const WorkWithUs = lazy(() => import("./components/WorkWithUs"));
 const Apply = lazy(() => import("./components/Apply"));
 
-// const Marketplace, { SingleProduct } = lazy(() => import("./components/Apply"));
-
 Number.prototype.fix = function (p) {
   return +this.toFixed(p || 2);
 };

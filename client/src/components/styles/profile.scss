@@ -62,7 +62,9 @@
     font-weight: 300;
     color: rgba(0, 0, 0, 0.75);
   }
-  .settings {
+  .settings,
+  .kyc {
+    grid-gap: 0;
     ul {
       li {
         padding: 2rem 0;

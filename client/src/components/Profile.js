@@ -223,7 +223,7 @@ const Profile = ({ history, match, location }) => {
                     defaultValue={user.phone}
                     name="phone"
                     required={true}
-                    pattern="((\+*)((0[ -]+)*|(91 )*)(\d{12}|\d{10}))|\d{5}([- ]*)\d{6}"
+                    pattern="^(\+91|91|1|)\d{10}$"
                   />
                 </section>
               </>
@@ -356,6 +356,11 @@ const Profile = ({ history, match, location }) => {
               user.address?.state || ""
             } ${user.address?.zip || ""}`}
           />
+        </ul>
+      </div>
+      <div className="kyc">
+        <div className="head">KYC</div>
+        <ul>
           <DataEdit
             label="KYC"
             setMsg={setMsg}
@@ -375,57 +380,14 @@ const Profile = ({ history, match, location }) => {
             }
             value={
               <>
+                <p>Status: {user.kyc?.verified ? "Verified" : "Unverified"}</p>
                 <label>Files for verification:</label>
                 <ul className="thumbs">
                   <Media links={user.kyc?.files} />
                 </ul>
-                <p>Verified: {user.kyc?.verified?.toString() || "False"}</p>
               </>
             }
           />
-          {
-            //   <DataEdit
-            //   label="GST Information"
-            //   setMsg={setMsg}
-            //   formData={gstFiles}
-            //   fields={
-            //     <>
-            //       <section>
-            //         <input
-            //           required={true}
-            //           type="text"
-            //           defaultValue={user.gst?.detail.reg}
-            //           placeholder="GST Registration number"
-            //           name="gst.detail.reg"
-            //         />
-            //       </section>
-            //       <section>
-            //         <label>Upload files for verification</label>
-            //         <FileInput
-            //           multiple={true}
-            //           prefill={user.gst?.detail?.files}
-            //           name="gst.detail.files"
-            //           onChange={(files) => setGstFiles(files)}
-            //         />
-            //       </section>
-            //     </>
-            //   }
-            //   value={
-            //     <>
-            //       <label>
-            //         GST Registration number: {user.gst?.detail?.reg || "N/A"}
-            //       </label>
-            //       <label>Files for verification:</label>
-            //       <ul className="thumbs">
-            //         <Media links={user.gst?.detail?.files} />
-            //       </ul>
-            //       <p>
-            //         Verified: {user.gst?.detail?.verified?.toString() || "False"}
-            //       </p>
-            //     </>
-            //   }
-            // />
-          }
         </ul>
       </div>
       <div className="paymentMethods">

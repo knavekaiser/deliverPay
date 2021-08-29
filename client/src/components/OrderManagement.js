@@ -12,7 +12,7 @@ import {
   Plus_svg,
   X_svg,
   Combobox,
-  Paginaiton,
+  Pagination,
   Checkbox,
   calculateDiscount,
   calculatePrice,
@@ -284,7 +284,7 @@ const Orders = ({ categories }) => {
           )}
         </tbody>
       </table>
-      <Paginaiton
+      <Pagination
         total={total}
         btns={5}
         currentPage={page}

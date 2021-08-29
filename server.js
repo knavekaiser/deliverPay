@@ -270,10 +270,10 @@ io.on("connection", async (socket) => {
             })),
           ]);
           const blocked =
-            clientBlockList.some(
+            clientBlockList?.some(
               (_id) => _id.toString() === decoded.sub.toString()
             ) ||
-            userBlockList.some(
+            userBlockList?.some(
               (_id) => _id.toString() === message.to.toString()
             );
           if (!blocked) {

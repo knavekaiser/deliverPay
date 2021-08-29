@@ -7,7 +7,8 @@ import React, {
 } from "react";
 import { useHistory } from "react-router-dom";
 import { LS } from "./components/Elements";
-import { socket } from "./components/Deals";
+import { io } from "socket.io-client";
+export const socket = io();
 
 export const SiteContext = createContext();
 export const Provider = ({ children }) => {
@@ -63,6 +64,7 @@ export const ChatProvider = ({ children }) => {
   const history = useHistory();
   const { user } = useContext(SiteContext);
   const [windowFocus, setWindowFocus] = useState(true);
+  const [connectedRooms, setConnectedRooms] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -73,22 +75,33 @@ export const ChatProvider = ({ children }) => {
         .then((res) => res.json())
         .then((data) => {
           setContacts(() =>
-            data.map((chat) => {
-              const status = user.blockList?.some(
-                (item) => item === chat.client._id
-              )
-                ? "blocked"
-                : chat.clientBlock
-                ? "blockedByClient"
-                : "";
-              return {
-                ...chat,
-                ...(chat.client.phone && { status }),
-                unread: chat.messages.filter((msg) => {
-                  return new Date(msg.createdAt) > new Date(chat.lastSeen);
-                }).length,
-              };
-            })
+            data
+              .map((chat) => {
+                const status = user.blockList?.some(
+                  (item) => item === chat.client._id
+                )
+                  ? "blocked"
+                  : chat.clientBlock
+                  ? "blockedByClient"
+                  : "";
+                return {
+                  ...chat,
+                  ...(chat.client.phone && { status }),
+                  unread: chat.messages.filter((msg) => {
+                    return new Date(msg.createdAt) > new Date(chat.lastSeen);
+                  }).length,
+                };
+              })
+              .sort((a, b) => {
+                if (
+                  new Date(a.messages[a.messages.length - 1]?.createdAt) >
+                  new Date(b.messages[b.messages.length - 1]?.createdAt)
+                ) {
+                  return -1;
+                } else {
+                  return 1;
+                }
+              })
           );
         })
         .catch((err) => {
@@ -103,6 +116,26 @@ export const ChatProvider = ({ children }) => {
     socket.on("disconnect", () => {
       console.log("disconnected from socket");
     });
+    socket.on(
+      "connectedToRoom",
+      ({ rooms, newChat, client, clientRoom_id }) => {
+        if (newChat) {
+          setContacts((prev) =>
+            prev.map((chat) => {
+              if (chat.client._id === client) {
+                return {
+                  ...chat,
+                  _id: clientRoom_id,
+                };
+              } else {
+                return chat;
+              }
+            })
+          );
+        }
+        setRooms(rooms);
+      }
+    );
     const focusHandler = (e) => setWindowFocus(true);
     const blurHandler = (e) => setWindowFocus(false);
     window.addEventListener("focus", focusHandler);
@@ -121,31 +154,39 @@ export const ChatProvider = ({ children }) => {
             payload.from;
         if (payload.from) {
           setContacts((prev) => {
-            const newContacts = prev.map((chat) => {
-              const newMessages = [
-                ...chat.messages,
-                { ...payload, createdAt: new Date(), updatedAt: new Date() },
-              ];
-              if (payload.from === user?._id) {
-                if (chat.client._id === payload.to) {
-                  return {
-                    ...chat,
-                    messages: newMessages,
-                  };
+            const newContacts = prev
+              .map((chat) => {
+                const newMessages = [
+                  ...chat.messages,
+                  { ...payload, createdAt: new Date(), updatedAt: new Date() },
+                ];
+                if (payload.from === user?._id) {
+                  if (chat.client._id === payload.to) {
+                    return {
+                      ...chat,
+                      messages: newMessages,
+                    };
+                  }
+                } else {
+                  if (chat.client._id === payload.from) {
+                    return {
+                      ...chat,
+                      messages: newMessages,
+                      unread: newMessages.filter(
+                        (msg) =>
+                          new Date(msg.createdAt) > new Date(chat.lastSeen)
+                      ).length,
+                    };
+                  }
                 }
-              } else {
-                if (chat.client._id === payload.from) {
-                  return {
-                    ...chat,
-                    messages: newMessages,
-                    unread: newMessages.filter(
-                      (msg) => new Date(msg.createdAt) > new Date(chat.lastSeen)
-                    ).length,
-                  };
-                }
-              }
-              return chat;
-            });
+                return chat;
+              })
+              .sort((a, b) =>
+                new Date(a.messages[a.messages.length - 1]?.createdAt) >
+                new Date(b.messages[b.messages.length - 1]?.createdAt)
+                  ? -1
+                  : 1
+              );
             return newContacts;
           });
           if (!focus) {
@@ -163,9 +204,9 @@ export const ChatProvider = ({ children }) => {
     }
   }, [user]);
   useEffect(() => {
-    if (contacts.map((room) => room._id).join("") !== rooms.join("")) {
+    if (contacts.map((room) => room._id).join("") !== connectedRooms.join("")) {
       socket.emit("joinRooms", { rooms: contacts.map((room) => room._id) });
-      setRooms(contacts.map((room) => room._id));
+      setConnectedRooms(contacts.map((room) => room._id));
     }
   }, [contacts]);
   useEffect(() => {
@@ -177,6 +218,8 @@ export const ChatProvider = ({ children }) => {
         contacts,
         setContacts,
         unread,
+        rooms,
+        setRooms,
       }}
     >
       {children}
