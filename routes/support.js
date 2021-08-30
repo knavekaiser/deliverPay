@@ -208,8 +208,9 @@ app.patch(
 );
 
 app.get("/api/faq", (req, res) => {
-  const { q } = req.query;
+  const { q, audience } = req.query;
   Faq.find({
+    ...(audience && { audience }),
     ...(q && {
       $or: [{ ques: new RegExp(q, "gi") }, { ans: new RegExp(q, "gi") }],
     }),

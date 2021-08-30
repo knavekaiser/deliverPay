@@ -667,6 +667,26 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
 //   }
 // );
 
+const calculateCouponCode = (coupon, price) => {
+  if (!coupon) {
+    return price;
+  } else if (coupon.type === "percent") {
+  }
+};
+const calculatePrice = ({ product, gst, discount }) => {
+  let finalPrice = product.price;
+  if (discount !== false && product.discount?.amount) {
+    finalPrice -= calculateDiscount(product);
+  }
+  if (gst?.verified) {
+    finalPrice += finalPrice * ((product.gst || gst.amount) / 100);
+  }
+  if (gst === true) {
+    finalPrice += finalPrice * (product.gst / 100);
+  }
+  return finalPrice.fix();
+};
+
 // -------------------------- payment methods
 app.post(
   "/api/addPaymentMethod",
@@ -833,15 +853,7 @@ app.post(
   "/api/requestMilestone",
   passport.authenticate("userPrivate"),
   async (req, res) => {
-    const {
-      buyer_id,
-      amount,
-      // products,
-      dscr,
-      // deliveryDetail,
-      order,
-      refund,
-    } = req.body;
+    const { buyer_id, amount, dscr, order, refund } = req.body;
     if (buyer_id?.toString() === req.user._id.toString()) {
       res
         .status(403)
@@ -1183,6 +1195,7 @@ app.post(
   passport.authenticate("userPrivate"),
   async (req, res) => {
     const { amount, seller, dscr, order, refund } = req.body;
+    const today = moment({ time: new Date(), format: "YYYY-MM-DD" });
     const { fee, gst } = await Config.findOne().then((config) => config || {});
     if (seller?._id?.toString() === req.user._id.toString()) {
       res
@@ -1194,34 +1207,101 @@ app.post(
       res.status(403).json({ code: 403, message: "insufficient fund" });
       return;
     }
-    if (
-      order &&
-      (!order?.products?.length || !order?.deliveryDetail || !order?.total)
-    ) {
-      res.status(400).json({
-        code: 400,
-        message: "order with products, deliveryDetail, total is required",
-      });
-      return;
-    }
-    const newOrder = order
-      ? await new Order({
-          ...order,
-          buyer: req.user,
-          seller: seller,
-          products: order.products.map(({ product, qty }) => ({
-            product: { ...product, _id: ObjectId(product._id) },
-            qty,
+    let newOrder = null;
+    if (order) {
+      if (order && (!order?.products?.length || !order?.deliveryDetail)) {
+        res.status(400).json({
+          code: 400,
+          message: "order with products, deliveryDetail required",
+        });
+        return;
+      }
+      const orderSeller = await User.findOne({ _id: seller._id });
+      const products = await Product.find(
+        {
+          $or: order.products.map(({ product, qty }) => ({
+            _id: product._id,
+            user: orderSeller._id,
           })),
-          // deliveryDetail: order.deliveryDetail,
-          total: order.total.addPercent(fee),
-          fee: fee,
-        })
-          .save()
-          .catch((err) => {
-            console.log(err);
-          })
-      : null;
+        },
+        "-available -reviews -createdAt -updatedAt -__v -status"
+      ).then((products) =>
+        products.map((item) => ({
+          product: item,
+          qty:
+            order.products.find(
+              ({ product, qty }) =>
+                product._id.toString() === item._id.toString()
+            )?.qty || 0,
+        }))
+      );
+      const productPrice = products.reduce(
+        (a, c) =>
+          (
+            a +
+            calculatePrice({ product: c.product, gst: orderSeller.gst }) * c.qty
+          ).fix(),
+        0
+      );
+      const coupon = await Coupon.aggregate([
+        {
+          $match: {
+            code: order.couponCode,
+            "date.from": { $lt: new Date(today) },
+            "date.to": { $gte: new Date(today) },
+            status: "active",
+            threshold: { $lte: productPrice },
+          },
+        },
+        {
+          $set: {
+            usage: {
+              $size: {
+                $filter: {
+                  input: "$users",
+                  as: "user",
+                  cond: { $eq: ["$$user", req.user._id] },
+                },
+              },
+            },
+          },
+        },
+        {
+          $match: { $expr: { $gt: ["$validPerUser", "$usage"] } },
+        },
+        { $unset: "usage" },
+      ]).then(([coupon]) => coupon);
+      const couponCodeDiscount =
+        (coupon?.type === "percent" &&
+          Math.min((productPrice / 100) * coupon.amount, coupon.maxDiscount)) ||
+        productPrice - coupon?.amount ||
+        0;
+      newOrder = await new Order({
+        ...order,
+        buyer: req.user,
+        seller: orderSeller,
+        products,
+        total: (
+          productPrice -
+          couponCodeDiscount +
+          (orderSeller.shopInfo?.shippingCost || 0)
+        ).addPercent(fee),
+        ...(coupon && { coupon }),
+        fee,
+        ...seller.shopInfo,
+      })
+        .save()
+        .catch((err) => {
+          console.log(err);
+        });
+      if (newOrder) {
+        Coupon.findOneAndUpdate(
+          { _id: coupon._id },
+          { $push: { users: req.user._id } },
+          { new: true }
+        ).then((value) => {});
+      }
+    }
     if (order && !newOrder) {
       res.status(500).json({ code: 500, message: "Could not place order." });
       return;

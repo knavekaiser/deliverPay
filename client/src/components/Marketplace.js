@@ -722,16 +722,28 @@ const Shop = ({ seller, products, loading }) => {
   const [addressForm, setAddressForm] = useState(false);
   const [milestoneForm, setMilestoneForm] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const total = +(
-    products.reduce(
-      (a, c) =>
-        (
-          a +
-          calculatePrice({ product: c.product, gst: seller.gst }) * c.qty
-        ).fix(),
-      0
-    ) + (seller.shopInfo?.shippingCost || 0)
-  ).fix();
+  const [couponCode, setCouponCode] = useState("");
+  const [validCoupon, setValidCoupon] = useState(false);
+  const [couponCodeForm, setCouponCodeForm] = useState(false);
+  const productPrice = products.reduce(
+    (a, c) =>
+      (
+        a +
+        calculatePrice({ product: c.product, gst: seller.gst }) * c.qty
+      ).fix(),
+    0
+  );
+  const couponCodeDiscount =
+    (validCoupon?.type === "percent" &&
+      Math.min(
+        (productPrice / 100) * validCoupon.amount,
+        validCoupon.maxDiscount
+      )) ||
+    productPrice - validCoupon?.amount ||
+    0;
+  const total =
+    +(productPrice - couponCodeDiscount) +
+    (seller.shopInfo?.shippingCost || 0).fix();
   const fee = (total * ((100 + config.fee) / 100) - total).fix();
   return (
     <>
@@ -753,6 +765,140 @@ const Shop = ({ seller, products, loading }) => {
             ))}
             <div className="total">
               <p>
+                <label>Total</label>₹{productPrice}
+              </p>
+              <hr />
+              <div className="coupon">
+                {!validCoupon ? (
+                  <label>Coupon</label>
+                ) : (
+                  <label>
+                    Coupon Code {validCoupon.code}
+                    <br />
+                    Discount{" "}
+                    {validCoupon.type === "percent" ? (
+                      <>
+                        {validCoupon.amount}% (Upto ₹{validCoupon.maxDiscount})
+                      </>
+                    ) : (
+                      <>flat</>
+                    )}
+                  </label>
+                )}
+                {!couponCodeForm && !validCoupon && (
+                  <button onClick={() => setCouponCodeForm(true)}>
+                    Add Coupon
+                  </button>
+                )}
+                {validCoupon && <span>₹{couponCodeDiscount}</span>}
+                {couponCodeForm && (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      fetch(`/api/getCoupon/${couponCode}`)
+                        .then((res) => res.json())
+                        .then(({ code, coupon }) => {
+                          if (code === "ok") {
+                            if (total < coupon.threshold) {
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Err_svg />
+                                    <h4>
+                                      Coupon code {couponCode} can only be
+                                      applied on order more that ₹
+                                      {coupon.threshold}.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            } else if (
+                              coupon.users.filter((_id) => _id === user._id)
+                                .length >= coupon.validPerUser
+                            ) {
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Err_svg />
+                                    <h4>
+                                      Each user can use this Coupon{" "}
+                                      {coupon.validPerUser} times.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            } else {
+                              setValidCoupon(coupon);
+                              setCouponCodeForm(false);
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Succ_svg />
+                                    <h4>
+                                      Coupon code {couponCode} has been applied.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            }
+                          } else {
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <Err_svg />
+                                  <h4>Invalid Coupon code.</h4>
+                                </div>
+                              </>
+                            );
+                          }
+                        })
+                        .catch((err) => {
+                          console.log(err);
+                          setMsg(
+                            <>
+                              <button onClick={() => setMsg(null)}>Okay</button>
+                              <div>
+                                <Err_svg />
+                                <h4>
+                                  Could not apply Coupon code. Make sure you're
+                                  online.
+                                </h4>
+                              </div>
+                            </>
+                          );
+                        });
+                    }}
+                  >
+                    <input
+                      required={true}
+                      value={couponCode}
+                      onBlur={(e) => {
+                        if (!couponCode) {
+                          setCouponCodeForm(false);
+                        }
+                      }}
+                      onChange={(e) =>
+                        setCouponCode(e.target.value.toUpperCase())
+                      }
+                    />
+                    <button>Apply</button>
+                  </form>
+                )}
+              </div>
+              <hr />
+              <p>
                 <label>Shipping</label>₹{seller.shopInfo?.shippingCost}
               </p>
               <p>
@@ -760,7 +906,7 @@ const Shop = ({ seller, products, loading }) => {
               </p>
               <hr />
               <p>
-                <label>Total</label>₹{total + fee}
+                <label>Grand total</label>₹{total + fee}
               </p>
               {
                 //   <span className="note">
@@ -841,10 +987,7 @@ const Shop = ({ seller, products, loading }) => {
                 ...deliveryDetail,
                 deliveryWithin: seller.shopInfo?.deliveryWithin,
               },
-              total,
-              refundable: seller.shopInfo?.refundable,
-              terms: seller.shopInfo?.terms,
-              shippingCost: seller.shopInfo?.shippingCost,
+              ...(validCoupon && { couponCode: validCoupon?.code }),
             }}
             onSuccess={({ milestone, order }) => {
               setCart((prev) =>

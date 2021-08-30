@@ -698,6 +698,23 @@ export const FullOrder = ({ history, match }) => {
     }
   }, [order]);
   if (order) {
+    const productPrice = order.products.reduce(
+      (a, c) =>
+        (a + calculatePrice({ product: c.product, gst: true }) * c.qty).fix(),
+      0
+    );
+    const couponCodeDiscount =
+      (order.coupon?.type === "percent" &&
+        Math.min(
+          (productPrice / 100) * order.coupon.amount,
+          order.coupon.maxDiscount
+        )) ||
+      productPrice - order.coupon?.amount ||
+      0;
+    const fee = (
+      ((productPrice - couponCodeDiscount + order.shippingCost) / 100) *
+      order.fee
+    ).fix();
     return (
       <>
         <div className="actions">
@@ -805,21 +822,34 @@ export const FullOrder = ({ history, match }) => {
             </ul>
             <div className="total">
               <div className="data">
-                <label>Total</label>₹
-                {order.products.reduce(
-                  (a, c) =>
-                    a +
-                    calculatePrice({ product: c.product, gst: true }) * c.qty,
-                  0
-                )}
+                <label>Total</label>₹{productPrice}
               </div>
-              <hr />
+              {order.coupon && (
+                <>
+                  <div className="data">
+                    <label>
+                      Coupon Code {order.coupon.code}
+                      <br />
+                      Discount{" "}
+                      {order.coupon.type === "percent" ? (
+                        <>
+                          {order.coupon.amount}% (Upto ₹
+                          {order.coupon.maxDiscount})
+                        </>
+                      ) : (
+                        <>flat</>
+                      )}
+                    </label>
+                    <span>₹{couponCodeDiscount}</span>
+                  </div>
+                </>
+              )}
               <div className="data">
                 <label>Shipping</label>₹{order.shippingCost || "N/A"}
               </div>
+              <hr />
               <div className="data">
-                <label>Delivery Pay fee {order.fee}%</label>₹
-                {(order.total - (order.total / (order.fee + 100)) * 100).fix()}
+                <label>Delivery Pay fee {order.fee}%</label>₹{fee}
               </div>
               <hr />
               <div className="data">

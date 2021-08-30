@@ -575,9 +575,6 @@ export const FullOrder = ({ history, match }) => {
   const [order, setOrder] = useState(null);
   const [shipping, setShipping] = useState(user.shopInfo?.shippingCost || 0);
   const [refundable, setRefundable] = useState(null);
-  const [deliveryTime, setDeliveryTime] = useState(
-    moment(order?.deliveryTime).format("YYYY-MM-DDThh:mm")
-  );
   const [addTerm, setAddTerm] = useState("");
   const [milestoneForm, setMilestoneForm] = useState(false);
   const [fileUpload, setFileUpload] = useState(false);
@@ -592,7 +589,6 @@ export const FullOrder = ({ history, match }) => {
         // shippingCost: shipping,
         // refundable,
         // terms,
-        // deliveryTime,
         // total,
       }),
     })
@@ -811,6 +807,23 @@ export const FullOrder = ({ history, match }) => {
       });
   }, []);
   if (order) {
+    const productPrice = order.products.reduce(
+      (a, c) =>
+        (a + calculatePrice({ product: c.product, gst: true }) * c.qty).fix(),
+      0
+    );
+    const couponCodeDiscount =
+      (order.coupon?.type === "percent" &&
+        Math.min(
+          (productPrice / 100) * order.coupon.amount,
+          order.coupon.maxDiscount
+        )) ||
+      productPrice - order.coupon?.amount ||
+      0;
+    const fee = (
+      ((productPrice - couponCodeDiscount + order.shippingCost) / 100) *
+      order.fee
+    ).fix();
     return (
       <>
         <div className="actions">
@@ -853,18 +866,6 @@ export const FullOrder = ({ history, match }) => {
             <>
               <button
                 onClick={() => {
-                  if (!deliveryTime) {
-                    setMsg(
-                      <>
-                        <button onClick={() => setMsg(null)}>Okay</button>
-                        <div>
-                          <Err_svg />
-                          <h4>Add a delivery time</h4>
-                        </div>
-                      </>
-                    );
-                    return;
-                  }
                   Confirm({
                     lable: "Accept Order",
                     question: <>You sure want to accept this order?</>,
@@ -973,17 +974,28 @@ export const FullOrder = ({ history, match }) => {
             </ul>
             <div className="total">
               <div className="data">
-                <label>Total</label>₹
-                {order.products.reduce(
-                  (a, c) =>
-                    (
-                      a +
-                      calculatePrice({ product: c.product, gst: true }) * c.qty
-                    ).fix(),
-                  0
-                )}
+                <label>Total</label>₹{productPrice}
               </div>
-              <hr />
+              {order.coupon && (
+                <>
+                  <div className="data">
+                    <label>
+                      Coupon Code {order.coupon.code}
+                      <br />
+                      Discount{" "}
+                      {order.coupon.type === "percent" ? (
+                        <>
+                          {order.coupon.amount}% (Upto ₹
+                          {order.coupon.maxDiscount})
+                        </>
+                      ) : (
+                        <>flat</>
+                      )}
+                    </label>
+                    <span>₹{couponCodeDiscount}</span>
+                  </div>
+                </>
+              )}
               <div className="data">
                 <label>Shipping</label>₹
                 {
@@ -998,6 +1010,7 @@ export const FullOrder = ({ history, match }) => {
                   order.shippingCost
                 }
               </div>
+              <hr />
               <div className="data">
                 <label>Delivery Pay fee {order.fee}%</label>₹
                 {(order.total - (order.total / (order.fee + 100)) * 100).fix()}

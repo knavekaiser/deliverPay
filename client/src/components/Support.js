@@ -729,18 +729,19 @@ export const SingleTicket = ({ history, match }) => {
   );
 };
 const Support = ({ history, location, match }) => {
+  const { userType } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [faqs, setFaqs] = useState([]);
   const [bugReport, setBugReport] = useState(false);
   useEffect(() => {
-    fetch(`/api/faq`)
+    fetch(`/api/faq?audience=${userType}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "ok") {
           setFaqs(data.faqs);
         }
       });
-  }, []);
+  }, [userType]);
   return (
     <>
       <Switch>
@@ -769,7 +770,7 @@ const Support = ({ history, location, match }) => {
                   required={true}
                   placeholder="Eg: How does the Delivery pay Hold Works"
                   onChange={(e) => {
-                    fetch(`/api/faq?q=${e.target.value}`)
+                    fetch(`/api/faq?audience=${userType}&q=${e.target.value}`)
                       .then((res) => res.json())
                       .then((data) => {
                         if (data.code === "ok") {
@@ -798,7 +799,9 @@ const Support = ({ history, location, match }) => {
             </div>
             <div className="content">
               <div className="faq">
-                <p className="label">FAQs</p>
+                <h3 className="label">
+                  FAQs {userType && <span>(for {userType}s)</span>}
+                </h3>
                 <ul>
                   {faqs.map((item) => (
                     <li key={item._id}>

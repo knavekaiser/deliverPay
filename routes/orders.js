@@ -216,6 +216,37 @@ app.patch(
   }
 );
 
+app.get(
+  "/api/getCoupon/:code",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const today = moment({ time: new Date(), format: "YYYY-MM-DD" });
+    Coupon.aggregate([
+      {
+        $match: {
+          code: req.params.code || "",
+          "date.from": { $lt: new Date(today) },
+          "date.to": { $gte: new Date(today) },
+          status: "active",
+        },
+      },
+    ])
+      .then(([coupon]) => {
+        if (coupon) {
+          res.json({ code: "ok", coupon });
+        } else {
+          res
+            .status(400)
+            .json({ code: 400, message: "Coupon does not exist or expired." });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ code: 500, message: "Database error" });
+      });
+  }
+);
+
 app.get("/api/getRefunds", passport.authenticate("userPrivate"), (req, res) => {
   const {
     q,
@@ -384,55 +415,7 @@ app.patch(
     }
   }
 );
-//------------------------------------ Buyer
-// app.post(
-//   "/api/submitOrder",
-//   passport.authenticate("userPrivate"),
-//   async (req, res) => {
-//     let { products, seller, deliveryDetail, total } = req.body;
-//     seller = await User.findOne(
-//       { _id: seller },
-//       "_id firstName lastName phone email profileImg"
-//     );
-//     if (deliveryDetail && seller && products?.length && total) {
-//       new Order({
-//         buyer: req.user,
-//         seller: seller,
-//         products: products.map(({ product, qty }) => ({
-//           product: { ...product, _id: ObjectId(product._id) },
-//           qty,
-//         })),
-//         deliveryDetail,
-//         total,
-//       })
-//         .save()
-//         .then((order) => {
-//           notify(
-//             seller._id,
-//             JSON.stringify({
-//               title: "New order!",
-//               body: "You have a new order",
-//             }),
-//             "User"
-//           );
-//           res.json({
-//             code: "ok",
-//             products: order.products.map(({ product }) => product._id),
-//           });
-//         })
-//         .catch((err) => {
-//           console.log(err);
-//           res.status(500).json({ code: 500, message: "Database error" });
-//         });
-//     } else {
-//       res.status(400).json({
-//         code: 400,
-//         message: "seller, deliveryDetail, products and total is required",
-//         fieldsFound: req.body,
-//       });
-//     }
-//   }
-// );
+
 app.patch(
   "/api/cancelOrder",
   passport.authenticate("userPrivate"),
