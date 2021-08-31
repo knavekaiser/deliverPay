@@ -1,9 +1,12 @@
 import { useEffect, useState, useContext, lazy, useRef } from "react";
 import { useHistory, Link, Route } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
-import { UserSearch, MilestoneForm } from "./Account";
+import { UserSearch } from "./Account";
 import { Err_svg, Img, Moment, Succ_svg } from "./Elements";
 import { Modal } from "./Modal";
+const MilestoneForm = lazy(() =>
+  import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
+);
 
 export const StartTransaction = () => {
   const { userType } = useContext(SiteContext);

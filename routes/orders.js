@@ -216,37 +216,6 @@ app.patch(
   }
 );
 
-app.get(
-  "/api/getCoupon/:code",
-  passport.authenticate("userPrivate"),
-  (req, res) => {
-    const today = moment({ time: new Date(), format: "YYYY-MM-DD" });
-    Coupon.aggregate([
-      {
-        $match: {
-          code: req.params.code || "",
-          "date.from": { $lt: new Date(today) },
-          "date.to": { $gte: new Date(today) },
-          status: "active",
-        },
-      },
-    ])
-      .then(([coupon]) => {
-        if (coupon) {
-          res.json({ code: "ok", coupon });
-        } else {
-          res
-            .status(400)
-            .json({ code: 400, message: "Coupon does not exist or expired." });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({ code: 500, message: "Database error" });
-      });
-  }
-);
-
 app.get("/api/getRefunds", passport.authenticate("userPrivate"), (req, res) => {
   const {
     q,
@@ -708,6 +677,163 @@ app.patch(
           console.log(err);
           res.status(500).json({ code: 500, message: "Database error" });
         });
+    } else {
+      res.status(400).json({ code: 400, message: "_id is required" });
+    }
+  }
+);
+
+//------------------------------------ Coupons
+app.get(
+  "/api/getCoupon/:code",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const today = moment({ time: new Date(), format: "YYYY-MM-DD" });
+    Coupon.aggregate([
+      {
+        $match: {
+          code: req.params.code || "",
+          "date.from": { $lte: new Date(today) },
+          "date.to": { $gte: new Date(today) },
+          status: "active",
+        },
+      },
+      {
+        $set: {
+          usage: {
+            $size: {
+              $filter: {
+                input: "$users",
+                as: "user",
+                cond: { $eq: ["$$user", req.user._id] },
+              },
+            },
+          },
+        },
+      },
+      { $unset: "users" },
+    ])
+      .then(([coupon]) => {
+        if (coupon) {
+          res.json({ code: "ok", coupon });
+        } else {
+          res
+            .status(400)
+            .json({ code: 400, message: "Coupon does not exist or expired." });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ code: 500, message: "Database error" });
+      });
+  }
+);
+app.get("/api/getCoupons", passport.authenticate("userPrivate"), (req, res) => {
+  const { q, page, perPage, sort, order, status } = req.query;
+  const query = {
+    ...(q && { code: new RegExp(q, "gi") }),
+    ...(status && { $or: status.split("|").map((status) => ({ status })) }),
+  };
+  const sortOrder = {
+    [sort || "createdAt"]: order === "asc" ? 1 : -1,
+  };
+  Coupon.aggregate([
+    { $match: query },
+    {
+      $set: {
+        accept: {
+          $cond: {
+            if: {
+              $and: [
+                "$sellers",
+                {
+                  $size: {
+                    $filter: {
+                      input: "$sellers",
+                      as: "user",
+                      cond: {
+                        $eq: ["$$user", req.user._id],
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    { $project: { users: 0, sellers: 0 } },
+    { $sort: sortOrder },
+    {
+      $facet: {
+        coupons: [
+          { $skip: +perPage * (+(page || 1) - 1) },
+          { $limit: +(perPage || 20) },
+        ],
+        total: [{ $group: { _id: null, count: { $sum: 1 } } }],
+      },
+    },
+    { $set: { total: { $first: "$total.count" } } },
+  ])
+    .then(([{ coupons, total }]) => {
+      res.json({ code: "ok", coupons, total });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ code: 500, message: "Database error" });
+    });
+});
+app.post(
+  "/api/acceptCoupon",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    if (req.body._id) {
+      Coupon.findOneAndUpdate(
+        {
+          _id: req.body._id,
+          "date.to": {
+            $gte: moment({ time: new Date(), format: "YYYY-MM-DD" }),
+          },
+        },
+        { $addToSet: { sellers: req.user._id } },
+        { new: true }
+      ).then((coupon) => {
+        if (coupon) {
+          res.json({ code: "ok", coupon });
+        } else {
+          res.status(400).json({
+            code: 400,
+            message: "Coupon code does not exist or expired.",
+          });
+        }
+      });
+    } else {
+      res.status(400).json({ code: 400, message: "_id is required" });
+    }
+  }
+);
+app.post(
+  "/api/declineCoupon",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    if (req.body._id) {
+      Coupon.findOneAndUpdate(
+        { _id: req.body._id },
+        { $pull: { sellers: req.user._id } },
+        { new: true }
+      ).then((coupon) => {
+        if (coupon) {
+          res.json({ code: "ok", coupon });
+        } else {
+          res.status(400).json({
+            code: 400,
+            message: "Coupon code does not exist.",
+          });
+        }
+      });
     } else {
       res.status(400).json({ code: 400, message: "_id is required" });
     }

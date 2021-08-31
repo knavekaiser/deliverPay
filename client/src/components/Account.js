@@ -5,43 +5,21 @@ import {
   useCallback,
   useRef,
   lazy,
+  Suspense,
 } from "react";
 import { SiteContext, ChatContext, socket } from "../SiteContext";
 import { Route, Switch, useHistory, Link, useLocation } from "react-router-dom";
 import { Modal } from "./Modal.js";
 import {
-  Combobox,
-  NumberInput,
   Err_svg,
   Succ_svg,
-  X_svg,
-  Plus_svg,
-  Minus_svg,
   Footer,
   Actions,
   Cart_svg,
-  calculatePrice,
   Img,
   Moment,
   Chev_down_svg,
 } from "./Elements";
-import { AddressForm } from "./Forms";
-import Hold from "./Hold.js";
-import Transactions, { StartTransaction } from "./Transactions";
-import Wallet from "./Wallet";
-import MyShop from "./MyShop";
-import Support, { SingleTicket } from "./Support";
-import Profile from "./Profile";
-import Marketplace, { SingleProduct, Cart, CartItem } from "./Marketplace";
-import Deals from "./Deals";
-import MyShopping, {
-  Orders,
-  FullOrder,
-  Disputes,
-  FullDispute,
-} from "./myShopping";
-import OrderManagement from "./OrderManagement";
-import { GoogleLogout } from "react-google-login";
 import {
   EmailShareButton,
   FacebookShareButton,
@@ -84,11 +62,34 @@ import {
   WhatsappIcon,
   WorkplaceIcon,
 } from "react-share";
-import "react-date-range/dist/styles.css";
-import "react-date-range/dist/theme/default.css";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+
+const OrderManagement = lazy(() => import("./OrderManagement"));
+const MilestoneForm = lazy(() =>
+  import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
+);
+
+const MyShopping = lazy(() => import("./myShopping"));
+const Cart = lazy(() =>
+  import("./myShopping").then((mod) => ({ default: mod.Cart }))
+);
+
+const CartItem = lazy(() =>
+  import("./Marketplace").then((mod) => ({ default: mod.CartItem }))
+);
+
+const StartTransaction = lazy(() =>
+  import("./Transactions").then((mod) => ({ default: mod.StartTransaction }))
+);
+const Transactions = lazy(() => import("./Transactions"));
+
+const Support = lazy(() => import("./Support"));
+
 const QRCode = lazy(() => import("qrcode.react"));
+const Profile = lazy(() => import("./Profile"));
+const Hold = lazy(() => import("./Hold"));
+const Wallet = lazy(() => import("./Wallet"));
+const MyShop = lazy(() => import("./MyShop"));
+const Deals = lazy(() => import("./Deals"));
 require("./styles/account.scss");
 require("./styles/generic.scss");
 
@@ -543,70 +544,6 @@ function Account() {
               Home
             </Link>
           </li>
-          {
-            //   <li
-            //   className={
-            //     location.pathname.startsWith("/account/wallet")
-            //       ? "active"
-            //       : undefined
-            //   }
-            // >
-            //   <Link to="/account/wallet">
-            //     <div className="icon">
-            //       <svg
-            //         xmlns="http://www.w3.org/2000/svg"
-            //         width="20.886"
-            //         height="22.948"
-            //         viewBox="0 0 20.886 22.948"
-            //       >
-            //         <g
-            //           id="Rectangle_2"
-            //           data-name="Rectangle 2"
-            //           fill="none"
-            //           stroke="#fff"
-            //           strokeWidth="2"
-            //         >
-            //           <rect width="20.886" height="16.244" rx="2" stroke="none" />
-            //           <rect
-            //             x="1"
-            //             y="1"
-            //             width="18.886"
-            //             height="14.244"
-            //             rx="1"
-            //             fill="none"
-            //           />
-            //         </g>
-            //         <g
-            //           id="Rectangle_3"
-            //           data-name="Rectangle 3"
-            //           transform="translate(0 9.283)"
-            //           fill="none"
-            //           stroke="#fff"
-            //           strokeWidth="2"
-            //         >
-            //           <rect width="20.886" height="6.962" rx="2" stroke="none" />
-            //           <rect
-            //             x="1"
-            //             y="1"
-            //             width="18.886"
-            //             height="4.962"
-            //             rx="1"
-            //             fill="none"
-            //           />
-            //         </g>
-            //         <path
-            //           id="Path_2"
-            //           data-name="Path 2"
-            //           d="M-180.174-182v7.923l4.1-4.653,3.932,4.653V-182Z"
-            //           transform="translate(186.6 197.025)"
-            //           fill="#fff"
-            //         />
-            //       </svg>
-            //     </div>
-            //     Wallet
-            //   </Link>
-            // </li>
-          }
           <Accordion
             className={`${
               location.pathname.startsWith("/account/transaction")
@@ -983,189 +920,6 @@ function Account() {
               </Link>
             </li>
           )}
-          {
-            //   <li
-            //   className={`trans ${
-            //     location.pathname.startsWith("/account/transactions")
-            //       ? "active"
-            //       : undefined
-            //   }`}
-            // >
-            //   <Link to="/account/transactions">
-            //     <div className="icon">
-            //       <svg
-            //         id="Group_283"
-            //         data-name="Group 283"
-            //         xmlns="http://www.w3.org/2000/svg"
-            //         width="28.407"
-            //         height="25.407"
-            //         viewBox="0 0 28.407 25.407"
-            //       >
-            //         <g
-            //           id="Path_4"
-            //           data-name="Path 4"
-            //           transform="translate(3)"
-            //           fill="none"
-            //         >
-            //           <path
-            //             d="M12.7,0A12.7,12.7,0,1,1,0,12.7,12.7,12.7,0,0,1,12.7,0Z"
-            //             stroke="none"
-            //           />
-            //           <path
-            //             d="M 12.70325660705566 1.999996185302734 C 9.844316482543945 1.999996185302734 7.156496047973633 3.113327026367188 5.134906768798828 5.134906768798828 C 3.113327026367188 7.156496047973633 1.999996185302734 9.844316482543945 1.999996185302734 12.70325660705566 C 1.999996185302734 15.56219673156738 3.113327026367188 18.2500171661377 5.134906768798828 20.2716064453125 C 7.156496047973633 22.29318618774414 9.844316482543945 23.40651702880859 12.70325660705566 23.40651702880859 C 15.56219673156738 23.40651702880859 18.2500171661377 22.29318618774414 20.2716064453125 20.2716064453125 C 22.29318618774414 18.2500171661377 23.40651702880859 15.56219673156738 23.40651702880859 12.70325660705566 C 23.40651702880859 9.844316482543945 22.29318618774414 7.156496047973633 20.2716064453125 5.134906768798828 C 18.2500171661377 3.113327026367188 15.56219673156738 1.999996185302734 12.70325660705566 1.999996185302734 M 12.70325660705566 -3.814697265625e-06 C 19.71906661987305 -3.814697265625e-06 25.40651702880859 5.687446594238281 25.40651702880859 12.70325660705566 C 25.40651702880859 19.71906661987305 19.71906661987305 25.40651702880859 12.70325660705566 25.40651702880859 C 5.687446594238281 25.40651702880859 -3.814697265625e-06 19.71906661987305 -3.814697265625e-06 12.70325660705566 C -3.814697265625e-06 5.687446594238281 5.687446594238281 -3.814697265625e-06 12.70325660705566 -3.814697265625e-06 Z"
-            //             stroke="none"
-            //             fill="#fff"
-            //           />
-            //         </g>
-            //         <g
-            //           id="Polygon_1"
-            //           data-name="Polygon 1"
-            //           transform="translate(6.001 12.353) rotate(-150)"
-            //           fill="#fff"
-            //         >
-            //           <path
-            //             d="M 4.929044723510742 3.619362831115723 L 2.000004529953003 3.619362831115723 L 3.464524507522583 1.666669487953186 L 4.929044723510742 3.619362831115723 Z"
-            //             stroke="none"
-            //           />
-            //           <path
-            //             d="M 3.464524507522583 2.86102294921875e-06 L 6.929044723510742 4.619362831115723 L 4.291534423828125e-06 4.619362831115723 L 3.464524507522583 2.86102294921875e-06 Z"
-            //             stroke="none"
-            //             fill="#fff"
-            //           />
-            //         </g>
-            //         <g
-            //           id="Rectangle_4"
-            //           data-name="Rectangle 4"
-            //           transform="translate(0 11.86) rotate(-22)"
-            //           fill="#3b2ab4"
-            //           stroke="#3b2ab4"
-            //           strokeWidth="1"
-            //         >
-            //           <rect width="6.929" height="4.619" stroke="none" />
-            //           <rect
-            //             x="0.5"
-            //             y="0.5"
-            //             width="5.929"
-            //             height="3.619"
-            //             fill="none"
-            //           />
-            //         </g>
-            //         <g
-            //           id="Group_5"
-            //           data-name="Group 5"
-            //           transform="translate(15.704 4.888)"
-            //         >
-            //           <line
-            //             id="Line_3"
-            //             data-name="Line 3"
-            //             y2="9.239"
-            //             transform="translate(0 0)"
-            //             fill="none"
-            //             stroke="#fff"
-            //             strokeWidth="2"
-            //           />
-            //           <line
-            //             id="Line_4"
-            //             data-name="Line 4"
-            //             x2="6.929"
-            //             y2="2.31"
-            //             transform="translate(0 9.239)"
-            //             fill="none"
-            //             stroke="#fff"
-            //             strokeWidth="2"
-            //           />
-            //         </g>
-            //       </svg>
-            //     </div>
-            //     Delivery pay Transactions
-            //   </Link>
-            // </li>
-          }
-          {
-            //     <li
-            //       className={`products ${
-            //         location.pathname.startsWith("/account/orderManagement")
-            //           ? "active"
-            //           : undefined
-            //       }`}
-            //     >
-            //       <Link to="/account/orderManagement">
-            //         <div className="icon">
-            //           <svg
-            //             xmlns="http://www.w3.org/2000/svg"
-            //             width="19.872"
-            //             height="21.086"
-            //             viewBox="0 0 19.872 21.086"
-            //           >
-            //             <g
-            //               id="Group_4"
-            //               data-name="Group 4"
-            //               transform="translate(0 5.63)"
-            //             >
-            //               <g id="Path_288" data-name="Path 288" fill="none">
-            //                 <path
-            //                   d="M1,0H18.872a1,1,0,0,1,1,1V14.456a1,1,0,0,1-1,1H1a1,1,0,0,1-1-1V1A1,1,0,0,1,1,0Z"
-            //                   stroke="none"
-            //                 />
-            //                 <path
-            //                   d="M 2 2.000001907348633 L 2 13.45590209960938 L 17.87188148498535 13.45590209960938 L 17.87188148498535 2.000001907348633 L 2 2.000001907348633 M 1 1.9073486328125e-06 L 18.87188148498535 1.9073486328125e-06 C 19.42416000366211 1.9073486328125e-06 19.87188148498535 0.4477119445800781 19.87188148498535 1.000001907348633 L 19.87188148498535 14.45590209960938 C 19.87188148498535 15.00819206237793 19.42416000366211 15.45590209960938 18.87188148498535 15.45590209960938 L 1 15.45590209960938 C 0.4477100372314453 15.45590209960938 0 15.00819206237793 0 14.45590209960938 L 0 1.000001907348633 C 0 0.4477119445800781 0.4477100372314453 1.9073486328125e-06 1 1.9073486328125e-06 Z"
-            //                   stroke="none"
-            //                   fill="#fff"
-            //                 />
-            //               </g>
-            //               <g
-            //                 id="Rectangle_3"
-            //                 data-name="Rectangle 3"
-            //                 transform="translate(0 8.832)"
-            //                 fill="none"
-            //                 stroke="#fff"
-            //                 strokeWidth="2"
-            //               >
-            //                 <rect
-            //                   width="19.872"
-            //                   height="6.624"
-            //                   rx="2"
-            //                   stroke="none"
-            //                 />
-            //                 <rect
-            //                   x="1"
-            //                   y="1"
-            //                   width="17.872"
-            //                   height="4.624"
-            //                   rx="1"
-            //                   fill="none"
-            //                 />
-            //               </g>
-            //             </g>
-            //             <g
-            //               id="Rectangle_1134"
-            //               data-name="Rectangle 1134"
-            //               transform="translate(4)"
-            //               fill="none"
-            //               stroke="#fff"
-            //               strokeWidth="2"
-            //             >
-            //               <path
-            //                 d="M2,0h8a2,2,0,0,1,2,2V7a0,0,0,0,1,0,0H0A0,0,0,0,1,0,7V2A2,2,0,0,1,2,0Z"
-            //                 stroke="none"
-            //               />
-            //               <rect
-            //                 x="1"
-            //                 y="1"
-            //                 width="10"
-            //                 height="5"
-            //                 rx="1"
-            //                 fill="none"
-            //               />
-            //             </g>
-            //           </svg>
-            //         </div>
-            //         Order Management
-            //       </Link>
-            //     </li>
-            //   </>
-            // )
-          }
           <li
             className={`deals ${
               location.pathname.startsWith("/account/deals")
@@ -1194,22 +948,6 @@ function Account() {
             </Link>
             {unread ? <span className="unred">{unread}</span> : null}
           </li>
-          {
-            //   <li
-            //   className={
-            //     location.pathname.startsWith("/account/profile")
-            //       ? "active"
-            //       : undefined
-            //   }
-            // >
-            //   <Link to="/account/profile">
-            //     <div className="icon acc">
-            //       <Img src={user?.profileImg || "/profile-user.jpg"} />
-            //     </div>
-            //     Account
-            //   </Link>
-            // </li>
-          }
           <Accordion
             className={`profile ${
               location.pathname.startsWith("/account/profile") ? "active" : ""
@@ -1224,25 +962,9 @@ function Account() {
               </>
             }
             link="/account/profile"
-            path="/account/profile/edit"
+            path="/account/profile/wallet"
           >
             <>
-              <li
-                className={
-                  location.pathname.startsWith("/account/profile/edit")
-                    ? "active"
-                    : undefined
-                }
-              >
-                <Link to="/account/profile/edit">Edit Profile</Link>
-              </li>
-              <li
-                className={
-                  location.pathname.startsWith("/account/profile/kyc")
-                    ? "active"
-                    : undefined
-                }
-              ></li>
               <li
                 className={
                   location.pathname.startsWith("/account/profile/wallet")
@@ -1251,6 +973,15 @@ function Account() {
                 }
               >
                 <Link to="/account/profile/wallet">Wallet</Link>
+              </li>
+              <li
+                className={
+                  location.pathname.startsWith("/account/profile/edit")
+                    ? "active"
+                    : undefined
+                }
+              >
+                <Link to="/account/profile/edit">Edit Profile</Link>
               </li>
             </>
           </Accordion>
@@ -1337,70 +1068,32 @@ function Account() {
           </li>
         </ul>
         <main>
-          <Switch>
-            <Route path="/account/deals/:_id?" component={Deals} />
-            <Route
-              path="/account/transaction/history"
-              component={Transactions}
-            />
-            <Route path="/account/transaction" component={StartTransaction} />
-            <Route path="/account/orders/current/:_id" component={FullOrder} />
-            <Route path="/account/orders/current">
-              <Orders
-                status="approved|shipped|refundPending"
-                onClick={(_id) =>
-                  history.push(`/account/orders/current/${_id}`)
-                }
+          <Suspense fallback={<>Loading</>}>
+            <Switch>
+              <Route path="/account/deals/:_id?" component={Deals} />
+              <Route
+                path="/account/transaction/history"
+                component={Transactions}
               />
-            </Route>
-            <Route path="/account/orders/pending/:_id" component={FullOrder} />
-            <Route path="/account/orders/pending">
-              <Orders
-                status="pending"
-                onClick={(_id) =>
-                  history.push(`/account/orders/pending/${_id}`)
-                }
+              <Route path="/account/transaction" component={StartTransaction} />
+              <Route path="/account/orders" component={MyShopping} />
+              <Route path="/account/wallet" component={Wallet} />
+              <Route path="/account/hold" component={Hold} />
+              <Route path="/account/transactions" component={Transactions} />
+              <Route path="/account/myShop" component={MyShop} />
+              <Route path="/account/cart" component={Cart} />
+              <Route
+                path="/account/orderManagement"
+                component={OrderManagement}
               />
-            </Route>
-            <Route path="/account/orders/history/:_id" component={FullOrder} />
-            <Route path="/account/orders/history">
-              <Orders
-                status="delivered|cancelled|declined|refunded"
-                onClick={(_id) =>
-                  history.push(`/account/orders/history/${_id}`)
-                }
-              />
-            </Route>
-            <Route
-              path="/account/orders/dispute/:_id"
-              component={FullDispute}
-            />
-            <Route path="/account/orders/dispute" component={Disputes} />
-            <Route path="/account/wallet" component={Wallet} />
-            <Route path="/account/hold" component={Hold} />
-            {
-              // <Route exact path="/account/marketplace" component={Marketplace} />
-              // <Route path="/account/marketplace/:_id" component={SingleProduct} />
-            }
-            <Route path="/account/transactions" component={Transactions} />
-            <Route path="/account/myShop" component={MyShop} />
-            <Route path="/account/cart" component={Cart} />
-            <Route path="/account/myShopping" component={MyShopping} />
-            <Route
-              path="/account/orderManagement"
-              component={OrderManagement}
-            />
-            <Route
-              path="/account/support/ticket/:_id"
-              component={SingleTicket}
-            />
-            <Route path="/account/support" component={Support} />
-            <Route path="/account/profile/edit" component={Profile} />
-            <Route path="/account/profile/kyc" component={Profile} />
-            <Route path="/account/profile/wallet" component={Wallet} />
-            <Route path="/account/profile/customerCare" component={Profile} />
-            <Route path="/" component={Home} />
-          </Switch>
+              <Route path="/account/support" component={Support} />
+              <Route path="/account/profile/edit" component={Profile} />
+              <Route path="/account/profile/kyc" component={Profile} />
+              <Route path="/account/profile/wallet" component={Wallet} />
+              <Route path="/account/profile/customerCare" component={Profile} />
+              <Route path="/" component={Home} />
+            </Switch>
+          </Suspense>
         </main>
       </div>
       <ul className="mobileMenu">
@@ -1891,7 +1584,9 @@ function Account() {
   );
 }
 export const ProfileAvatar = () => {
-  const { user, setUser, cart, setCart, userType } = useContext(SiteContext);
+  const { user, setUser, cart, setCart, userType, setUserType } = useContext(
+    SiteContext
+  );
   const history = useHistory();
   const menuRef = useRef(null);
   const [menu, setMenu] = useState(false);
@@ -1903,13 +1598,6 @@ export const ProfileAvatar = () => {
   const logout = (e) => {
     console.log(e);
   };
-  // <GoogleLogout
-  // clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
-  // buttonText="Logout"
-  // onLogoutSuccess={logout}
-  // >
-  // test
-  // </GoogleLogout>
   useEffect(() => {
     if (noti) {
       fetch("/api/editUserProfile", {
@@ -1948,9 +1636,6 @@ export const ProfileAvatar = () => {
   return (
     <>
       <div className="profile">
-        {
-          // <UserTypeSwitch />
-        }
         {userType === "buyer" && (
           <Actions
             className="cart"
@@ -2005,7 +1690,23 @@ export const ProfileAvatar = () => {
         >
           {[...user.notifications].reverse().map((item, i) => {
             return (
-              <li key={i}>
+              <li
+                key={i}
+                onClick={() => {
+                  if (item.link) {
+                    if (item.link.includes("/myShop/")) {
+                      setUserType("seller");
+                    }
+                    if (item.link.includes("/account/orders")) {
+                      setUserType("buyer");
+                    }
+                    history.push({
+                      pathname: item.link,
+                      target: "_blank",
+                    });
+                  }
+                }}
+              >
                 <Moment format="hh:mm">{item.createdAt}</Moment>
                 <p className="title">{item.title}</p>
                 <p className="body">{item.body}</p>
@@ -2228,447 +1929,4 @@ const UserTypeSwitch = ({ tip }) => {
   );
 };
 
-export const MilestoneForm = ({
-  action,
-  client,
-  onSuccess,
-  definedAmount,
-  order,
-  refund,
-  strict,
-}) => {
-  const { user, setUser, config } = useContext(SiteContext);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  // const [type, setType] = useState("product");
-  const [addressForm, setAddressForm] = useState(false);
-  // const [products, setProducts] = useState([]);
-  const [userDetail, setUserDetail] = useState({ ...user });
-  const [clientDetail, setClientDetail] = useState({ ...client });
-  // const [deliveryTime, setDeliveryTime] = useState(
-  //   new Date().toISOString().substring(0, 16)
-  // );
-  const [dscr, setDscr] = useState("");
-  const [amount, setAmount] = useState(definedAmount || "");
-  const [fee, setFee] = useState(0);
-  const [msg, setMsg] = useState(null);
-  // const [productResult, setProductResult] = useState([]);
-  // const [showSelectedProducts, setShowSelectedProducts] = useState(false);
-  // const searchInput = useRef(null);
-  const onTimeout = useRef();
-  const requestMilestone = useCallback(() => {
-    fetch("/api/requestMilestone", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        buyer_id: client._id,
-        amount,
-        // products,
-        dscr,
-        order,
-        refund,
-        // deliveryDetail: {
-        //   phone: client.phone,
-        //   name: client.firstName + " " + client.lastName,
-        //   ...client.address,
-        //   timeOfDelivery: deliveryTime,
-        // },
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setLoading(false);
-        if (data.code === "ok") {
-          onSuccess?.(data.milestone);
-        } else {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not request milestone. Try again.</h4>
-              </div>
-            </>
-          );
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        console.log(err);
-        setMsg(
-          <>
-            <button onClick={() => setMsg(null)}>Okay</button>
-            <div>
-              <Err_svg />
-              <h4>Could not request milestone. Make sure you're online.</h4>
-            </div>
-          </>
-        );
-      });
-  }, [
-    clientDetail,
-    userDetail,
-    amount,
-    dscr,
-    // type,
-    // deliveryTime,
-  ]);
-  const createMilestone = useCallback(() => {
-    fetch("/api/createMilestone", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        seller: { ...clientDetail },
-        amount,
-        dscr,
-        order,
-        refund,
-        // deliveryDetail: {
-        //   phone: client.phone,
-        //   name: client.firstName + " " + client.lastName,
-        //   ...client.address,
-        //   timeOfDelivery: deliveryTime,
-        // },
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setLoading(false);
-        if (data.code === "ok") {
-          onSuccess?.({ ...data });
-        } else if (data.code === 403) {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Insufficient fund</h4>
-                <Link to="/account/wallet">Add Money to your wallet now.</Link>
-              </div>
-            </>
-          );
-        } else {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not create milestone. Try again</h4>
-              </div>
-            </>
-          );
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        console.log(err);
-        setMsg(
-          <>
-            <button onClick={() => setMsg(null)}>Okay</button>
-            <div>
-              <Err_svg />
-              <h4>Could not create milestone. Make sure you're online.</h4>
-            </div>
-          </>
-        );
-      });
-  }, [
-    clientDetail,
-    userDetail,
-    amount,
-    dscr,
-    // type,
-    // deliveryTime,
-  ]);
-  useEffect(() => {
-    setFee(() => {
-      return ((+amount / 100) * config.fee).fix();
-    });
-  }, [amount]);
-  // useEffect(() => {
-  //   if (search) {
-  //     fetch(`/api/products?q=${search}&perPage=8`)
-  //       .then((res) => res.json())
-  //       .then((data) => {
-  //         if (data.products) {
-  //           setProductResult(data.products);
-  //         }
-  //       });
-  //   }
-  // }, [search]);
-  // useEffect(() => {
-  //   if (products.length === 0) {
-  //     setShowSelectedProducts(false);
-  //   }
-  // }, [products]);
-  return (
-    <>
-      <form
-        className="milestonesForm"
-        onSubmit={(e) => {
-          setLoading(true);
-          e.preventDefault();
-          toast(
-            <div className="toast">
-              Milestone is being{" "}
-              {action === "create" ? "created." : "requested."}{" "}
-              <button
-                className="undo"
-                onClick={() => {
-                  onTimeout.current = null;
-                }}
-              >
-                Undo
-              </button>
-            </div>,
-            {
-              position: "bottom-center",
-              autoClose: 8000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              onClose: () => {
-                onTimeout.current?.();
-                setLoading(false);
-              },
-              draggable: true,
-              progress: undefined,
-            }
-          );
-          if (action === "create") {
-            onTimeout.current = createMilestone;
-          } else {
-            onTimeout.current = requestMilestone;
-          }
-        }}
-      >
-        <section className="transactionDetail">
-          {
-            // userType === "seller"
-            //  && (
-            //   <>
-            //     <section className="products">
-            //       <label>Products</label>
-            //       <div className="count">
-            //         <p className="totalProduct">
-            //           {products.length} items selected.
-            //         </p>
-            //         {products.length > 0 && (
-            //           <button
-            //             type="button"
-            //             className={showSelectedProducts ? "open" : undefined}
-            //             onClick={() =>
-            //               setShowSelectedProducts(!showSelectedProducts)
-            //             }
-            //           >
-            //             <svg
-            //               xmlns="http://www.w3.org/2000/svg"
-            //               width="11.872"
-            //               height="18"
-            //               viewBox="0 0 11.872 18"
-            //             >
-            //               <path
-            //                 id="Path_36"
-            //                 data-name="Path 36"
-            //                 d="M9,11.872,0,2.725,2.681,0,9,6.423,15.319,0,18,2.725Z"
-            //                 transform="translate(11.872) rotate(90)"
-            //                 fill="rgba(0, 0, 0, 0.5)"
-            //               />
-            //             </svg>
-            //           </button>
-            //         )}
-            //       </div>
-            //       {showSelectedProducts && (
-            //         <ul>
-            //           {products.map((product) => (
-            //             <li key={product._id}>
-            //               <Img src={product.images[0]} />
-            //               <div className="productDetail">
-            //                 <p className="name">{product.name}</p>
-            //                 <p className="price">₹ {product.price}</p>
-            //               </div>
-            //               <button
-            //                 type="button"
-            //                 className="btn"
-            //                 onClick={() =>
-            //                   setProducts((prev) =>
-            //                     prev.filter((item) => item._id !== product._id)
-            //                   )
-            //                 }
-            //               >
-            //                 <Minus_svg />
-            //               </button>
-            //             </li>
-            //           ))}
-            //         </ul>
-            //       )}
-            //     </section>
-            //     <section className="productSearch">
-            //       <label>Search products</label>
-            //       <input
-            //         ref={searchInput}
-            //         type="text"
-            //         value={search}
-            //         onChange={(e) => setSearch(e.target.value)}
-            //       />
-            //       {search && productResult.length > 0 && (
-            //         <ul className="productSearchList">
-            //           {productResult.map((product) => (
-            //             <li key={product._id}>
-            //               <Img src={product.images[0]} />
-            //               <div className="productDetail">
-            //                 <p className="name">{product.name}</p>
-            //                 <p className="price">₹ {product.price}</p>
-            //               </div>
-            //               {!products.some(
-            //                 (item) => item._id === product._id
-            //               ) ? (
-            //                 <button
-            //                   type="button"
-            //                   className="btn"
-            //                   onClick={() => {
-            //                     setProducts((prev) => [...prev, product]);
-            //                     searchInput.current.focus();
-            //                   }}
-            //                 >
-            //                   <Plus_svg />
-            //                 </button>
-            //               ) : (
-            //                 <p className="addedLabel">Added</p>
-            //               )}
-            //             </li>
-            //           ))}
-            //         </ul>
-            //       )}
-            //     </section>{" "}
-            //   </>
-            // )
-          }
-          <section className="amount">
-            <label>Amount</label>
-            <NumberInput
-              readOnly={strict}
-              min={10}
-              defaultValue={definedAmount || 0}
-              required={true}
-              onChange={(e) => setAmount((+e.target.value).toString())}
-            />
-          </section>
-          {amount && (
-            <>
-              {action === "create" && (
-                <label className="receivable">
-                  {client.firstName} {client.lastName} will recieve ₹
-                  {(amount - fee).fix()}
-                </label>
-              )}
-              {action === "request" && (
-                <label className="receivable">
-                  You will recieve ₹{(amount - fee).fix()}
-                </label>
-              )}
-            </>
-          )}
-          <section>
-            <label>Detail</label>
-            <input
-              value={dscr}
-              required={true}
-              onChange={(e) => setDscr(e.target.value)}
-            />
-          </section>
-          <button type="submit">
-            {action === "create" ? "Create Milestone" : "Request Milestone"}
-          </button>
-        </section>
-        <section className="clientDetail">
-          {action === "request" && (
-            <>
-              <Img src={client?.profileImg || "/profile-user.jpg"} />
-              <label>Buyer Information</label>
-              <div
-                className="detail"
-                onClick={() => {
-                  // setAddressForm(true)
-                }}
-              >
-                {
-                  // <button type="button">+ Add/Edit Address</button>
-                }
-                <section className="profileDetail">
-                  <p className="name">
-                    {client?.firstName + " " + client?.lastName}
-                  </p>
-                  <p className="phone">{client?.phone}</p>
-                  <p className="email">{client?.email}</p>
-                </section>
-                {client?.address?.street && (
-                  <section className="address">
-                    <p className="street">
-                      {client.address?.street}, {client.address?.city},{" "}
-                      {client.address?.zip}
-                    </p>
-                  </section>
-                )}
-              </div>
-            </>
-          )}
-          {action === "request" ? null : (
-            <div className="sellerInfo">
-              <Img src={clientDetail?.profileImg || "/profile-user.jpg"} />
-              <label>Seller Information</label>
-              <div className="detail">
-                <section className="profileDetail">
-                  <p className="name">
-                    {clientDetail?.firstName} {clientDetail?.lastName}
-                  </p>
-                  <p className="phone">{clientDetail?.phone}</p>
-                  <p className="email">{clientDetail?.email}</p>
-                </section>
-              </div>
-            </div>
-          )}
-          {
-            //   <div className="deliveryTime">
-            //   <p>Delivery Time</p>
-            //   <input
-            //     value={deliveryTime}
-            //     type="datetime-local"
-            //     onChange={(e) => setDeliveryTime(e.target.value)}
-            //   />
-            // </div>
-          }
-        </section>
-      </form>
-      {loading && (
-        <div className="spinnerContainer">
-          <div className="spinner" />
-        </div>
-      )}
-      {
-        //   <Modal
-        //   open={addressForm}
-        //   head={true}
-        //   label="Add/Edit Address"
-        //   setOpen={setAddressForm}
-        //   className="addAddress"
-        // >
-        //   <AddressForm
-        //     client={client}
-        //     // setClient={setClient}
-        //     onSuccess={(data) => {
-        //       console.log(data);
-        //       // setClient((prev) => ({ ...prev, ...data }));
-        //       setAddressForm(false);
-        //     }}
-        //     onCancel={() => setAddressForm(false)}
-        //   />
-        // </Modal>
-      }
-      <Modal className="msg" open={msg}>
-        {msg}
-      </Modal>
-    </>
-  );
-};
 export default Account;

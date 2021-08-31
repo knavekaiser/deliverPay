@@ -89,9 +89,7 @@ app.get("/api/getChat", passport.authenticate("userPrivate"), (req, res) => {
       $lookup: {
         from: "users",
         as: "clientProfile",
-        let: {
-          client: "$client",
-        },
+        let: { client: "$client" },
         pipeline: [
           { $match: { $expr: { $eq: ["$$client", "$_id"] } } },
           {
@@ -216,115 +214,6 @@ app.get(
   }
 );
 
-// app.post(
-//   "/api/sendContactRequest",
-//   passport.authenticate("userPrivate"),
-//   (req, res) => {
-//     Promise.all([
-//       User.findOneAndUpdate(
-//         {
-//           _id: req.user._id,
-//           contacts: { $not: { $elemMatch: { _id: req.body._id } } },
-//         },
-//         { $addToSet: { contacts: { _id: req.body._id } } }
-//       ),
-//       User.findOneAndUpdate(
-//         {
-//           _id: req.body._id,
-//           contacts: { $not: { $elemMatch: { _id: req.user._id } } },
-//         },
-//         { $addToSet: { contacts: { _id: req.user._id } } }
-//       ),
-//     ])
-//       .then(([user, target]) => {
-//         if (user && target) {
-//           res.json({ message: "request sent" });
-//           notify(
-//             target._id,
-//             JSON.stringify({
-//               title: "Contact Request",
-//               body: `${user.firstName} requested to contact.`,
-//             }),
-//             "User"
-//           );
-//         } else {
-//           res.status(400).json({ message: "bad request" });
-//         }
-//       })
-//       .catch((err) => {
-//         console.log(err);
-//         res.status(400).json({ message: "bad request" });
-//       });
-//   }
-// );
-// app.patch(
-//   "/api/acceptContactRequest",
-//   passport.authenticate("userPrivate"),
-//   async (req, res) => {
-//     const client = await User.findOne({
-//       _id: req.body._id,
-//       contacts: { $elemMatch: { _id: req.user._id, status: "pending" } },
-//     });
-//     if (client) {
-//       const userContacts = req.user.contacts.map((user) => {
-//         if (
-//           user._id.toString() === client._id.toString() &&
-//           user.status === "pending"
-//         ) {
-//           return {
-//             ...user._doc,
-//             status: "connected",
-//           };
-//         } else {
-//           return user;
-//         }
-//       });
-//       const clientContacts = client.contacts.map((user) => {
-//         if (
-//           user._id.toString() === req.user._id.toString() &&
-//           user.status === "pending"
-//         ) {
-//           return {
-//             ...user._doc,
-//             status: "connected",
-//           };
-//         } else {
-//           return user;
-//         }
-//       });
-//       Promise.all([
-//         User.findOneAndUpdate(
-//           { _id: req.user._id },
-//           { contacts: userContacts },
-//           { new: true }
-//         ),
-//         User.findOneAndUpdate(
-//           { _id: client._id },
-//           { contacts: clientContacts },
-//           { new: true }
-//         ),
-//       ])
-//         .then(([user, client]) => {
-//           res.json({ message: "request accepted" });
-//           notify(
-//             client._id,
-//             JSON.stringify({
-//               title: "Contact Request Accepted",
-//               body: `${user.firstName} accepted your contact request.`,
-//             }),
-//             "User"
-//           );
-//         })
-//         .catch((err) => {
-//           console.log(err);
-//           res.status(400).json({ message: "something went wrong" });
-//         });
-//     } else {
-//       res.status(400).json({ message: "bad request" });
-//     }
-//   }
-// );
-
 app.patch(
   "/api/updateLastSeen",
   passport.authenticate("userPrivate"),
@@ -435,6 +324,14 @@ global.SendMessage = async ({ rooms, message }) => {
     { $push: { messages: { ...message, _id } } },
     { new: true }
   ).then((data) => {
+    Chat.findOneAndUpdate(
+      {
+        $or: rooms.map((room) => ({ _id: room })),
+        user: message.from,
+      },
+      { lastSeen: new Date() },
+      { new: true }
+    ).then((dbRes) => {});
     return data;
   });
 };

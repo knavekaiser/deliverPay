@@ -8,16 +8,26 @@ import {
   Link,
   useHistory,
 } from "react-router-dom";
-import { Modal } from "./components/Modal";
 import { Header, Footer } from "./components/Elements";
-import LandingPage from "./components/LandingPage";
-import UserStart from "./components/UserStart";
 import { ToastContainer } from "react-toastify";
-import Marketplace, { SingleProduct } from "./components/Marketplace";
+
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
 const Account = lazy(() => import("./components/Account"));
 
+const Modal = lazy(() =>
+  import("./components/Modal").then((mod) => ({
+    default: mod.Modal,
+  }))
+);
+const SingleProduct = lazy(() =>
+  import("./components/Marketplace").then((mod) => ({
+    default: mod.SingleProduct,
+  }))
+);
+const Marketplace = lazy(() => import("./components/Marketplace"));
+const LandingPage = lazy(() => import("./components/LandingPage"));
+const UserStart = lazy(() => import("./components/UserStart"));
 const AboutUs = lazy(() => import("./components/AboutUs"));
 const PrivacyPolicy = lazy(() => import("./components/PrivacyPolicy"));
 const CodeOfConduct = lazy(() => import("./components/codeOfConduct"));
@@ -71,11 +81,8 @@ function App() {
   }, []);
   return (
     <div className="App">
-      {
-        // siteLoading && <Splash />
-      }
-      <Suspense fallback={<>Loading</>}>
-        <BrowserRouter>
+      <BrowserRouter>
+        <Suspense fallback={<>Loading</>}>
           <Modal open={mobile} className="mobileApp">
             <button onClick={() => setMobile(false)}>
               I don't like better things.
@@ -87,7 +94,9 @@ function App() {
               <p>Download our mobile app for a better experience.</p>
             </div>
           </Modal>
-          <ChatProvider>
+        </Suspense>
+        <ChatProvider>
+          <Suspense fallback={<>Loading</>}>
             <Switch>
               <Route path="/" exact component={LandingPage} />
               <Route path="/u" component={UserStart} />
@@ -122,20 +131,20 @@ function App() {
                 </div>
               </Route>
             </Switch>
-          </ChatProvider>
-          <ToastContainer
-            position="bottom-center"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-        </BrowserRouter>
-      </Suspense>
+          </Suspense>
+        </ChatProvider>
+        <ToastContainer
+          position="bottom-center"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+      </BrowserRouter>
     </div>
   );
 }

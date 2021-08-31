@@ -5,12 +5,17 @@ import {
   useEffect,
   useContext,
   lazy,
+  Suspense,
 } from "react";
 import { SiteContext } from "../SiteContext";
 import { Modal } from "./Modal";
 import { Link, useHistory } from "react-router-dom";
-import { CartItem } from "./Marketplace";
 import { ProfileAvatar } from "./Account";
+const DateRange = lazy(async () => {
+  await import("react-date-range/dist/styles.css");
+  await import("react-date-range/dist/theme/default.css");
+  return import("react-date-range").then((mod) => ({ default: mod.DateRange }));
+});
 
 require("./styles/elements.scss");
 
@@ -224,6 +229,131 @@ export const Step_fill = ({ className }) => {
         fill="#fff"
       />
     </svg>
+  );
+};
+
+export const InputDateRange = ({
+  dateRange: defaultRange,
+  onChange,
+  required,
+}) => {
+  const dateFilterRef = useRef();
+  const [dateRange, setDateRange] = useState(
+    defaultRange || {
+      startDate: new Date(),
+      endDate: new Date(),
+    }
+  );
+  const [datePickerStyle, setDatePickerStyle] = useState({});
+  const [dateFilter, setDateFilter] = useState(!!defaultRange);
+  const [open, setOpen] = useState(false);
+  useLayoutEffect(() => {
+    const {
+      height,
+      y,
+      width,
+      x,
+      bottom,
+    } = dateFilterRef.current.getBoundingClientRect();
+    setDatePickerStyle({
+      position: "fixed",
+      top: Math.min(height + y + 4, window.innerHeight - 350),
+      right: Math.min(window.innerWidth - x - width, window.innerWidth - 335),
+    });
+  }, [open]);
+  useEffect(() => {
+    if (dateFilter) {
+      onChange?.(dateRange);
+    } else {
+      onChange?.(null);
+    }
+  }, [dateRange]);
+  return (
+    <>
+      <section
+        className={`date ${dateFilter ? "open" : ""}`}
+        ref={dateFilterRef}
+        onClick={() => setOpen(true)}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="30.971"
+          height="30.971"
+          viewBox="0 0 30.971 30.971"
+        >
+          <path
+            id="Path_299"
+            data-name="Path 299"
+            d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
+            fill="#336cf9"
+          />
+        </svg>
+        <input
+          className="dateInput"
+          type="date"
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+          value={
+            dateFilter
+              ? moment({
+                  time: dateRange.startDate,
+                  format: "YYYY-MM-DD",
+                })
+              : ""
+          }
+          required={required}
+          onChange={() => {}}
+        />
+        {dateFilter && (
+          <>
+            <div className="dates">
+              <p>
+                From:{" "}
+                <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
+              </p>
+              <p>
+                To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
+              </p>
+            </div>
+            <button
+              className="clearDateFilter"
+              onClick={() => {
+                setDateRange({
+                  startDate: new Date(),
+                  endDate: new Date(),
+                });
+                setDateFilter(false);
+              }}
+            >
+              <X_svg />
+            </button>
+          </>
+        )}
+      </section>
+      <Modal
+        open={open}
+        onBackdropClick={() => setOpen(false)}
+        backdropClass="datePicker"
+        className="datePicker"
+        style={datePickerStyle}
+      >
+        <Suspense fallback={<>Loading</>}>
+          <DateRange
+            className="dateRange"
+            ranges={[dateRange]}
+            onChange={(e) => {
+              setDateRange(e.range1);
+              if (e.range1.endDate !== e.range1.startDate) {
+                setOpen(false);
+                setDateFilter(true);
+              }
+            }}
+          />
+        </Suspense>
+      </Modal>
+    </>
   );
 };
 

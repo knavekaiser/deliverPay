@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useContext,
   useRef,
+  useCallback,
 } from "react";
 import { useHistory } from "react-router-dom";
 import { LS } from "./components/Elements";
@@ -110,32 +111,6 @@ export const ChatProvider = ({ children }) => {
     }
   }, [user]);
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("connected");
-    });
-    socket.on("disconnect", () => {
-      console.log("disconnected from socket");
-    });
-    socket.on(
-      "connectedToRoom",
-      ({ rooms, newChat, client, clientRoom_id }) => {
-        if (newChat) {
-          setContacts((prev) =>
-            prev.map((chat) => {
-              if (chat.client._id === client) {
-                return {
-                  ...chat,
-                  _id: clientRoom_id,
-                };
-              } else {
-                return chat;
-              }
-            })
-          );
-        }
-        setRooms(rooms);
-      }
-    );
     const focusHandler = (e) => setWindowFocus(true);
     const blurHandler = (e) => setWindowFocus(false);
     window.addEventListener("focus", focusHandler);
@@ -147,6 +122,33 @@ export const ChatProvider = ({ children }) => {
   }, []);
   useEffect(() => {
     if (!effectRan.current && user) {
+      socket.on("connect", () => {
+        console.log("connected");
+      });
+      socket.on("disconnect", () => {
+        console.log("disconnected from socket");
+      });
+      socket.on(
+        "connectedToRoom",
+        ({ rooms, newChat, client, clientRoom_id }) => {
+          if (newChat) {
+            console.log(newChat, client);
+            setContacts((prev) =>
+              prev.map((chat) => {
+                if (chat.client._id === client) {
+                  return {
+                    ...chat,
+                    _id: clientRoom_id,
+                  };
+                } else {
+                  return chat;
+                }
+              })
+            );
+          }
+          setRooms(rooms);
+        }
+      );
       socket.on("messageToUser", (payload) => {
         const focus =
           setWindowFocus &&
@@ -164,6 +166,8 @@ export const ChatProvider = ({ children }) => {
                   if (chat.client._id === payload.to) {
                     return {
                       ...chat,
+                      lastSeen: new Date().toISOString(),
+                      unread: null,
                       messages: newMessages,
                     };
                   }
@@ -195,10 +199,12 @@ export const ChatProvider = ({ children }) => {
         }
       });
       socket.on("newChat", (payload) => {
-        setContacts((prev) => [
-          { ...payload.chat },
-          ...prev.filter(({ _id }) => _id !== payload.chat?._id),
-        ]);
+        setContacts((prev) => {
+          return [
+            { ...payload.chat },
+            ...prev.filter(({ _id }) => _id !== payload.chat?._id),
+          ];
+        });
       });
       effectRan.current = true;
     }

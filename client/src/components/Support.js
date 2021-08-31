@@ -20,6 +20,7 @@ import {
   Media,
   Moment,
   moment,
+  InputDateRange,
 } from "./Elements";
 import { DateRange } from "react-date-range";
 import { TicketForm, TicketReplyForm } from "./Forms";
@@ -121,42 +122,22 @@ const BugReportForm = ({ onSuccess }) => {
 };
 
 export const Tickets = ({ history, location, pathname }) => {
-  const dateFilterRef = useRef();
   const [ticketForm, setTicketForm] = useState(false);
   const [msg, setMsg] = useState(null);
   const [total, setTotal] = useState(0);
   const [tickets, setTickets] = useState([]);
   const [sort, setSort] = useState({ column: "createdAt", order: "dsc" });
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(),
-    endDate: new Date(),
-  });
-  const [dateOpen, setDateOpen] = useState(false);
+  const [dateRange, setDateRange] = useState(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [perPage, setPerPage] = useState(20);
-  const [datePickerStyle, setDatePickerStyle] = useState({});
-  const [dateFilter, setDateFilter] = useState(false);
-  useLayoutEffect(() => {
-    const {
-      height,
-      y,
-      width,
-      x,
-    } = dateFilterRef.current.getBoundingClientRect();
-    setDatePickerStyle({
-      position: "fixed",
-      top: height + y + 4,
-      right: window.innerWidth - x - width,
-    });
-  }, []);
   useEffect(() => {
     const startDate = moment({
       time: dateRange?.startDate,
       format: "YYYY-MM-DD",
     });
     const endDate = moment({
-      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      time: new Date(dateRange?.endDate)?.setHours(24, 0, 0, 0),
       format: "YYYY-MM-DD",
     });
     fetch(
@@ -166,7 +147,7 @@ export const Tickets = ({ history, location, pathname }) => {
         sort: sort.column,
         sort: sort.order,
         ...(search && { q: search }),
-        ...(dateFilter && {
+        ...(dateRange && {
           dateFrom: startDate,
           dateTo: endDate,
         }),
@@ -201,7 +182,7 @@ export const Tickets = ({ history, location, pathname }) => {
           </>
         );
       });
-  }, [page, perPage, sort.column, sort.order, search, dateFilter]);
+  }, [page, perPage, sort.column, sort.order, search, dateRange]);
   return (
     <div className="table ticketContainer">
       <div style={{ display: "none" }}>
@@ -255,49 +236,11 @@ export const Tickets = ({ history, location, pathname }) => {
             </button>
           )}
         </section>
-        <section
-          className={`date ${dateFilter ? "open" : ""}`}
-          ref={dateFilterRef}
-        >
-          <svg
-            onClick={() => setDateOpen(true)}
-            xmlns="http://www.w3.org/2000/svg"
-            width="30.971"
-            height="30.971"
-            viewBox="0 0 30.971 30.971"
-          >
-            <path
-              id="Path_299"
-              data-name="Path 299"
-              d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
-              fill="#336cf9"
-            />
-          </svg>
-          {dateFilter && (
-            <>
-              <div className="dates">
-                <p>
-                  From:{" "}
-                  <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
-                </p>
-                <p>
-                  To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
-                </p>
-              </div>
-              <button
-                className="clearDateFilter"
-                onClick={() => {
-                  setDateRange({
-                    startDate: new Date(),
-                    endDate: new Date(),
-                  });
-                  setDateFilter(false);
-                }}
-              >
-                <X_svg />
-              </button>
-            </>
-          )}
+        <section className={`date`}>
+          <InputDateRange
+            dateRange={dateRange}
+            onChange={(range) => setDateRange(range)}
+          />
         </section>
       </div>
       <table cellSpacing={0} cellPadding={0}>
@@ -379,24 +322,6 @@ export const Tickets = ({ history, location, pathname }) => {
       </table>
       <Modal open={msg} className="msg">
         {msg}
-      </Modal>
-      <Modal
-        open={dateOpen}
-        onBackdropClick={() => setDateOpen(false)}
-        backdropClass="datePicker"
-        style={datePickerStyle}
-      >
-        <DateRange
-          className="dateRange"
-          ranges={[dateRange]}
-          onChange={(e) => {
-            setDateRange(e.range1);
-            if (e.range1.endDate !== e.range1.startDate) {
-              setDateOpen(false);
-              setDateFilter(true);
-            }
-          }}
-        />
       </Modal>
       <Modal
         open={ticketForm}
@@ -745,6 +670,7 @@ const Support = ({ history, location, match }) => {
   return (
     <>
       <Switch>
+        <Route path="/account/support/ticket/:_id" component={SingleTicket} />
         <Route path="/account/support/ticket" component={Tickets} />
         <Route path="/">
           <div className="supportContainer">

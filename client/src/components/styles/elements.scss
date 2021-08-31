@@ -176,7 +176,7 @@
       img {
         height: 100%;
         width: 100%;
-        object-fit: contain;
+        object-fit: cover;
       }
     }
     &.any {
@@ -354,6 +354,7 @@
   flex: 1;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   grid-gap: 2rem;
   padding: 1rem 1.5rem;
   background: rgba(99, 52, 209, 0.1);
@@ -421,6 +422,7 @@
     grid-gap: 0.5rem;
     position: relative;
     border-radius: 4px;
+    display: flex;
     padding: 0.4rem 0.5rem;
     cursor: pointer;
     svg {
@@ -632,12 +634,41 @@
   }
 }
 
+button.pill {
+  cursor: pointer;
+  background: $blue;
+  color: white;
+  border: 2px solid $blue;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  outline: none;
+  svg {
+    line {
+      stroke: white;
+    }
+  }
+  display: flex;
+  grid-gap: 0.5rem;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+  &:hover {
+    background: white;
+    color: $blue;
+    svg {
+      line {
+        stroke: $blue;
+      }
+    }
+  }
+}
+
 div {
   form,
   .batchItemPreview,
   .shop {
     & + .spinnerContainer {
-      z-index: 15;
+      z-index: 500;
       position: absolute;
       top: 0;
       bottom: 0;
@@ -655,6 +686,19 @@ div {
         animation: spin 1.5s linear infinite;
       }
     }
+  }
+}
+
+section.date {
+  position: relative;
+  .dateInput {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
   }
 }
 

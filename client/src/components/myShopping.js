@@ -27,34 +27,29 @@ import {
   Img,
   Moment,
   moment,
+  InputDateRange,
 } from "./Elements";
 import { Link, Route, useHistory, Switch, Redirect } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
 import { Modal, Confirm } from "./Modal";
-import { MilestoneForm } from "./Account";
-import { DateRange } from "react-date-range";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "react-toastify";
+const MilestoneForm = lazy(() =>
+  import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
+);
 
 export const Orders = ({ status, onClick }) => {
-  const { cart } = useContext(SiteContext);
-  const dateFilterRef = useRef();
+  const { cart, userType } = useContext(SiteContext);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [type, setType] = useState("");
   const [search, setSearch] = useState("");
-  const [dateOpen, setDateOpen] = useState("");
+  const [dateRange, setDateRange] = useState(null);
   const [sort, setSort] = useState({
     column: "createdAt",
     order: "dsc",
   });
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(),
-    endDate: new Date(),
-  });
-  const [dateFilter, setDateFilter] = useState(false);
-  const [datePickerStyle, setDatePickerStyle] = useState({});
   const [orders, setOrders] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [batch, setBatch] = useState([]);
@@ -66,7 +61,7 @@ export const Orders = ({ status, onClick }) => {
       format: "YYYY-MM-DD",
     });
     const endDate = moment({
-      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      time: new Date(dateRange?.endDate)?.setHours(24, 0, 0, 0),
       format: "YYYY-MM-DD",
     });
     fetch(
@@ -77,7 +72,7 @@ export const Orders = ({ status, onClick }) => {
         perPage,
         sort: sort.column,
         order: sort.order,
-        ...(dateFilter && {
+        ...(dateRange && {
           dateFrom: startDate,
           dateTo: endDate,
         }),
@@ -104,7 +99,7 @@ export const Orders = ({ status, onClick }) => {
           </>
         );
       });
-  }, [type, search, page, perPage, dateFilter, status]);
+  }, [type, search, page, perPage, dateRange, status]);
   useEffect(() => {
     fetch("/api/getCartDetail", {
       method: "POST",
@@ -130,21 +125,6 @@ export const Orders = ({ status, onClick }) => {
         );
       });
   }, [cart]);
-  useLayoutEffect(() => {
-    if (dateFilterRef.current) {
-      const {
-        height,
-        y,
-        width,
-        x,
-      } = dateFilterRef.current.getBoundingClientRect();
-      setDatePickerStyle({
-        position: "fixed",
-        top: height + y + 4,
-        right: window.innerWidth - x - width,
-      });
-    }
-  }, []);
   useEffect(() => {
     if (selectAll) {
     } else {
@@ -157,199 +137,145 @@ export const Orders = ({ status, onClick }) => {
     }
   }, [batch]);
   return (
-    <div className="productContainer">
-      {
-        <div className="benner">
-          <p>My Orders</p>
-        </div>
-      }
-      {
-        //   <div className="filters">
-        //   <section>
-        //     <label>Total:</label>
-        //     {total}
-        //   </section>
-        //   <section>
-        //     <label>Per Page:</label>
-        //     <Combobox
-        //       defaultValue={0}
-        //       options={[
-        //         { label: "20", value: 20 },
-        //         { label: "30", value: 30 },
-        //         { label: "50", value: 50 },
-        //       ]}
-        //       onChange={(e) => setPerPage(e.value)}
-        //     />
-        //   </section>
-        //   <section className="search">
-        //     <svg
-        //       xmlns="http://www.w3.org/2000/svg"
-        //       width="23"
-        //       height="23"
-        //       viewBox="0 0 23 23"
-        //     >
-        //       <path
-        //         id="Icon_ionic-ios-search"
-        //         data-name="Icon ionic-ios-search"
-        //         d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
-        //         transform="translate(-4.5 -4.493)"
-        //         fill="#707070"
-        //         opacity="0.74"
-        //       />
-        //     </svg>
-        //     <input
-        //       value={search}
-        //       onChange={(e) => setSearch(e.target.value)}
-        //       placeholder="Search for Seller"
-        //     />
-        //     {search && (
-        //       <button onClick={() => setSearch("")}>
-        //         <X_svg />
-        //       </button>
-        //     )}
-        //   </section>
-        //   <section className="category">
-        //     <label>Type:</label>
-        //     <Combobox
-        //       defaultValue={0}
-        //       options={[
-        //         { label: "All", value: "" },
-        //         { label: "Product", value: "product" },
-        //         { label: "Service", value: "service" },
-        //         { label: "Other", value: "other" },
-        //       ]}
-        //       onChange={(e) => setType(e.value)}
-        //     />
-        //   </section>
-        //   <section
-        //     className={`date ${dateFilter ? "open" : ""}`}
-        //     ref={dateFilterRef}
-        //     onClick={() => setDateOpen(true)}
-        //   >
-        //     <svg
-        //       xmlns="http://www.w3.org/2000/svg"
-        //       width="30.971"
-        //       height="30.971"
-        //       viewBox="0 0 30.971 30.971"
-        //     >
-        //       <path
-        //         id="Path_299"
-        //         data-name="Path 299"
-        //         d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
-        //         fill="#336cf9"
-        //       />
-        //     </svg>
-        //     {dateFilter && (
-        //       <>
-        //         <div className="dates">
-        //           <p>
-        //             From:{" "}
-        //             <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
-        //           </p>
-        //           <p>
-        //             To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
-        //           </p>
-        //         </div>
-        //         <button
-        //           className="clearDateFilter"
-        //           onClick={() => {
-        //             setDateRange({
-        //               startDate: new Date(),
-        //               endDate: new Date(),
-        //             });
-        //             setDateFilter(false);
-        //           }}
-        //         >
-        //           <X_svg />
-        //         </button>
-        //       </>
-        //     )}
-        //   </section>
-        // </div>
-      }
-      {batch.length > 0 && (
-        <div className="batchAction">
-          <button onClick={() => console.log("batch delete")}>Delete</button>
-        </div>
-      )}
-      <table className="table orders">
-        <thead>
-          <tr>
-            {
-              //   <th className="checkContainer">
-              //   <Checkbox
-              //     value={selectAll}
-              //     defaultValue={selectAll}
-              //     onChange={(e) => setSelectAll(e)}
-              //   />
-              // </th>
-            }
-            <th>Order</th>
-            <th className="date">Purchase Date</th>
-            {
-              //   <th>Seller</th>
-              // <th>QTY</th>
-              // <th>Refundable</th>
-              // <th>Milestone</th>
-            }
-            <th>Total</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <SingleOrder
-              onClick={onClick}
-              key={order._id}
-              order={order}
-              setOrders={setOrders}
-              selectAll={selectAll}
-              setBatch={setBatch}
-              batch={batch}
-            />
-          ))}
-          {status.includes("pending") &&
-            carts.map((order) => (
-              <OrderDraft order={order} key={order.seller._id} />
-            ))}
-          {orders.length === 0 && (
-            <tr className="placeholder">
-              <td>No order yet.</td>
+    <>
+      {userType === "seller" && <Redirect to="/account/myShop/orders" />}
+      <div className="productContainer">
+        {
+          <div className="benner">
+            <p>My Orders</p>
+          </div>
+        }
+        {
+          //   <div className="filters">
+          //   <section>
+          //     <label>Total:</label>
+          //     {total}
+          //   </section>
+          //   <section>
+          //     <label>Per Page:</label>
+          //     <Combobox
+          //       defaultValue={0}
+          //       options={[
+          //         { label: "20", value: 20 },
+          //         { label: "30", value: 30 },
+          //         { label: "50", value: 50 },
+          //       ]}
+          //       onChange={(e) => setPerPage(e.value)}
+          //     />
+          //   </section>
+          //   <section className="search">
+          //     <svg
+          //       xmlns="http://www.w3.org/2000/svg"
+          //       width="23"
+          //       height="23"
+          //       viewBox="0 0 23 23"
+          //     >
+          //       <path
+          //         id="Icon_ionic-ios-search"
+          //         data-name="Icon ionic-ios-search"
+          //         d="M27.23,25.828l-6.4-6.455a9.116,9.116,0,1,0-1.384,1.4L25.8,27.188a.985.985,0,0,0,1.39.036A.99.99,0,0,0,27.23,25.828ZM13.67,20.852a7.2,7.2,0,1,1,5.091-2.108A7.155,7.155,0,0,1,13.67,20.852Z"
+          //         transform="translate(-4.5 -4.493)"
+          //         fill="#707070"
+          //         opacity="0.74"
+          //       />
+          //     </svg>
+          //     <input
+          //       value={search}
+          //       onChange={(e) => setSearch(e.target.value)}
+          //       placeholder="Search for Seller"
+          //     />
+          //     {search && (
+          //       <button onClick={() => setSearch("")}>
+          //         <X_svg />
+          //       </button>
+          //     )}
+          //   </section>
+          //   <section className="category">
+          //     <label>Type:</label>
+          //     <Combobox
+          //       defaultValue={0}
+          //       options={[
+          //         { label: "All", value: "" },
+          //         { label: "Product", value: "product" },
+          //         { label: "Service", value: "service" },
+          //         { label: "Other", value: "other" },
+          //       ]}
+          //       onChange={(e) => setType(e.value)}
+          //     />
+          //   </section>
+          // <section className={`date`}>
+          //   <InputDateRange
+          //     dateRange={dateRange}
+          //     onChange={(range) => setDateRange(range)}
+          //   />
+          // </section>
+          // </div>
+        }
+        {batch.length > 0 && (
+          <div className="batchAction">
+            <button onClick={() => console.log("batch delete")}>Delete</button>
+          </div>
+        )}
+        <table className="table orders">
+          <thead>
+            <tr>
+              {
+                //   <th className="checkContainer">
+                //   <Checkbox
+                //     value={selectAll}
+                //     defaultValue={selectAll}
+                //     onChange={(e) => setSelectAll(e)}
+                //   />
+                // </th>
+              }
+              <th>Order</th>
+              <th className="date">Purchase Date</th>
+              {
+                //   <th>Seller</th>
+                // <th>QTY</th>
+                // <th>Refundable</th>
+                // <th>Milestone</th>
+              }
+              <th>Total</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          )}
-        </tbody>
-      </table>
-      <Pagination
-        total={total}
-        btns={5}
-        currentPage={page}
-        perPage={perPage}
-        setPage={setPage}
-      />
-      <Modal className="msg" open={msg}>
-        {msg}
-      </Modal>
-      <Modal
-        open={dateOpen}
-        onBackdropClick={() => setDateOpen(false)}
-        className="datePicker"
-        backdropClass="datePicker"
-        style={datePickerStyle}
-      >
-        <DateRange
-          className="dateRange"
-          ranges={[dateRange]}
-          onChange={(e) => {
-            setDateRange(e.range1);
-            if (e.range1.endDate !== e.range1.startDate) {
-              setDateOpen(false);
-              setDateFilter(true);
-            }
-          }}
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <SingleOrder
+                onClick={onClick}
+                key={order._id}
+                order={order}
+                setOrders={setOrders}
+                selectAll={selectAll}
+                setBatch={setBatch}
+                batch={batch}
+              />
+            ))}
+            {status?.includes("pending") &&
+              carts.map((order) => (
+                <OrderDraft order={order} key={order.seller._id} />
+              ))}
+            {orders.length === 0 && (
+              <tr className="placeholder">
+                <td>No order yet.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <Pagination
+          total={total}
+          btns={5}
+          currentPage={page}
+          perPage={perPage}
+          setPage={setPage}
         />
-      </Modal>
-    </div>
+        <Modal className="msg" open={msg}>
+          {msg}
+        </Modal>
+      </div>
+    </>
   );
 };
 const OrderDraft = ({ order, setOrder }) => {
@@ -709,7 +635,7 @@ export const FullOrder = ({ history, match }) => {
           (productPrice / 100) * order.coupon.amount,
           order.coupon.maxDiscount
         )) ||
-      productPrice - order.coupon?.amount ||
+      (order.coupon?.type === "flat" && order.coupon?.amount) ||
       0;
     const fee = (
       ((productPrice - couponCodeDiscount + order.shippingCost) / 100) *
@@ -1095,23 +1021,16 @@ const RefundForm = ({ order, onSuccess }) => {
 
 const Refunds = ({ history, location }) => {
   const { userType } = useContext(SiteContext);
-  const dateFilterRef = useRef();
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [dateOpen, setDateOpen] = useState("");
   const [sort, setSort] = useState({
     column: "createdAt",
     order: "dsc",
   });
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(),
-    endDate: new Date(),
-  });
-  const [dateFilter, setDateFilter] = useState(false);
-  const [datePickerStyle, setDatePickerStyle] = useState({});
+  const [dateRange, setDateRange] = useState(null);
   const [refunds, setRefunds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [batch, setBatch] = useState([]);
@@ -1122,7 +1041,7 @@ const Refunds = ({ history, location }) => {
       format: "YYYY-MM-DD",
     });
     const endDate = moment({
-      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      time: new Date(dateRange?.endDate)?.setHours(24, 0, 0, 0),
       format: "YYYY-MM-DD",
     });
     fetch(
@@ -1133,7 +1052,7 @@ const Refunds = ({ history, location }) => {
         perPage,
         sort: sort.column,
         order: sort.order,
-        ...(dateFilter && {
+        ...(dateRange && {
           dateFrom: startDate,
           dateTo: endDate,
         }),
@@ -1159,22 +1078,7 @@ const Refunds = ({ history, location }) => {
           </>
         );
       });
-  }, [search, page, perPage, dateFilter, status]);
-  useLayoutEffect(() => {
-    if (dateFilterRef.current) {
-      const {
-        height,
-        y,
-        width,
-        x,
-      } = dateFilterRef.current.getBoundingClientRect();
-      setDatePickerStyle({
-        position: "fixed",
-        top: height + y + 4,
-        right: window.innerWidth - x - width,
-      });
-    }
-  }, []);
+  }, [search, page, perPage, dateRange, status]);
   useEffect(() => {
     if (selectAll) {
     } else {
@@ -1250,49 +1154,11 @@ const Refunds = ({ history, location }) => {
             onChange={(e) => setStatus(e.value)}
           />
         </section>
-        <section
-          className={`date ${dateFilter ? "open" : ""}`}
-          ref={dateFilterRef}
-          onClick={() => setDateOpen(true)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="30.971"
-            height="30.971"
-            viewBox="0 0 30.971 30.971"
-          >
-            <path
-              id="Path_299"
-              data-name="Path 299"
-              d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
-              fill="#336cf9"
-            />
-          </svg>
-          {dateFilter && (
-            <>
-              <div className="dates">
-                <p>
-                  From:{" "}
-                  <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
-                </p>
-                <p>
-                  To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
-                </p>
-              </div>
-              <button
-                className="clearDateFilter"
-                onClick={() => {
-                  setDateRange({
-                    startDate: new Date(),
-                    endDate: new Date(),
-                  });
-                  setDateFilter(false);
-                }}
-              >
-                <X_svg />
-              </button>
-            </>
-          )}
+        <section className={`date`}>
+          <InputDateRange
+            dateRange={dateRange}
+            onChange={(range) => setDateRange(range)}
+          />
         </section>
       </div>
       {batch.length > 0 && (
@@ -1349,25 +1215,6 @@ const Refunds = ({ history, location }) => {
       />
       <Modal className="msg" open={msg}>
         {msg}
-      </Modal>
-      <Modal
-        open={dateOpen}
-        onBackdropClick={() => setDateOpen(false)}
-        className="datePicker"
-        backdropClass="datePicker"
-        style={datePickerStyle}
-      >
-        <DateRange
-          className="dateRange"
-          ranges={[dateRange]}
-          onChange={(e) => {
-            setDateRange(e.range1);
-            if (e.range1.endDate !== e.range1.startDate) {
-              setDateOpen(false);
-              setDateFilter(true);
-            }
-          }}
-        />
       </Modal>
     </>
   );
@@ -1861,7 +1708,6 @@ export const Disputes = ({ status }) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [search, setSearch] = useState("");
-  const [dateOpen, setDateOpen] = useState("");
   const [sort, setSort] = useState({
     column: "createdAt",
     order: "dsc",
@@ -2396,6 +2242,7 @@ const Case = ({ role, dispute, setData }) => {
 };
 
 const MyShopping = () => {
+  const history = useHistory();
   const { userType } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -2408,7 +2255,7 @@ const MyShopping = () => {
   }, []);
   return (
     <>
-      {userType === "seller" && <Redirect to="/account/orders/current" />}
+      {userType === "seller" && <Redirect to="/account/myShop/orders" />}
       <div className="productContainer">
         <div style={{ display: "none" }}>
           <X_svg />
@@ -2423,13 +2270,29 @@ const MyShopping = () => {
           // />
         }
         <Switch>
-          <Route path="/account/myShopping/orders/:_id" component={FullOrder} />
-          <Route path="/account/myShopping/orders" component={Orders} />
-          <Route
-            path="/account/myShopping/refunds/:_id"
-            component={FullRefund}
-          />
-          <Route path="/account/myShopping/Refunds" component={Refunds} />
+          <Route path="/account/orders/current/:_id" component={FullOrder} />
+          <Route path="/account/orders/current">
+            <Orders
+              status="approved|shipped|refundPending"
+              onClick={(_id) => history.push(`/account/orders/current/${_id}`)}
+            />
+          </Route>
+          <Route path="/account/orders/pending/:_id" component={FullOrder} />
+          <Route path="/account/orders/pending">
+            <Orders
+              status="pending"
+              onClick={(_id) => history.push(`/account/orders/pending/${_id}`)}
+            />
+          </Route>
+          <Route path="/account/orders/history/:_id" component={FullOrder} />
+          <Route path="/account/orders/history">
+            <Orders
+              status="delivered|cancelled|declined|refunded"
+              onClick={(_id) => history.push(`/account/orders/history/${_id}`)}
+            />
+          </Route>
+          <Route path="/account/orders/dispute/:_id" component={FullDispute} />
+          <Route path="/account/orders/dispute" component={Disputes} />
         </Switch>
         {
           // <Route path="/account/myShop/settings">

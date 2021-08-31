@@ -148,6 +148,12 @@ const couponModel = new Schema(
         ref: "User",
       },
     ],
+    sellers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     terms: [{ type: String }],
     termsUrl: { type: String },
     validPerUser: { type: Number, default: 1 },

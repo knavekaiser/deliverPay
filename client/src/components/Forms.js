@@ -1,14 +1,274 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { SiteContext } from "../SiteContext";
 import {
   NumberInput,
   Combobox,
   Err_svg,
   FileInput,
   UploadFiles,
+  Img,
 } from "./Elements";
+import { Link } from "react-router-dom";
 import { Modal } from "./Modal";
 import TextareaAutosize from "react-textarea-autosize";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
+export const MilestoneForm = ({
+  action,
+  client,
+  onSuccess,
+  definedAmount,
+  order,
+  refund,
+  strict,
+}) => {
+  const { user, setUser, config } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [addressForm, setAddressForm] = useState(false);
+  const [userDetail, setUserDetail] = useState({ ...user });
+  const [clientDetail, setClientDetail] = useState({ ...client });
+  const [dscr, setDscr] = useState("");
+  const [amount, setAmount] = useState(definedAmount || "");
+  const [fee, setFee] = useState(0);
+  const [msg, setMsg] = useState(null);
+  const onTimeout = useRef();
+  const requestMilestone = useCallback(() => {
+    fetch("/api/requestMilestone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        buyer_id: client._id,
+        amount,
+        dscr,
+        order,
+        refund,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          onSuccess?.(data.milestone);
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not request milestone. Try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not request milestone. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  }, [clientDetail, userDetail, amount, dscr]);
+  const createMilestone = useCallback(() => {
+    fetch("/api/createMilestone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        seller: { ...clientDetail },
+        amount,
+        dscr,
+        order,
+        refund,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          onSuccess?.({ ...data });
+        } else if (data.code === 403) {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Insufficient fund</h4>
+                <Link to="/account/profile/wallet">
+                  Add Money to your wallet now.
+                </Link>
+              </div>
+            </>
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not create milestone. Try again</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not create milestone. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  }, [clientDetail, userDetail, amount, dscr]);
+  useEffect(() => {
+    setFee(() => {
+      return ((+amount / 100) * config.fee).fix();
+    });
+  }, [amount]);
+  return (
+    <>
+      <form
+        className="milestonesForm"
+        onSubmit={(e) => {
+          setLoading(true);
+          e.preventDefault();
+          toast(
+            <div className="toast">
+              Milestone is being{" "}
+              {action === "create" ? "created." : "requested."}{" "}
+              <button
+                className="undo"
+                onClick={() => {
+                  onTimeout.current = null;
+                }}
+              >
+                Undo
+              </button>
+            </div>,
+            {
+              position: "bottom-center",
+              autoClose: 8000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              onClose: () => {
+                onTimeout.current?.();
+                setLoading(false);
+              },
+              draggable: true,
+              progress: undefined,
+            }
+          );
+          if (action === "create") {
+            onTimeout.current = createMilestone;
+          } else {
+            onTimeout.current = requestMilestone;
+          }
+        }}
+      >
+        <section className="transactionDetail">
+          <section className="amount">
+            <label>Amount</label>
+            <NumberInput
+              readOnly={strict}
+              min={10}
+              defaultValue={definedAmount || 0}
+              required={true}
+              onChange={(e) => setAmount((+e.target.value).toString())}
+            />
+          </section>
+          {amount && (
+            <>
+              {action === "create" && (
+                <label className="receivable">
+                  {client.firstName} {client.lastName} will recieve ₹
+                  {(amount - fee).fix()}
+                </label>
+              )}
+              {action === "request" && (
+                <label className="receivable">
+                  You will recieve ₹{(amount - fee).fix()}
+                </label>
+              )}
+            </>
+          )}
+          <section>
+            <label>Detail</label>
+            <input
+              value={dscr}
+              required={true}
+              onChange={(e) => setDscr(e.target.value)}
+            />
+          </section>
+          <button type="submit">
+            {action === "create" ? "Create Milestone" : "Request Milestone"}
+          </button>
+        </section>
+        <section className="clientDetail">
+          {action === "request" && (
+            <>
+              <Img src={client?.profileImg || "/profile-user.jpg"} />
+              <label>Buyer Information</label>
+              <div className="detail">
+                <section className="profileDetail">
+                  <p className="name">
+                    {client?.firstName + " " + client?.lastName}
+                  </p>
+                  <p className="phone">{client?.phone}</p>
+                  <p className="email">{client?.email}</p>
+                </section>
+                {client?.address?.street && (
+                  <section className="address">
+                    <p className="street">
+                      {client.address?.street}, {client.address?.city},{" "}
+                      {client.address?.zip}
+                    </p>
+                  </section>
+                )}
+              </div>
+            </>
+          )}
+          {action === "request" ? null : (
+            <div className="sellerInfo">
+              <Img src={clientDetail?.profileImg || "/profile-user.jpg"} />
+              <label>Seller Information</label>
+              <div className="detail">
+                <section className="profileDetail">
+                  <p className="name">
+                    {clientDetail?.firstName} {clientDetail?.lastName}
+                  </p>
+                  <p className="phone">{clientDetail?.phone}</p>
+                  <p className="email">{clientDetail?.email}</p>
+                </section>
+              </div>
+            </div>
+          )}
+        </section>
+      </form>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+    </>
+  );
+};
 export const MilestoneReleaseForm = ({
   milestone,
   setReleaseForm,

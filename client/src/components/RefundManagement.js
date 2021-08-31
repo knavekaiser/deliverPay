@@ -24,23 +24,23 @@ import {
   Img,
   Moment,
   moment,
+  InputDateRange,
 } from "./Elements";
 import { Link, useHistory } from "react-router-dom";
 import { SiteContext } from "../SiteContext";
-import { MilestoneForm } from "./Account";
 import { Modal, Confirm } from "./Modal";
-import { DateRange } from "react-date-range";
 import { toast } from "react-toastify";
+const MilestoneForm = lazy(() =>
+  import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
+);
 
 const Refunds = ({ history, location }) => {
   const { userType } = useContext(SiteContext);
-  const dateFilterRef = useRef();
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [dateOpen, setDateOpen] = useState("");
   const [sort, setSort] = useState({
     column: "createdAt",
     order: "dsc",
@@ -49,8 +49,6 @@ const Refunds = ({ history, location }) => {
     startDate: new Date(),
     endDate: new Date(),
   });
-  const [dateFilter, setDateFilter] = useState(false);
-  const [datePickerStyle, setDatePickerStyle] = useState({});
   const [refunds, setRefunds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [batch, setBatch] = useState([]);
@@ -61,7 +59,7 @@ const Refunds = ({ history, location }) => {
       format: "YYYY-MM-DD",
     });
     const endDate = moment({
-      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      time: new Date(dateRange?.endDate)?.setHours(24, 0, 0, 0),
       format: "YYYY-MM-DD",
     });
     fetch(
@@ -72,7 +70,7 @@ const Refunds = ({ history, location }) => {
         perPage,
         sort: sort.column,
         order: sort.order,
-        ...(dateFilter && {
+        ...(dateRange && {
           dateFrom: startDate,
           dateTo: endDate,
         }),
@@ -98,22 +96,7 @@ const Refunds = ({ history, location }) => {
           </>
         );
       });
-  }, [search, page, perPage, dateFilter, status]);
-  useLayoutEffect(() => {
-    if (dateFilterRef.current) {
-      const {
-        height,
-        y,
-        width,
-        x,
-      } = dateFilterRef.current.getBoundingClientRect();
-      setDatePickerStyle({
-        position: "fixed",
-        top: height + y + 4,
-        right: window.innerWidth - x - width,
-      });
-    }
-  }, []);
+  }, [search, page, perPage, dateRange, status]);
   useEffect(() => {
     if (selectAll) {
     } else {
@@ -189,49 +172,11 @@ const Refunds = ({ history, location }) => {
             onChange={(e) => setStatus(e.value)}
           />
         </section>
-        <section
-          className={`date ${dateFilter ? "open" : ""}`}
-          ref={dateFilterRef}
-          onClick={() => setDateOpen(true)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="30.971"
-            height="30.971"
-            viewBox="0 0 30.971 30.971"
-          >
-            <path
-              id="Path_299"
-              data-name="Path 299"
-              d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
-              fill="#336cf9"
-            />
-          </svg>
-          {dateFilter && (
-            <>
-              <div className="dates">
-                <p>
-                  From:{" "}
-                  <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
-                </p>
-                <p>
-                  To: <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
-                </p>
-              </div>
-              <button
-                className="clearDateFilter"
-                onClick={() => {
-                  setDateRange({
-                    startDate: new Date(),
-                    endDate: new Date(),
-                  });
-                  setDateFilter(false);
-                }}
-              >
-                <X_svg />
-              </button>
-            </>
-          )}
+        <section className={`date`}>
+          <InputDateRange
+            dateRange={dateRange}
+            onChange={(range) => setDateRange(range)}
+          />
         </section>
       </div>
       {batch.length > 0 && (
@@ -288,25 +233,6 @@ const Refunds = ({ history, location }) => {
       />
       <Modal className="msg" open={msg}>
         {msg}
-      </Modal>
-      <Modal
-        open={dateOpen}
-        onBackdropClick={() => setDateOpen(false)}
-        className="datePicker"
-        backdropClass="datePicker"
-        style={datePickerStyle}
-      >
-        <DateRange
-          className="dateRange"
-          ranges={[dateRange]}
-          onChange={(e) => {
-            setDateRange(e.range1);
-            if (e.range1.endDate !== e.range1.startDate) {
-              setDateOpen(false);
-              setDateFilter(true);
-            }
-          }}
-        />
       </Modal>
     </>
   );

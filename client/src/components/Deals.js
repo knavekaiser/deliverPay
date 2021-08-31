@@ -20,10 +20,20 @@ import {
   Moment,
   moment,
 } from "./Elements";
-import { MilestoneForm } from "./Account";
 import TextareaAutosize from "react-textarea-autosize";
+const MilestoneForm = lazy(() =>
+  import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
+);
 
 require("./styles/deals.scss");
+
+const updateChatLastSeen = (rooms) => {
+  fetch("/api/updateLastSeen", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rooms }),
+  });
+};
 
 const Deals = ({ history, location, match }) => {
   const { user, setUser } = useContext(SiteContext);
@@ -364,19 +374,11 @@ export const Chat = ({
   const [msg, setMsg] = useState(null);
   useEffect(() => {
     if (rooms.length) {
-      fetch("/api/updateLastSeen", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rooms }),
-      });
+      updateChatLastSeen(rooms);
     }
     return () => {
       if (rooms.length) {
-        fetch("/api/updateLastSeen", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rooms }),
-        });
+        updateChatLastSeen(rooms);
       }
     };
   }, [rooms]);

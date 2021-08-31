@@ -9,33 +9,11 @@
     font-weight: 500;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    button {
-      background: $blue;
-      color: white;
-      border: 2px solid $blue;
-      padding: 0.5rem 1rem;
-      border-radius: 2rem;
-      outline: none;
-      svg {
-        line {
-          stroke: white;
-        }
-      }
-      display: flex;
-      grid-gap: 0.5rem;
-      align-items: center;
-      font-weight: 600;
-      font-size: 1rem;
-      &:hover {
-        background: white;
-        color: $blue;
-        svg {
-          line {
-            stroke: $blue;
-          }
-        }
-      }
+    justify-content: flex-end;
+    grid-gap: 1rem;
+    p {
+      margin: auto;
+      margin-left: 0;
     }
     .err {
       color: $red;
@@ -70,6 +48,19 @@
     .product {
       align-items: center;
       position: relative;
+    }
+  }
+  .coupons {
+    tr {
+      grid-template-columns: 4.5rem 1fr 4rem 8rem 8rem 5rem 12rem 4rem 4rem;
+      text-align: center;
+    }
+    .discount {
+      span {
+        font-size: 0.8rem;
+        display: block;
+        color: rgba(0, 0, 0, 0.6);
+      }
     }
   }
 }
@@ -578,6 +569,21 @@
     &:hover {
       background: white;
       color: $blue;
+    }
+  }
+}
+
+.couponDetail {
+  max-width: 40rem;
+  .content {
+    display: grid;
+    grid-gap: 1.5rem;
+    padding: 1.5rem;
+    section {
+      label {
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.6);
+      }
     }
   }
 }

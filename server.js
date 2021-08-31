@@ -392,6 +392,7 @@ io.on("connection", async (socket) => {
                     {
                       $set: {
                         "client.lastSeen": { $first: "$clientChat.lastSeen" },
+                        messages: { $slice: ["$messages", -50, 50] },
                       },
                     },
                     { $unset: ["clientProfile", "clientChat"] },

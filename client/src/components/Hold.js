@@ -24,16 +24,15 @@ import {
   Img,
   Moment,
   moment,
+  InputDateRange,
 } from "./Elements";
 import { MilestoneReleaseForm, DisputeForm } from "./Forms";
-import { DateRange } from "react-date-range";
 import queryString from "query-string";
 
 require("./styles/hold.scss");
 
 const Hold = ({ history, location, match }) => {
   const { userType } = useContext(SiteContext);
-  const dateFilterRef = useRef();
   const [milestones, setMilestones] = useState([]);
   const [total, setTotal] = useState(null);
   const [page, setPage] = useState(
@@ -48,18 +47,11 @@ const Hold = ({ history, location, match }) => {
   const [status, setStatus] = useState(
     queryString.parse(location.search).status || ""
   );
-  const [dateOpen, setDateOpen] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(),
-    endDate: new Date(),
-  });
+  const [dateRange, setDateRange] = useState(null);
   const [sort, setSort] = useState({
     column: queryString.parse(location.search).sort || "createdAt",
     order: queryString.parse(location.search).order || "dsc",
   });
-  const [dateFilter, setDateFilter] = useState(false);
-  const [datePickerStyle, setDatePickerStyle] = useState({});
-  const [date, setDate] = useState("");
   const [msg, setMsg] = useState(null);
   useEffect(() => {
     fetch(`/api/milestone${location.search}`)
@@ -89,7 +81,7 @@ const Hold = ({ history, location, match }) => {
       format: "YYYY-MM-DD",
     });
     const endDate = moment({
-      time: dateRange?.endDate.setHours(24, 0, 0, 0),
+      time: new Date(dateRange?.endDate)?.setHours(24, 0, 0, 0),
       format: "YYYY-MM-DD",
     });
     history.replace({
@@ -103,7 +95,7 @@ const Hold = ({ history, location, match }) => {
           sort: sort.column,
           order: sort.order,
           ...(search && { q: search }),
-          ...(dateFilter && {
+          ...(dateRange && {
             dateFrom: startDate,
             dateTo: endDate,
           }),
@@ -116,23 +108,10 @@ const Hold = ({ history, location, match }) => {
     sort.column,
     sort.order,
     search,
-    dateFilter,
+    dateRange,
     status,
     userType,
   ]);
-  useLayoutEffect(() => {
-    const {
-      height,
-      y,
-      width,
-      x,
-    } = dateFilterRef.current.getBoundingClientRect();
-    setDatePickerStyle({
-      position: "fixed",
-      top: height + y + 4,
-      right: window.innerWidth - x - width,
-    });
-  }, []);
   return (
     <div className="holdContainer">
       <div style={{ display: "none" }}>
@@ -143,9 +122,6 @@ const Hold = ({ history, location, match }) => {
         <p>All payments and transactions come here</p>
       </div>
       <div className="head">
-        {
-          // <p>Milestone Status</p>
-        }
         <div className="filters">
           <section>
             <label>Total:</label>
@@ -205,50 +181,11 @@ const Hold = ({ history, location, match }) => {
               onChange={(e) => setStatus(e.value)}
             />
           </section>
-          <section
-            className={`date ${dateFilter ? "open" : ""}`}
-            ref={dateFilterRef}
-            onClick={() => setDateOpen(true)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="30.971"
-              height="30.971"
-              viewBox="0 0 30.971 30.971"
-            >
-              <path
-                id="Path_299"
-                data-name="Path 299"
-                d="M3.992,2.42H6.775V.968a.968.968,0,1,1,1.936,0V2.42H22.26V.968a.968.968,0,1,1,1.936,0V2.42h2.783a4,4,0,0,1,3.992,3.992V26.978a4,4,0,0,1-3.992,3.992H3.992A4,4,0,0,1,0,26.978V6.412A4,4,0,0,1,3.992,2.42ZM26.978,4.355H24.2v.968a.968.968,0,1,1-1.936,0V4.355H8.71v.968a.968.968,0,1,1-1.936,0V4.355H3.992A2.059,2.059,0,0,0,1.936,6.412v2.3h27.1v-2.3A2.059,2.059,0,0,0,26.978,4.355ZM3.992,29.035H26.978a2.059,2.059,0,0,0,2.057-2.057V10.646H1.936V26.978A2.059,2.059,0,0,0,3.992,29.035Z"
-                fill="#336cf9"
-              />
-            </svg>
-            {dateFilter && (
-              <>
-                <div className="dates">
-                  <p>
-                    From:{" "}
-                    <Moment format="DD MMM, YYYY">{dateRange.startDate}</Moment>
-                  </p>
-                  <p>
-                    To:{" "}
-                    <Moment format="DD MMM, YYYY">{dateRange.endDate}</Moment>
-                  </p>
-                </div>
-                <button
-                  className="clearDateFilter"
-                  onClick={() => {
-                    setDateRange({
-                      startDate: new Date(),
-                      endDate: new Date(),
-                    });
-                    setDateFilter(false);
-                  }}
-                >
-                  <X_svg />
-                </button>
-              </>
-            )}
+          <section className={`date`}>
+            <InputDateRange
+              dateRange={dateRange}
+              onChange={(range) => setDateRange(range)}
+            />
           </section>
         </div>
       </div>
@@ -281,25 +218,6 @@ const Hold = ({ history, location, match }) => {
       />
       <Modal className="msg" open={msg}>
         {msg}
-      </Modal>
-      <Modal
-        open={dateOpen}
-        onBackdropClick={() => setDateOpen(false)}
-        className="datePicker"
-        backdropClass="datePicker"
-        style={datePickerStyle}
-      >
-        <DateRange
-          className="dateRange"
-          ranges={[dateRange]}
-          onChange={(e) => {
-            setDateRange(e.range1);
-            if (e.range1.endDate !== e.range1.startDate) {
-              setDateOpen(false);
-              setDateFilter(true);
-            }
-          }}
-        />
       </Modal>
     </div>
   );

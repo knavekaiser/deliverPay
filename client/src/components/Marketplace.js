@@ -29,15 +29,18 @@ import { AddressForm } from "./Forms";
 import { SiteContext, ChatContext, socket } from "../SiteContext";
 import { Link, Redirect } from "react-router-dom";
 import { Modal, Confirm } from "./Modal";
-import { MilestoneForm } from "./Account";
 import { Chat } from "./Deals";
 import queryString from "query-string";
 import { toast } from "react-toastify";
+const MilestoneForm = lazy(() =>
+  import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
+);
 
 require("./styles/marketplace.scss");
 
 const Marketplace = ({ history, location, match }) => {
   const { userType } = useContext(SiteContext);
+  const [nativeShare, setNativeShare] = useState(false);
   const [loadingRef, loadingVisible] = useOnScreen({ rootMargin: "100px" });
   const sortOptions = useRef([
     {
@@ -182,7 +185,11 @@ const Marketplace = ({ history, location, match }) => {
       loadMore();
     }
   }, [loadingVisible]);
-  useEffect(() => {}, []);
+  useEffect(() => {
+    if (navigator.share) {
+      setNativeShare(true);
+    }
+  }, []);
   return (
     <div className={`generic marketplace ${chatOpen ? "chatOpen" : ""}`}>
       <Header />
@@ -197,7 +204,7 @@ const Marketplace = ({ history, location, match }) => {
         <div className="mainContent">
           {sellerDetail && (
             <div className="sellerDetail">
-              {sellerDetail.profileImg && (
+              {sellerDetail?.profileImg && (
                 <Img className="logo" src={"/profile-user.jpg"} />
               )}
               <p>
@@ -261,6 +268,30 @@ const Marketplace = ({ history, location, match }) => {
                 onChange={(e) => setSort(e.value)}
               />
             </section>
+            {nativeShare && (
+              <section className="share">
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.share({
+                        title: `Delivery Pay | ${
+                          sellerDetail
+                            ? `${
+                                sellerDetail.firstName +
+                                " " +
+                                sellerDetail.lastName
+                              }`
+                            : "Marketplace"
+                        }`,
+                        url: window.location.href,
+                      });
+                    } catch (err) {}
+                  }}
+                >
+                  Share this page
+                </button>
+              </section>
+            )}
           </div>
           <div className={`products ${products.length === 0 ? "empty" : ""}`}>
             {products.map((item) => (
@@ -297,19 +328,28 @@ const MiniChat = ({ client, onToggle }) => {
   const [userCard, setUserCard] = useState(null);
   const [chat, setChat] = useState(null);
   useEffect(() => {
-    const clientChat = contacts.find(
-      (contact) => contact.client._id === client._id
-    );
-    if (clientChat) {
-      setUserCard({
-        ...clientChat.client,
-        status: clientChat.userBlock ? "blocked" : "",
-      });
-      setChat(clientChat.messages);
-      socket.emit("initiateChat", {
-        client_id: client._id,
-        ...(clientChat.messages === undefined && { newChat: true }),
-      });
+    if (user) {
+      // console.log(client);
+      const clientChat = contacts.find(
+        (contact) => contact.client._id === client._id
+      );
+      if (clientChat) {
+        setUserCard({
+          ...clientChat.client,
+          status: clientChat.userBlock ? "blocked" : "",
+        });
+        setChat(clientChat.messages);
+        socket.emit("initiateChat", {
+          client_id: client._id,
+          ...(clientChat.messages === undefined && { newChat: true }),
+        });
+      }
+      // else {
+      //   socket.emit("initiateChat", {
+      //     client_id: client._id,
+      //     newChat: true,
+      //   });
+      // }
     }
   }, [client, contacts]);
   useEffect(() => {
@@ -317,7 +357,39 @@ const MiniChat = ({ client, onToggle }) => {
   }, [open]);
   if (!open) {
     return (
-      <button className="chatBtn" onClick={() => setOpen(true)}>
+      <button
+        className="chatBtn"
+        onClick={() => {
+          if (user && !userCard) {
+            const clientChat = contacts.find(
+              (contact) => contact.client._id === client._id
+            );
+            console.log(clientChat);
+            if (clientChat) {
+              setUserCard({
+                ...clientChat.client,
+                status: clientChat.userBlock ? "blocked" : "",
+              });
+
+              setChat(clientChat.messages);
+              socket.emit("initiateChat", {
+                client_id: client._id,
+                ...(clientChat.messages === undefined && { newChat: true }),
+              });
+            } else {
+              setContacts((prev) => [
+                ...prev,
+                { client, messages: [], status: "" },
+              ]);
+              socket.emit("initiateChat", {
+                client_id: client._id,
+                newChat: true,
+              });
+            }
+          }
+          setOpen(true);
+        }}
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="26.55"
@@ -333,6 +405,22 @@ const MiniChat = ({ client, onToggle }) => {
           />
         </svg>
       </button>
+    );
+  }
+  if (!user) {
+    return (
+      <div className="chatWrapper">
+        <button className="closeChat" onClick={() => setOpen(false)}>
+          <Arrow_left_svg />
+        </button>
+        <div className="chat">
+          <div className="startChat">
+            <Link to="/u/login">
+              <p>Login to start chat with this seller.</p>
+            </Link>
+          </div>
+        </div>
+      </div>
     );
   }
   return (
@@ -403,6 +491,7 @@ const Product = ({ data }) => {
 
 export const SingleProduct = ({ match }) => {
   const { user, setCart, userType } = useContext(SiteContext);
+  const [nativeShare, setNativeShare] = useState(false);
   const [product, setProduct] = useState(null);
   const [msg, setMsg] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -436,6 +525,9 @@ export const SingleProduct = ({ match }) => {
           </>
         );
       });
+    if (navigator.share) {
+      setNativeShare(true);
+    }
   }, []);
   if (product) {
     return (
@@ -446,23 +538,6 @@ export const SingleProduct = ({ match }) => {
           <div className="detail">
             <h1>{product.name}</h1>
             <p>{product.dscr}</p>
-            <p>
-              {product.type === "product" && (
-                <>
-                  Available: {product.available && product.available}{" "}
-                  {product.available === 0 && <>Out of stock</>}
-                  {product.available < 7 && product.available > 0 && (
-                    <>Low stock</>
-                  )}
-                </>
-              )}
-              {product.type !== "product" && (
-                <>
-                  Availability:{" "}
-                  {product.available ? "Available" : "Unavailable"}
-                </>
-              )}
-            </p>
             <p className="price">
               <label>Price: </label> <span className="symbol">₹</span>
               {calculatePrice({ product, gst: product.user?.gst })}{" "}
@@ -488,18 +563,23 @@ export const SingleProduct = ({ match }) => {
               //   </p>
               // )
             }
-            <div className="seller">
-              <label>Being sold by:</label>
-              <Link to={`/marketplace?seller=${product.user?._id}`}>
-                <div className="profile">
-                  <Img src={product.user.profileImg || "/profile-user.jpg"} />
-                  <p className="name">
-                    {product.user.firstName} {product.user.lastName}{" "}
-                    <span className="contact">{product.user.phone}</span>
-                  </p>
-                </div>
-              </Link>
-            </div>
+            <p>
+              {product.type === "product" && (
+                <>
+                  Available: {product.available && product.available}{" "}
+                  {product.available === 0 && <>Out of stock</>}
+                  {product.available < 7 && product.available > 0 && (
+                    <>Low stock</>
+                  )}
+                </>
+              )}
+              {product.type !== "product" && (
+                <>
+                  Availability:{" "}
+                  {product.available ? "Available" : "Unavailable"}
+                </>
+              )}
+            </p>
             <div className="actions">
               <button
                 disabled={
@@ -513,6 +593,20 @@ export const SingleProduct = ({ match }) => {
               >
                 Add to Cart
               </button>
+              {nativeShare && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.share({
+                        title: `${product.name} | Delivery Pay`,
+                        url: window.location.href,
+                      });
+                    } catch (err) {}
+                  }}
+                >
+                  Share this Product
+                </button>
+              )}
               {userType === "seller" && product?.user._id !== user?._id && (
                 <p className="note">
                   Switch to buyer profile to buy this product.
@@ -521,6 +615,18 @@ export const SingleProduct = ({ match }) => {
               {userType === "buyer" && product?.user._id === user?._id && (
                 <p className="note">Can't buy product from self.</p>
               )}
+            </div>
+            <div className="seller">
+              <label>Being sold by:</label>
+              <Link to={`/marketplace?seller=${product.user?._id}`}>
+                <div className="profile">
+                  <Img src={product.user.profileImg || "/profile-user.jpg"} />
+                  <p className="name">
+                    {product.user.firstName} {product.user.lastName}{" "}
+                    <span className="contact">{product.user.phone}</span>
+                  </p>
+                </div>
+              </Link>
             </div>
           </div>
           <Modal className="msg" open={msg}>
@@ -739,7 +845,7 @@ const Shop = ({ seller, products, loading }) => {
         (productPrice / 100) * validCoupon.amount,
         validCoupon.maxDiscount
       )) ||
-    productPrice - validCoupon?.amount ||
+    (validCoupon?.type === "flat" && validCoupon?.amount) ||
     0;
   const total =
     +(productPrice - couponCodeDiscount) +
@@ -799,7 +905,27 @@ const Shop = ({ seller, products, loading }) => {
                         .then((res) => res.json())
                         .then(({ code, coupon }) => {
                           if (code === "ok") {
-                            if (total < coupon.threshold) {
+                            if (
+                              !coupon.sellers ||
+                              coupon.sellers?.filter(
+                                (_id) => _id === seller._id
+                              ).length === 0
+                            ) {
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Err_svg />
+                                    <h4>
+                                      This seller does not accept this coupon
+                                      code.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            } else if (total < coupon.threshold) {
                               setMsg(
                                 <>
                                   <button onClick={() => setMsg(null)}>
@@ -815,10 +941,7 @@ const Shop = ({ seller, products, loading }) => {
                                   </div>
                                 </>
                               );
-                            } else if (
-                              coupon.users.filter((_id) => _id === user._id)
-                                .length >= coupon.validPerUser
-                            ) {
+                            } else if (coupon.usage >= coupon.validPerUser) {
                               setMsg(
                                 <>
                                   <button onClick={() => setMsg(null)}>

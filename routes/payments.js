@@ -1251,6 +1251,7 @@ app.post(
             "date.to": { $gte: new Date(today) },
             status: "active",
             threshold: { $lte: productPrice },
+            sellers: { $in: [orderSeller._id] },
           },
         },
         {
