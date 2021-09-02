@@ -710,9 +710,9 @@ const InstagramAccount = ({ setStep }) => {
           <ul>
             <li>
               <div className="profile">
-                <Img src={user.fbMarket.instagramAccount?.profileImg} />
+                <Img src={user.fbMarket.instagramAccount?.profile_pic} />
                 <div className="detail">
-                  {user.fbMarket.instagramAccount.name}
+                  {user.fbMarket.instagramAccount.username}
                 </div>
               </div>
               <button
@@ -752,12 +752,8 @@ const InstagramAccount = ({ setStep }) => {
                   onClick={() => {
                     updateProfileInfo({
                       "fbMarket.instagramAccount.id": item.id,
-                      "fbMarket.instagramAccount.name": item.name,
-                      "fbMarket.instagramAccount.access_token":
-                        item.access_token,
-                      "fbMarket.instagramAccount.profileImg":
-                        item.picture.data.url,
-                      "fbMarket.instagramAccount.category": item.category,
+                      "fbMarket.instagramAccount.username": item.username,
+                      "fbMarket.instagramAccount.profile_pic": item.profile_pic,
                     }).then(({ user: newUser }) => {
                       setUser((prev) => ({
                         ...prev,
