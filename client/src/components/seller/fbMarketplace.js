@@ -685,13 +685,13 @@ const InstagramAccount = ({ setStep }) => {
         `/${user.fbMarket.facebookPage.id}/instagram_accounts`,
         "GET",
         {
-          fields: "picture{url},access_token,name,category,business",
+          fields: "profile_pic,username",
           access_token: user.fbMarket.facebookPage?.access_token,
         },
         function (res) {
           console.log("instagram accounts:", res);
-          if (res?.data) {
-            setInstas(res?.data);
+          if (res.data) {
+            setInstas(res.data);
           }
         }
       );
@@ -744,8 +744,8 @@ const InstagramAccount = ({ setStep }) => {
             {instas.map((item, i) => (
               <li key={i}>
                 <div className="profile">
-                  <Img src={item.picture.data.url} />
-                  <div className="detail">{item.name}</div>
+                  <Img src={item.profile_pic} />
+                  <div className="detail">{item.username}</div>
                 </div>
                 <button
                   className="btn"
