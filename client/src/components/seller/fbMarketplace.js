@@ -690,8 +690,8 @@ const InstagramAccount = ({ setStep }) => {
         },
         function (res) {
           console.log("instagram accounts:", res);
-          if (res.data) {
-            setInstas(res.data);
+          if (res?.data) {
+            setInstas(res?.data);
           }
         }
       );
