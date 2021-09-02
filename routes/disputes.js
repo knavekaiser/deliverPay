@@ -17,8 +17,8 @@ app.get(
       ...(dateFrom &&
         dateTo && {
           createdAt: {
-            $gte: new Date(dateFrom),
-            $lt: new Date(dateTo),
+            $gte: new Date(`${dateFrom} 0:0`),
+            $lt: new Date(`${dateTo} 0:0`),
           },
         }),
       ...(status && { status }),

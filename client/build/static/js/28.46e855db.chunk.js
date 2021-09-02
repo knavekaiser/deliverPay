@@ -1,2 +1,0 @@
-(this["webpackJsonpdeliveryPay-react"]=this["webpackJsonpdeliveryPay-react"]||[]).push([[28],{223:function(e,n){},276:function(e,n){},277:function(e,n){}}]);
-//# sourceMappingURL=28.46e855db.chunk.js.map

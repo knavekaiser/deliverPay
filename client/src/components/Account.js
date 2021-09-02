@@ -63,7 +63,7 @@ import {
   WorkplaceIcon,
 } from "react-share";
 
-const OrderManagement = lazy(() => import("./OrderManagement"));
+// const OrderManagement = lazy(() => import("./OrderManagement"));
 const MilestoneForm = lazy(() =>
   import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
 );
@@ -88,7 +88,7 @@ const QRCode = lazy(() => import("qrcode.react"));
 const Profile = lazy(() => import("./Profile"));
 const Hold = lazy(() => import("./Hold"));
 const Wallet = lazy(() => import("./Wallet"));
-const MyShop = lazy(() => import("./MyShop"));
+const MyShop = lazy(() => import("./seller/MyShop"));
 const Deals = lazy(() => import("./Deals"));
 require("./styles/account.scss");
 require("./styles/generic.scss");
@@ -1082,10 +1082,12 @@ function Account() {
               <Route path="/account/transactions" component={Transactions} />
               <Route path="/account/myShop" component={MyShop} />
               <Route path="/account/cart" component={Cart} />
-              <Route
-                path="/account/orderManagement"
-                component={OrderManagement}
-              />
+              {
+                //   <Route
+                //   path="/account/orderManagement"
+                //   component={OrderManagement}
+                // />
+              }
               <Route path="/account/support" component={Support} />
               <Route path="/account/profile/edit" component={Profile} />
               <Route path="/account/profile/kyc" component={Profile} />
@@ -1386,12 +1388,12 @@ function Account() {
         ) : (
           <li
             className={`trans ${
-              location.pathname.startsWith("/account/myShopping")
+              location.pathname.startsWith("/account/orders")
                 ? "active"
                 : undefined
             }`}
           >
-            <Link to="/account/myShopping/orders">
+            <Link to="/account/orders/current">
               <div className="icon">
                 <svg
                   id="Group_283"

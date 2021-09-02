@@ -33,8 +33,8 @@ app.get("/api/getOrders", passport.authenticate("userPrivate"), (req, res) => {
     ...(dateFrom &&
       dateTo && {
         createdAt: {
-          $gte: new Date(dateFrom),
-          $lt: new Date(dateTo),
+          $gte: new Date(`${dateFrom} 0:0`),
+          $lt: new Date(`${dateTo} 0:0`),
         },
       }),
     ...(status && { $or: status.split("|").map((status) => ({ status })) }),
@@ -239,8 +239,8 @@ app.get("/api/getRefunds", passport.authenticate("userPrivate"), (req, res) => {
     ...(dateFrom &&
       dateTo && {
         createdAt: {
-          $gte: new Date(dateFrom),
-          $lt: new Date(dateTo),
+          $gte: new Date(`${dateFrom} 0:0`),
+          $lt: new Date(`${dateTo} 0:0`),
         },
       }),
     ...(status && { status }),
@@ -779,7 +779,7 @@ app.get("/api/getCoupons", passport.authenticate("userPrivate"), (req, res) => {
     { $set: { total: { $first: "$total.count" } } },
   ])
     .then(([{ coupons, total }]) => {
-      res.json({ code: "ok", coupons, total });
+      res.json({ code: "ok", coupons, total: total || 0 });
     })
     .catch((err) => {
       console.log(err);

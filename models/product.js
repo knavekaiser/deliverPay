@@ -10,7 +10,7 @@ const productModel = new Schema(
     material: { type: String },
     size: { type: String },
     discount: {
-      type: { type: String, enum: ["flat", "percent"] },
+      type: { type: String, enum: ["flat", "percent", null] },
       amount: { type: Number },
       dscr: { type: String },
     },

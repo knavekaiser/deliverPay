@@ -10,7 +10,6 @@
     padding: 0.7rem 2rem;
     display: flex;
     grid-gap: 1rem;
-    // justify-content: space-between;
     align-items: center;
     .logo,
     .logo_small {
@@ -45,6 +44,7 @@
     height: 100%;
     overflow: hidden;
     padding: 1rem;
+    padding-right: 0;
     display: flex;
     grid-gap: 1.25rem;
     .sidebar {
@@ -157,6 +157,7 @@
       height: calc(100% + 2rem);
       margin: -1rem 0;
       padding: 1rem 0;
+      padding-right: 1rem;
     }
   }
   .mobileMenu {

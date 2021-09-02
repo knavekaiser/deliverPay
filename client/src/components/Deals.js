@@ -42,15 +42,15 @@ const Deals = ({ history, location, match }) => {
   const [userCard, setUserCard] = useState(null);
   const [chat, setChat] = useState(null);
   useEffect(() => {
-    if (userCard?._id !== user_id.current) {
+    if (userCard && userCard._id !== user_id.current) {
       socket.emit("initiateChat", {
-        client_id: userCard?._id,
+        client_id: userCard._id,
         ...(userCard.messages === undefined && { newChat: true }),
       });
       user_id.current = userCard._id;
     }
     if (userCard) {
-      setChat(userCard?.messages);
+      setChat(userCard.messages);
     }
   }, [userCard]);
   useEffect(() => {

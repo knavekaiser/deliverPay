@@ -22,7 +22,6 @@ import {
   moment,
   InputDateRange,
 } from "./Elements";
-import { DateRange } from "react-date-range";
 import { TicketForm, TicketReplyForm } from "./Forms";
 import TextareaAutosize from "react-textarea-autosize";
 

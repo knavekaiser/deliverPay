@@ -7,11 +7,7 @@ const userModel = new Schema(
     twitterId: { type: String, unique: true, sparse: true },
     userId: { type: String, unique: true, sparse: true },
     razorPayContactId: { type: String, unique: true, sparse: true },
-    phone: {
-      type: String,
-      trim: true,
-      unique: true,
-    },
+    phone: { type: String, trim: true, unique: true },
     balance: { type: Number, default: 0 },
     email: { type: String, unique: true, sparse: true },
     pass: { type: String, required: true },
@@ -22,13 +18,8 @@ const userModel = new Schema(
       state: { type: String },
       country: { type: String },
       location: {
-        type: {
-          type: String,
-          enum: ["Point"],
-        },
-        coordinates: {
-          type: [Number],
-        },
+        type: { type: String, enum: ["Point"] },
+        coordinates: { type: [Number] },
       },
     },
     gender: { type: String },
@@ -82,6 +73,7 @@ const userModel = new Schema(
       user: {},
       businessManager: {},
       facebookPage: {},
+      instagramAccount: {},
       dataSharing: { type: String, default: null },
       commerceAccount: {},
       userAgreement: { type: Boolean, default: false },

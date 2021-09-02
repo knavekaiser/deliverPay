@@ -72,7 +72,7 @@ app.post("/api/registerUser", async (req, res) => {
         })
         .then((dbRes) => {
           if (dbRes) {
-            signingIn(dbRes._doc, res);
+            signingIn(dbRes._doc, req, res);
             if (referer) {
               new Reward({
                 name: "Referral reward",
@@ -342,7 +342,7 @@ app.put("/api/submitUserOTP", async (req, res) => {
   if (bcrypt.compareSync(code, dbOtp.code)) {
     const user =
       (await User.findOne({ phone })) || (await new User({ phone }).save());
-    signingIn(user._doc, res);
+    signingIn(user._doc, req, res);
     OTP.findOneAndDelete({ id: phone }).then((value) => {});
   } else {
     if (dbOtp.attempt >= 2) {
@@ -491,7 +491,7 @@ app.patch("/api/userResetPass", async (req, res) => {
       )
       .then((dbUser) => {
         const user = JSON.parse(JSON.stringify(dbUser));
-        signingIn(user, res);
+        signingIn(user, req, res);
       });
   } else {
     if (dbOtp.attempt > 2) {
