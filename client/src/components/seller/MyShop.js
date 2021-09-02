@@ -943,31 +943,30 @@ const Products = ({ categories, shopSetupComplete }) => {
                   Delete
                 </button>
               </th>
-              {user.fbMarket?.userAgreement &&
-                LS.get("facebook_user_accessToken") && (
-                  <>
-                    <th>
-                      <button
-                        onClick={() => {
-                          addToFbMarket(batch);
-                          setBatch([]);
-                        }}
-                      >
-                        Add to Facebook
-                      </button>
-                    </th>
-                    <th>
-                      <button
-                        onClick={() => {
-                          removeFromFbMarket(batch);
-                          setBatch([]);
-                        }}
-                      >
-                        Remove from Facebook
-                      </button>
-                    </th>
-                  </>
-                )}
+              {user.fbMarket?.userAgreement && (
+                <>
+                  <th>
+                    <button
+                      onClick={() => {
+                        addToFbMarket(batch);
+                        setBatch([]);
+                      }}
+                    >
+                      Add to Facebook
+                    </button>
+                  </th>
+                  <th>
+                    <button
+                      onClick={() => {
+                        removeFromFbMarket(batch);
+                        setBatch([]);
+                      }}
+                    >
+                      Remove from Facebook
+                    </button>
+                  </th>
+                </>
+              )}
             </tr>
           ) : (
             <tr>

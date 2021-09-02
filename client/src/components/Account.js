@@ -70,7 +70,7 @@ const MilestoneForm = lazy(() =>
 
 const MyShopping = lazy(() => import("./myShopping"));
 const Cart = lazy(() =>
-  import("./myShopping").then((mod) => ({ default: mod.Cart }))
+  import("./Marketplace").then((mod) => ({ default: mod.Cart }))
 );
 
 const CartItem = lazy(() =>
