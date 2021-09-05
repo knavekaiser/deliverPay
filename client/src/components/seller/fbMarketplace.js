@@ -652,39 +652,40 @@ const InstagramAccount = ({ setStep }) => {
   const { user, setUser } = useContext(SiteContext);
   const [insta, setInsta] = useState(null);
   useEffect(async () => {
-    if (!user.fbMarket?.instagramAccount?.id) {
-      FB.api(
-        "/108729214858102",
-        "GET",
-        {
-          fields: "instagram_business_account",
-          access_token: user.fbMarket.user.access_token,
-        },
-        (res) => {
-          if (res.instagram_business_account) {
-            FB.api(
-              `/${res.instagram_business_account.id}`,
-              "GET",
-              { fields: "username,profile_picture_url" },
-              function (res) {
-                if (res.id) {
-                  setInsta(res);
-                  updateProfileInfo({
-                    "fbMarket.instagramAccount": insta,
-                  }).then(({ user: newUser }) => {
-                    setUser((prev) => ({
-                      ...prev,
-                      fbMarket: newUser.fbMarket,
-                    }));
-                  });
-                  console.log("instagram_business_account:", res);
-                }
+    FB.api(
+      `/${user.fbMarket.facebookPage?.id}`,
+      "GET",
+      {
+        fields: "instagram_business_account",
+        access_token: user.fbMarket?.user.access_token,
+      },
+      (res) => {
+        if (res.instagram_business_account) {
+          console.log("insta id", res);
+          FB.api(
+            `/${res.instagram_business_account.id}`,
+            "GET",
+            {
+              fields: "username,profile_picture_url",
+              access_token: user.fbMarket?.user.access_token,
+            },
+            function (res) {
+              if (res.id) {
+                setInsta(res);
+                updateProfileInfo({
+                  "fbMarket.instagramAccount": insta,
+                }).then(({ user: newUser }) => {
+                  setUser((prev) => ({
+                    ...prev,
+                    fbMarket: newUser.fbMarket,
+                  }));
+                });
               }
-            );
-          }
+            }
+          );
         }
-      );
-    }
+      }
+    );
   }, [user]);
   return (
     <>
@@ -714,7 +715,7 @@ const InstagramAccount = ({ setStep }) => {
             <ul>
               <li>
                 <div className="profile">
-                  <Img src={insta.profile_pic_url} />
+                  <Img src={insta.profile_picture_url} />
                   <div className="detail">{insta.username}</div>
                 </div>
               </li>
