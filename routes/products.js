@@ -552,14 +552,11 @@ app.post(
             });
             return;
           }
-          res
-            .status(424)
-            .json({
-              code: 424,
-              message: "Facebook failed to response",
-              fbResp: fbRes,
-            });
-          console.log(res);
+          res.status(424).json({
+            code: 424,
+            message: "Facebook failed to response",
+            fbResp: fbRes,
+          });
         }
       );
     } else {
