@@ -677,8 +677,7 @@ const FbPage = () => {
 const InstagramAccount = ({ setStep }) => {
   const { FB } = window;
   const { user, setUser } = useContext(SiteContext);
-  const [instas, setInstas] = useState([]);
-  const [createNew, setCreateNew] = useState(false);
+  const [insta, setInsta] = useState(null);
   const updateInstaAccounts = () => {
     if (!user.fbMarket?.instagramAccount?.id) {
       FB.api(
@@ -686,7 +685,27 @@ const InstagramAccount = ({ setStep }) => {
         "GET",
         { fields: "instagram_business_account" },
         function (res) {
-          console.log("instagram_business_account:", res);
+          if (res.instagram_business_account) {
+            FB.api(
+              `/${res.instagram_business_account}`,
+              "GET",
+              { fields: "username,profile_picture_url" },
+              function (res) {
+                if (res.id) {
+                  setInsta(res);
+                  updateProfileInfo({
+                    "fbMarket.instagramAccount": insta,
+                  }).then(({ user: newUser }) => {
+                    setUser((prev) => ({
+                      ...prev,
+                      fbMarket: newUser.fbMarket,
+                    }));
+                  });
+                  console.log("instagram_business_account:", res);
+                }
+              }
+            );
+          }
         }
       );
     }
@@ -704,27 +723,11 @@ const InstagramAccount = ({ setStep }) => {
           <ul>
             <li>
               <div className="profile">
-                <Img src={user.fbMarket.instagramAccount?.profile_pic} />
+                <Img src={user.fbMarket.instagramAccount?.profile_pic_url} />
                 <div className="detail">
                   {user.fbMarket.instagramAccount.username}
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  updateProfileInfo({
-                    "fbMarket.instagramAccount": {},
-                  }).then(({ user: newUser }) => {
-                    console.log(newUser.fbMarket);
-                    setUser((prev) => ({
-                      ...prev,
-                      fbMarket: newUser.fbMarket,
-                    }));
-                  });
-                }}
-                className="btn"
-              >
-                Disconnect
-              </button>
             </li>
           </ul>
         </>
@@ -734,37 +737,17 @@ const InstagramAccount = ({ setStep }) => {
             Connect Instagram account to post about your product directly from
             Delivery Pay product dashboard.
           </p>
-          {instas.length > 0 && (
+          {insta && (
             <ul>
-              {instas.map((item, i) => (
-                <li key={i}>
-                  <div className="profile">
-                    <Img src={item.profile_pic} />
-                    <div className="detail">{item.username}</div>
-                  </div>
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      updateProfileInfo({
-                        "fbMarket.instagramAccount.id": item.id,
-                        "fbMarket.instagramAccount.username": item.username,
-                        "fbMarket.instagramAccount.profile_pic":
-                          item.profile_pic,
-                      }).then(({ user: newUser }) => {
-                        setUser((prev) => ({
-                          ...prev,
-                          fbMarket: newUser.fbMarket,
-                        }));
-                      });
-                    }}
-                  >
-                    Connect
-                  </button>
-                </li>
-              ))}
+              <li>
+                <div className="profile">
+                  <Img src={insta.profile_pic_url} />
+                  <div className="detail">{insta.username}</div>
+                </div>
+              </li>
             </ul>
           )}
-          {instas.length === 0 && (
+          {!insta && (
             <>
               <div className="err">
                 <p>
