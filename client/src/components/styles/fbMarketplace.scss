@@ -198,6 +198,9 @@
       padding: 1rem;
       border: 1px solid $red;
       font-size: 0.9rem;
+      a {
+        color: inherit;
+      }
     }
   }
   &.open {

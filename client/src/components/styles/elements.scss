@@ -521,7 +521,7 @@
       }
       &.batchAction {
         background: rgba(0, 0, 0, 0.78);
-        grid-template-columns: 1.5rem max-content max-content max-content;
+        grid-template-columns: 1.5rem max-content max-content max-content max-content max-content !important;
         color: white;
         button {
           color: white;

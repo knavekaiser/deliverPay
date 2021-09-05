@@ -198,13 +198,16 @@ const Orders = ({ categories }) => {
               //   />
               // </th>
             }
+            <th>Order</th>
             <th className="date">Date</th>
-            <th>Buyer</th>
-            <th>QTY</th>
-            <th>Refundable</th>
-            <th>Milestone</th>
-            <th>Status</th>
+            {
+              // <th>Buyer</th>
+              // <th>QTY</th>
+              // <th>Refundable</th>
+              // <th>Milestone</th>
+            }
             <th>Total Price</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -421,17 +424,20 @@ const SingleOrder = ({ order, setOrders, selectAll, setBatch, batch }) => {
           //   />
           // </td>
         }
+        <td>{order._id}</td>
         <td className="date">
           <Moment format="DD MMM YYYY, hh:mm a">{order.createdAt}</Moment>
         </td>
-        <td className="user">
-          <User user={order.buyer} />
-        </td>
-        <td>{order.products.reduce((a, c) => a + c.qty, 0)}</td>
-        <td>{order.refundable || "N/A"}</td>
-        <td>{order.milestones.length || "N/A"}</td>
-        <td>{order.status}</td>
+        {
+          //   <td className="user">
+          //   <User user={order.buyer} />
+          // </td>
+          // <td>{order.products.reduce((a, c) => a + c.qty, 0)}</td>
+          // <td>{order.refundable || "N/A"}</td>
+          // <td>{order.milestones.length || "N/A"}</td>
+        }
         <td>₹{order.total}</td>
+        <td>{order.status}</td>
         <td ref={actionsRef}>
           {batch.length === 0 && (
             <Actions icon={<Chev_down_svg />}>

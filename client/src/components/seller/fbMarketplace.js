@@ -682,17 +682,11 @@ const InstagramAccount = ({ setStep }) => {
   const updateInstaAccounts = () => {
     if (!user.fbMarket?.instagramAccount?.id) {
       FB.api(
-        `/${user.fbMarket.facebookPage.id}/instagram_accounts`,
+        `/${user.fbMarket?.facebookPage?.id}`,
         "GET",
-        {
-          fields: "profile_pic,username",
-          access_token: user.fbMarket.facebookPage?.access_token,
-        },
+        { fields: "instagram_business_account" },
         function (res) {
-          console.log("instagram accounts:", res);
-          if (res.data) {
-            setInstas(res.data);
-          }
+          console.log("instagram_business_account:", res);
         }
       );
     }
@@ -740,42 +734,72 @@ const InstagramAccount = ({ setStep }) => {
             Connect Instagram account to post about your product directly from
             Delivery Pay product dashboard.
           </p>
-          <ul>
-            {instas.map((item, i) => (
-              <li key={i}>
-                <div className="profile">
-                  <Img src={item.profile_pic} />
-                  <div className="detail">{item.username}</div>
-                </div>
-                <button
-                  className="btn"
-                  onClick={() => {
-                    updateProfileInfo({
-                      "fbMarket.instagramAccount.id": item.id,
-                      "fbMarket.instagramAccount.username": item.username,
-                      "fbMarket.instagramAccount.profile_pic": item.profile_pic,
-                    }).then(({ user: newUser }) => {
-                      setUser((prev) => ({
-                        ...prev,
-                        fbMarket: newUser.fbMarket,
-                      }));
-                    });
-                  }}
-                >
-                  Connect
-                </button>
-              </li>
-            ))}
-            <li>
-              <div className="profile">
-                <Img src="/profile-user.jpg" />
-                <p>Create Page</p>
+          {instas.length > 0 && (
+            <ul>
+              {instas.map((item, i) => (
+                <li key={i}>
+                  <div className="profile">
+                    <Img src={item.profile_pic} />
+                    <div className="detail">{item.username}</div>
+                  </div>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      updateProfileInfo({
+                        "fbMarket.instagramAccount.id": item.id,
+                        "fbMarket.instagramAccount.username": item.username,
+                        "fbMarket.instagramAccount.profile_pic":
+                          item.profile_pic,
+                      }).then(({ user: newUser }) => {
+                        setUser((prev) => ({
+                          ...prev,
+                          fbMarket: newUser.fbMarket,
+                        }));
+                      });
+                    }}
+                  >
+                    Connect
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {instas.length === 0 && (
+            <>
+              <div className="err">
+                <p>
+                  The connected Business Manager doesn’t own any Instagram
+                  accounts connected to the Facebook Page. Add your Instagram
+                  account to the connected Business Manager and Facebook Page or
+                  learn more about{" "}
+                  <a
+                    href="https://help.instagram.com/502981923235522"
+                    target="_blank"
+                  >
+                    how to create a new business account on Instagram
+                  </a>{" "}
+                  <External_link_icon />
+                </p>
               </div>
-              <button className="btn" onClick={() => setCreateNew(true)}>
-                Create new
-              </button>
-            </li>
-          </ul>
+              <p>
+                If you can’t find an Instagram account, learn more about how to{" "}
+                <a
+                  href="https://help.instagram.com/502981923235522"
+                  target="_blank"
+                >
+                  create a new account <External_link_icon />
+                </a>{" "}
+                or how to{" "}
+                <a
+                  href="https://www.facebook.com/business/help/1125825714110549?id=420299598837059"
+                  target="_blank"
+                >
+                  add an account to your Business Manager <External_link_icon />
+                </a>
+                .
+              </p>
+            </>
+          )}
           <div className="btns">
             <button
               className="btn_clear"
@@ -788,33 +812,6 @@ const InstagramAccount = ({ setStep }) => {
           </div>
         </>
       )}
-      <Modal
-        head={true}
-        label="Create a new Facebook business Page"
-        open={createNew}
-        setOpen={() => {
-          setCreateNew(false);
-          updateInstaAccounts();
-        }}
-        className="createNewPage"
-      >
-        <div className="content">
-          <p>
-            You'll be redirected to Facebook where you can connect your
-            Instagram account with {user.fbMarket?.facebookPage?.name}.
-          </p>
-          <p>
-            As soon as you add these details, return to Delivery Pay and finish
-            setup. You can always update your Instagram account later.
-          </p>
-          <a
-            target="_blank"
-            href={`https://www.facebook.com/${user.fbMarket?.facebookPage?.id}/settings/?tab=instagram_management`}
-          >
-            <External_link_icon /> Go to Facebook
-          </a>
-        </div>
-      </Modal>
     </>
   );
 };

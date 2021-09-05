@@ -878,6 +878,9 @@ export const Cart_svg = () => {
 
 export const Img = ({ src: defaultSrc, ...rest }) => {
   const [src, setSrc] = useState(defaultSrc);
+  useEffect(() => {
+    setSrc(defaultSrc);
+  }, [defaultSrc]);
   return (
     <img
       src={src}

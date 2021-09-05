@@ -1942,7 +1942,7 @@
     h4 {
       font-size: 1.25rem;
       font-weight: 400;
-      // text-transform: capitalize;
+      word-break: break-word;
       color: rgba(0, 0, 0, 0.75);
       &.amount {
         color: rgba(0, 0, 0, 0.6);

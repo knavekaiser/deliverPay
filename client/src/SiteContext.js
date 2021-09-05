@@ -13,6 +13,7 @@ export const socket = io();
 
 export const SiteContext = createContext();
 export const Provider = ({ children }) => {
+  const { gtag, ga } = window;
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState(LS.get("userType") || "");
@@ -41,6 +42,12 @@ export const Provider = ({ children }) => {
         console.log(err);
       });
   }, []);
+  useEffect(() => {
+    if (user) {
+      gtag("set", { user_id: user._id });
+      ga("set", "userId", user._id);
+    }
+  }, [user]);
   return (
     <SiteContext.Provider
       value={{

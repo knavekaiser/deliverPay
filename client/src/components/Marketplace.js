@@ -32,6 +32,7 @@ import { Modal, Confirm } from "./Modal";
 import { Chat } from "./Deals";
 import queryString from "query-string";
 import { toast } from "react-toastify";
+const Helmet = lazy(() => import("react-helmet"));
 const MilestoneForm = lazy(() =>
   import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
 );
@@ -531,111 +532,128 @@ export const SingleProduct = ({ match }) => {
   }, []);
   if (product) {
     return (
-      <div className={`generic singleProduct ${chatOpen ? "chatOpen" : ""}`}>
-        <Header />
-        <div className="content">
-          <Gallery images={product.images} />
-          <div className="detail">
-            <h1>{product.name}</h1>
-            <p>{product.dscr}</p>
-            <p className="price">
-              <label>Price: </label> <span className="symbol">₹</span>
-              {calculatePrice({ product, gst: product.user?.gst })}{" "}
-              {calculatePrice({ product, gst: product.user?.gst }) !==
-                calculatePrice({
-                  product,
-                  gst: product.user?.gst,
-                  discount: false,
-                }) && (
-                <span className="originalPrice">
-                  {calculatePrice({
+      <>
+        <Helmet>
+          <title>{product.name} | Delivery Pay</title>
+          <meta name="description" content={product.dscr} />
+          <meta
+            property="og:url"
+            content={`https://deliverypay.in/marketplace/${product._id}`}
+          />
+          <meta property="og:type" content="product" />
+          <meta
+            property="og:title"
+            content={`${product.name} | Delivery Pay`}
+          />
+          <meta property="og:description" content={product.dscr} />
+          <meta property="og:image" content={product.images[0]} />
+        </Helmet>
+        <div className={`generic singleProduct ${chatOpen ? "chatOpen" : ""}`}>
+          <Header />
+          <div className="content">
+            <Gallery images={product.images} />
+            <div className="detail">
+              <h1>{product.name}</h1>
+              <p>{product.dscr}</p>
+              <p className="price">
+                <label>Price: </label> <span className="symbol">₹</span>
+                {calculatePrice({ product, gst: product.user?.gst })}{" "}
+                {calculatePrice({ product, gst: product.user?.gst }) !==
+                  calculatePrice({
                     product,
                     gst: product.user?.gst,
                     discount: false,
-                  })}
-                </span>
-              )}
-            </p>
-            {
-              //   product.user?.gst?.verified && (
-              //   <p className="gst">
-              //     Including {product.gst || product.user.gst.amount}% GST
-              //   </p>
-              // )
-            }
-            <p>
-              {product.type === "product" && (
-                <>
-                  Available: {product.available && product.available}{" "}
-                  {product.available === 0 && <>Out of stock</>}
-                  {product.available < 7 && product.available > 0 && (
-                    <>Low stock</>
-                  )}
-                </>
-              )}
-              {product.type !== "product" && (
-                <>
-                  Availability:{" "}
-                  {product.available ? "Available" : "Unavailable"}
-                </>
-              )}
-            </p>
-            <div className="actions">
-              <button
-                disabled={
-                  !product.available ||
-                  userType === "seller" ||
-                  product.user?._id === user?._id
-                }
-                onClick={() => {
-                  setCart((prev) => addToCart(prev, product));
-                }}
-              >
-                Add to Cart
-              </button>
-              {nativeShare && (
+                  }) && (
+                  <span className="originalPrice">
+                    {calculatePrice({
+                      product,
+                      gst: product.user?.gst,
+                      discount: false,
+                    })}
+                  </span>
+                )}
+              </p>
+              {
+                //   product.user?.gst?.verified && (
+                //   <p className="gst">
+                //     Including {product.gst || product.user.gst.amount}% GST
+                //   </p>
+                // )
+              }
+              <p>
+                {product.type === "product" && (
+                  <>
+                    Available: {product.available && product.available}{" "}
+                    {product.available === 0 && <>Out of stock</>}
+                    {product.available < 7 && product.available > 0 && (
+                      <>Low stock</>
+                    )}
+                  </>
+                )}
+                {product.type !== "product" && (
+                  <>
+                    Availability:{" "}
+                    {product.available ? "Available" : "Unavailable"}
+                  </>
+                )}
+              </p>
+              <div className="actions">
                 <button
-                  onClick={async () => {
-                    try {
-                      await navigator.share({
-                        title: `${product.name} | Delivery Pay`,
-                        url: window.location.href,
-                      });
-                    } catch (err) {}
+                  disabled={
+                    !product.available ||
+                    userType === "seller" ||
+                    product.user?._id === user?._id
+                  }
+                  onClick={() => {
+                    setCart((prev) => addToCart(prev, product));
                   }}
                 >
-                  Share this Product
+                  Add to Cart
                 </button>
-              )}
-              {userType === "seller" && product?.user._id !== user?._id && (
-                <p className="note">
-                  Switch to buyer profile to buy this product.
-                </p>
-              )}
-              {userType === "buyer" && product?.user._id === user?._id && (
-                <p className="note">Can't buy product from self.</p>
-              )}
-            </div>
-            <div className="seller">
-              <label>Being sold by:</label>
-              <Link to={`/marketplace?seller=${product.user?._id}`}>
-                <div className="profile">
-                  <Img src={product.user.profileImg || "/profile-user.jpg"} />
-                  <p className="name">
-                    {product.user.firstName} {product.user.lastName}{" "}
-                    <span className="contact">{product.user.phone}</span>
+                {nativeShare && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await navigator.share({
+                          title: `${product.name} | Delivery Pay`,
+                          url: window.location.href,
+                        });
+                      } catch (err) {}
+                    }}
+                  >
+                    Share this Product
+                  </button>
+                )}
+                {userType === "seller" && product?.user._id !== user?._id && (
+                  <p className="note">
+                    Switch to buyer profile to buy this product.
                   </p>
-                </div>
-              </Link>
+                )}
+                {userType === "buyer" && product?.user._id === user?._id && (
+                  <p className="note">Can't buy product from self.</p>
+                )}
+              </div>
+              <div className="seller">
+                <label>Being sold by:</label>
+                <Link to={`/marketplace?seller=${product.user?._id}`}>
+                  <div className="profile">
+                    <Img src={product.user.profileImg || "/profile-user.jpg"} />
+                    <p className="name">
+                      {product.user.firstName} {product.user.lastName}{" "}
+                      <span className="contact">{product.user.phone}</span>
+                    </p>
+                  </div>
+                </Link>
+              </div>
             </div>
+            <Modal className="msg" open={msg}>
+              {msg}
+            </Modal>
           </div>
-          <Modal className="msg" open={msg}>
-            {msg}
-          </Modal>
+          {product && <MiniChat client={product.user} onToggle={setChatOpen} />}
+          <Footer />
         </div>
-        {product && <MiniChat client={product.user} onToggle={setChatOpen} />}
-        <Footer />
-      </div>
+      </>
     );
   }
   return (
@@ -671,9 +689,6 @@ const ImageView = ({ img }) => {
   const [applyStyle, setApplyStyle] = useState(false);
   const [style, setStyle] = useState({});
   const container = useRef();
-  useLayoutEffect(() => {
-    setBoundingBody(container.current?.getBoundingClientRect());
-  }, []);
   useEffect(() => {
     setSrc(img || "/open_box.png");
   }, [img]);
@@ -703,6 +718,7 @@ const ImageView = ({ img }) => {
       }}
       onTouchStart={(e) => {
         document.querySelector("body").style.overflow = "hidden";
+        setBoundingBody(container.current?.getBoundingClientRect());
         setApplyStyle(true);
       }}
       onTouchEnd={(e) => {
@@ -732,7 +748,10 @@ const ImageView = ({ img }) => {
           });
         }
       }}
-      onMouseEnter={() => setApplyStyle(true)}
+      onMouseEnter={() => {
+        setApplyStyle(true);
+        setBoundingBody(container.current?.getBoundingClientRect());
+      }}
       onMouseLeave={() => setApplyStyle(false)}
     >
       <img

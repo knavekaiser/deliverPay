@@ -29,6 +29,7 @@ import {
   Moment,
   moment,
   InputDateRange,
+  Img,
 } from "../Elements";
 import { Modal, Confirm } from "../Modal";
 import { Link, Route, Switch, Redirect } from "react-router-dom";
@@ -38,6 +39,7 @@ import RefundManagement, { FullRefund } from "./RefundManagement";
 import Campaigns from "./CampaignManagement";
 import FBMarket from "./fbMarketplace";
 import { updateProfileInfo } from "../Profile";
+import { FacebookShareButton } from "react-share";
 import { Step } from "./fbMarketplace";
 import { CSVLink } from "react-csv";
 
@@ -138,18 +140,22 @@ const MyShop = ({ history, location, match }) => {
   }, [categories, user]);
   useEffect(() => {
     FB.getLoginStatus(function (response) {
-      console.log(response);
       if (response.status === "connected") {
+        console.log(response);
         const accessToken = response.authResponse.accessToken;
         LS.set("facebook_user_accessToken", accessToken);
       }
     });
-    if (user.fbMarket?.facebookPage?.access_token) {
-      LS.set(
-        "facebook_page_accessToken",
-        user.fbMarket.facebookPage.access_token
-      );
-    }
+    FB.api(
+      `/${user.fbMarket?.facebookPage?.id}`,
+      "get",
+      { fields: "access_token" },
+      (res) => {
+        if (res.access_token) {
+          LS.set("facebook_page_accessToken", res.access_token);
+        }
+      }
+    );
   }, [user]);
   return (
     <>
@@ -602,10 +608,7 @@ const Products = ({ categories, shopSetupComplete }) => {
     fetch("/api/addToFbMarket", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        _ids,
-        access_token: LS.get("facebook_user_accessToken"),
-      }),
+      body: JSON.stringify({ _ids }),
     })
       .then((res) => res.json())
       .then(({ code, fb_products }) => {
@@ -1081,6 +1084,7 @@ const SingleProduct = ({
   const { user } = useContext(SiteContext);
   const [selected, setSelected] = useState(selectAll || false);
   const [edit, setEdit] = useState(false);
+  const [showInstaForm, setShowInstaForm] = useState(false);
   const [msg, setMsg] = useState(false);
   useEffect(() => {
     setSelected(selectAll);
@@ -1147,16 +1151,26 @@ const SingleProduct = ({
                 )}
               </>
             )}
+            {user.fbMarket?.instagramAccount?.id && (
+              <button onClick={() => setShowInstaForm(true)}>
+                Post to instagram
+              </button>
+            )}
             {!user.fbMarket?.userAgreement && (
               <Link to="/account/myShop/fbMarketplace" className="edit">
                 Setup FB Marketplace
               </Link>
             )}
-            <Link to="#" className="edit" onClick={() => setEdit(true)}>
+            <FacebookShareButton
+              resetButtonStyle={false}
+              url={`deliverypay.in/marketplace/${product._id}`}
+            >
+              Post on Facebook
+            </FacebookShareButton>
+            <button className="edit" onClick={() => setEdit(true)}>
               Edit
-            </Link>
-            <Link
-              to="#"
+            </button>
+            <button
               className="delete"
               onClick={() =>
                 Confirm({
@@ -1167,7 +1181,7 @@ const SingleProduct = ({
               }
             >
               Delete
-            </Link>
+            </button>
           </Actions>
         )}
       </td>
@@ -1204,10 +1218,136 @@ const SingleProduct = ({
           prefill={product}
         />
       </Modal>
+      <Modal
+        head={true}
+        label="Post to Instagram"
+        open={showInstaForm}
+        setOpen={setShowInstaForm}
+        className="instaForm"
+      >
+        <InstaForm
+          product={product}
+          onSuccess={() => setShowInstaForm(false)}
+        />
+      </Modal>
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>
     </tr>
+  );
+};
+const InstaForm = ({ product, onSuccess }) => {
+  const { FB } = window;
+  const { user } = useContext(SiteContext);
+  const [msg, setMsg] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [img, setImg] = useState(product.images[0]);
+  const [caption, setCaption] = useState("");
+  const submit = (e) => {
+    e.preventDefault();
+    FB.api(
+      `${user.fbMarket?.instagramAccount?.id}/media`,
+      "post",
+      { caption, image_url: img },
+      (res) => {
+        if (res.error) {
+          console.log(res.error);
+          setMsg(
+            <>
+              <button
+                onClick={() => {
+                  setMsg(null);
+                }}
+              >
+                Okay
+              </button>
+              <div>
+                <Err_svg />
+                <h4>{res.error.message}</h4>
+              </div>
+            </>
+          );
+          return;
+        }
+        FB.api(
+          `${user.fbMarket?.instagramAccount?.id}/media_publish`,
+          "post",
+          { creation_id: res.id },
+          (res) => {
+            if (res.error) {
+              console.log(res.error);
+              setMsg(
+                <>
+                  <button
+                    onClick={() => {
+                      setMsg(null);
+                    }}
+                  >
+                    Okay
+                  </button>
+                  <div>
+                    <Err_svg />
+                    <h4>{res.error.message}</h4>
+                  </div>
+                </>
+              );
+              return;
+            }
+            console.log(res);
+            setMsg(
+              <>
+                <button
+                  onClick={() => {
+                    setMsg(null);
+                  }}
+                >
+                  Okay
+                </button>
+                <div>
+                  <Succ_svg />
+                  <h4>Successfully posted.</h4>
+                </div>
+              </>
+            );
+          }
+        );
+      }
+    );
+  };
+  return (
+    <>
+      <form className="content" onSubmit={submit}>
+        <div className="profile">
+          <Img src={user.fbMarket?.instagramAccount?.profile_pic} />
+          <p>{user.fbMarket?.instagramAccount?.username}</p>
+        </div>
+        <Img src={img} className="main" />
+        <div className="thumbs">
+          {product.images?.map((img, i) => (
+            <Img key={i} src={img} onClick={() => setImg(img)} />
+          ))}
+        </div>
+        <section>
+          <label>Caption</label>
+          <TextareaAutosize
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            maxLength={2200}
+          />
+        </section>
+        <section className="btns">
+          <button className="submit pill">Post</button>
+        </section>
+      </form>
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
+    </>
   );
 };
 

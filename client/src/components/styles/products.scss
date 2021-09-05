@@ -33,7 +33,7 @@
     }
   }
   .products {
-    tr {
+    tr:not(.placeholder) {
       grid-template-columns: 1.5rem 4.5rem 5rem 1fr 5rem 6rem 4.5rem 4rem 3rem 5rem 6rem 4rem;
       grid-gap: 1rem;
       td,
@@ -593,6 +593,39 @@
         text-decoration: underline;
         &:hover {
           text-decoration: none;
+        }
+      }
+    }
+  }
+}
+
+.instaForm {
+  max-width: 30rem;
+  .content {
+    padding: 1.5rem;
+    display: grid;
+    grid-gap: 1.5rem;
+    .main {
+      max-width: 100%;
+    }
+    section {
+      label {
+        display: block;
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.6);
+        margin-bottom: 0.5rem;
+      }
+      textarea {
+        width: 100%;
+        min-height: 3rem;
+        resize: none;
+        font-size: 1rem;
+        padding: 0.3rem;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 0.4rem;
+        outline: none;
+        &:focus {
+          border: 1px solid rgba(0, 0, 0, 0.4);
         }
       }
     }

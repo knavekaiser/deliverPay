@@ -1,3 +1,5 @@
+const { FB } = require("fb");
+
 app.get("/api/products", passport.authenticate("userPrivate"), (req, res) => {
   const {
     q,
@@ -671,6 +673,7 @@ app.put(
           req.user._id,
           req.body.access_token
         );
+        console.log(fb_products);
         res.json({
           code: "ok",
           fb_products,
@@ -680,6 +683,60 @@ app.put(
       res.status(400).json({
         code: 400,
         message: "_ids with at least 1 product _id is required.",
+      });
+    }
+  }
+);
+app.put(
+  "/api/postToInstagram",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { pageId, userAccessToken, pageAccessToken, img, caption } = req.body;
+    if (pageId && userAccessToken && pageAccessToken && img && caption) {
+      FB.setAccessToken(pageAccessToken);
+      FB.api(pageId, { fields: ["instagram_business_account"] }, function (
+        result
+      ) {
+        if (!result || result.error) {
+          console.log("get account id", result.error);
+          res.status(424).json({ code: 424, message: result.error.message });
+          return;
+        }
+        FB.setAccessToken(user_access_token);
+        FB.api(
+          `${instagram_id}/media`,
+          "post",
+          { caption: caption, image_url: img },
+          function (result) {
+            if (!result || result.error) {
+              console.log("upload media", result.error);
+              res
+                .status(424)
+                .json({ code: 424, message: result.error.message });
+              return;
+            }
+            FB.api(
+              `${instagram_id}/media_publish`,
+              "post",
+              { creation_id: res.id },
+              function (result) {
+                console.log("final result", result);
+                if (!result || result.error) {
+                  res
+                    .status(424)
+                    .json({ code: 424, message: result.error.message });
+                  return;
+                }
+                res.json({ code: "ok", result });
+              }
+            );
+          }
+        );
+      });
+    } else {
+      res.status(400).json({
+        code: 400,
+        message: "pageId, pageAccessToken, img, caption is required",
       });
     }
   }
