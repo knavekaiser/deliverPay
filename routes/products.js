@@ -676,7 +676,7 @@ app.put(
           products,
           req.user.fbMarket.commerceAccount.catalog.id,
           req.user._id,
-          req.body.access_token
+          req.user.fbMarket.user.access_token
         );
         console.log(fb_products);
         res.json({
