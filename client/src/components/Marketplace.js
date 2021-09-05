@@ -329,8 +329,7 @@ const MiniChat = ({ client, onToggle }) => {
   const [userCard, setUserCard] = useState(null);
   const [chat, setChat] = useState(null);
   useEffect(() => {
-    if (user) {
-      // console.log(client);
+    if (user && client) {
       const clientChat = contacts.find(
         (contact) => contact.client._id === client._id
       );
@@ -345,17 +344,14 @@ const MiniChat = ({ client, onToggle }) => {
           ...(clientChat.messages === undefined && { newChat: true }),
         });
       }
-      // else {
-      //   socket.emit("initiateChat", {
-      //     client_id: client._id,
-      //     newChat: true,
-      //   });
-      // }
     }
   }, [client, contacts]);
   useEffect(() => {
     onToggle?.(open);
   }, [open]);
+  if (!client) {
+    return null;
+  }
   if (!open) {
     return (
       <button
@@ -636,14 +632,14 @@ export const SingleProduct = ({ match }) => {
               {product.user && (
                 <div className="seller">
                   <label>Being sold by:</label>
-                  <Link to={`/marketplace?seller=${product.user?._id}`}>
+                  <Link to={`/marketplace?seller=${product.user._id}`}>
                     <div className="profile">
                       <Img
-                        src={product.user?.profileImg || "/profile-user.jpg"}
+                        src={product.user.profileImg || "/profile-user.jpg"}
                       />
                       <p className="name">
-                        {product.user?.firstName} {product.user?.lastName}{" "}
-                        <span className="contact">{product.user?.phone}</span>
+                        {product.user.firstName} {product.user.lastName}{" "}
+                        <span className="contact">{product.user.phone}</span>
                       </p>
                     </div>
                   </Link>
