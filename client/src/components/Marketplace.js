@@ -531,7 +531,6 @@ export const SingleProduct = ({ match }) => {
     }
   }, []);
   if (product) {
-    console.log(product);
     return (
       <>
         <Helmet>
@@ -637,14 +636,14 @@ export const SingleProduct = ({ match }) => {
               {product.user && (
                 <div className="seller">
                   <label>Being sold by:</label>
-                  <Link to={`/marketplace?seller=${product.user._id}`}>
+                  <Link to={`/marketplace?seller=${product.user?._id}`}>
                     <div className="profile">
                       <Img
-                        src={product.user.profileImg || "/profile-user.jpg"}
+                        src={product.user?.profileImg || "/profile-user.jpg"}
                       />
                       <p className="name">
-                        {product.user.firstName} {product.user.lastName}{" "}
-                        <span className="contact">{product.user.phone}</span>
+                        {product.user?.firstName} {product.user?.lastName}{" "}
+                        <span className="contact">{product.user?.phone}</span>
                       </p>
                     </div>
                   </Link>
