@@ -139,23 +139,23 @@ const MyShop = ({ history, location, match }) => {
     }
   }, [categories, user]);
   useEffect(() => {
-    FB.getLoginStatus(function (response) {
-      if (response.status === "connected") {
-        console.log(response);
-        const accessToken = response.authResponse.accessToken;
-        LS.set("facebook_user_accessToken", accessToken);
-      }
-    });
-    FB.api(
-      `/${user.fbMarket?.facebookPage?.id}`,
-      "get",
-      { fields: "access_token" },
-      (res) => {
-        if (res.access_token) {
-          LS.set("facebook_page_accessToken", res.access_token);
-        }
-      }
-    );
+    // FB.getLoginStatus(function (response) {
+    //   if (response.status === "connected") {
+    //     console.log(response);
+    //     const accessToken = response.authResponse.accessToken;
+    //     LS.set("facebook_user_accessToken", accessToken);
+    //   }
+    // });
+    // FB.api(
+    //   `/${user.fbMarket?.facebookPage?.id}`,
+    //   "get",
+    //   { fields: "access_token" },
+    //   (res) => {
+    //     if (res.access_token) {
+    //       LS.set("facebook_page_accessToken", res.access_token);
+    //     }
+    //   }
+    // );
   }, [user]);
   return (
     <>

@@ -126,7 +126,7 @@ const Marketplace = ({ history, location, match }) => {
       });
   };
   useEffect(() => {
-    fetch(`/api/getProducts${location.search}&page=${1}`)
+    fetch(`/api/getProducts?${location.search.replace("?", "")}&page=${1}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "ok") {
@@ -153,7 +153,7 @@ const Marketplace = ({ history, location, match }) => {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log(err, 156);
         setMsg(
           <>
             <button onClick={() => setMsg(null)}>Okay</button>
@@ -624,12 +624,12 @@ export const SingleProduct = ({ match }) => {
                     Share this Product
                   </button>
                 )}
-                {userType === "seller" && product?.user._id !== user?._id && (
+                {userType === "seller" && product?.user?._id !== user?._id && (
                   <p className="note">
                     Switch to buyer profile to buy this product.
                   </p>
                 )}
-                {userType === "buyer" && product?.user._id === user?._id && (
+                {userType === "buyer" && product?.user?._id === user?._id && (
                   <p className="note">Can't buy product from self.</p>
                 )}
               </div>
@@ -701,12 +701,12 @@ const ImageView = ({ img }) => {
           const x =
             Math.abs(
               Math.round(
-                (e.clientX - boundingBody.x) / (boundingBody.width / 100)
+                (e.clientX - boundingBody?.x) / (boundingBody?.width / 100)
               )
             ) * 0.65;
           const y =
             Math.round(
-              (e.clientY - boundingBody.y) / (boundingBody.height / 100)
+              (e.clientY - boundingBody?.y) / (boundingBody?.height / 100)
             ) * 0.65;
           setStyle({
             transform: `scale(2) translateY(${Math.max(

@@ -315,22 +315,26 @@ app.get("/api/getProducts", (req, res) => {
       },
     },
     { $set: { total: { $first: "$total.count" } } },
-  ]).then(async ([{ products, total }]) => {
-    res.json({
-      code: "ok",
-      products,
-      total: total || 0,
-      ...(ObjectId.isValid(seller) && {
-        seller: await User.findOne(
-          { _id: seller },
-          "firstName lastName phone email profileImg"
-        ),
-        categories: await Category.findOne({ user: seller }).then(
-          (dbRes) => dbRes?.categories || null
-        ),
-      }),
+  ])
+    .then(async ([{ products, total }]) => {
+      res.json({
+        code: "ok",
+        products,
+        total: total || 0,
+        ...(ObjectId.isValid(seller) && {
+          seller: await User.findOne(
+            { _id: seller },
+            "firstName lastName phone email profileImg"
+          ),
+          categories: await Category.findOne({ user: seller }).then(
+            (dbRes) => dbRes?.categories || null
+          ),
+        }),
+      });
+    })
+    .catch((err) => {
+      console.log(err);
     });
-  });
 });
 app.get("/api/singleProduct", (req, res) => {
   if (ObjectId.isValid(req.query._id)) {
@@ -510,50 +514,48 @@ app.delete(
   }
 );
 
-app.put(
-  "/api/updateFBMarketUser",
+app.post(
+  "/api/addFbMarketUser",
   passport.authenticate("userPrivate"),
-  (req, res) => {
-    const { accessToken, pageId } = req.body;
+  async (req, res) => {
+    const { accessToken } = req.body;
     if (accessToken) {
-      fetch(`https://graph.facebook.com/oauth/access_token?${new URLSearchParams(
+      FB.setAccessToken(accessToken);
+      const fbUserData = await FB.api("/me", "GET", {
+        fields: "name,picture.type(large){url}",
+      });
+      console.log(fbUserData);
+      FB.api(
+        `/oauth/access_token`,
+        "GET",
         {
           grant_type: "fb_exchange_token",
           client_id: process.env.FACEBOOK_APP_ID,
           client_secret: process.env.FACEBOOK_APP_SECRET,
           fb_exchange_token: accessToken,
-        }
-      ).toString()}
-      `)
-        .then((res) => res.json())
-        .then(async (data) => {
-          if (data.access_token) {
-            const pageAccessToken = pageId
-              ? await fetch(`https://graph.facebook.com/${pageId}?${new URLSearchParams(
-                  {
-                    fields: access_token,
-                    access_token: data.accessToken,
-                  }
-                ).toString()}
-          `)
-                  .then((res) => res.json())
-                  .then((data) => data)
-              : null;
-            res.json({
-              code: "ok",
-              long_lived_token: data.access_token,
-              page_access_token: pageAccessToken,
+        },
+        (fbRes) => {
+          if (fbRes.access_token) {
+            User.findOneAndUpdate(
+              { _id: req.user._id },
+              {
+                "fbMarket.user.name": fbUserData.name,
+                "fbMarket.user.id": fbUserData.id,
+                "fbMarket.user.profileImg": fbUserData.picture.data.url,
+                "fbMarket.user.access_token": fbRes.access_token,
+              },
+              { new: true }
+            ).then((dbRes) => {
+              if (dbRes) {
+                res.json({ code: "ok", fbMarket: dbRes.fbMarket });
+              }
             });
-          } else {
-            res.status(428).json({ code: 428, ...data });
+            return;
           }
-        })
-        .catch((err) => {
-          console.log(err);
-          res
-            .status(500)
-            .json({ code: 500, message: "Could not get api from facebook" });
-        });
+          res.status(424).json({ code: 424, message: res });
+          console.log(res);
+        }
+      );
     } else {
       res.status(400).json({ code: 400, message: "accessToken is required" });
     }

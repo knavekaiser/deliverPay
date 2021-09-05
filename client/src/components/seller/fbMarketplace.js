@@ -145,48 +145,21 @@ const Marketplace = () => {
                 className="btn"
                 onClick={() => {
                   FB.login((res) => {
-                    LS.set(
-                      "facebook_user_accessToken",
-                      res.authResponse?.accessToken
-                    );
                     const accessToken = res.authResponse.accessToken;
-                    fetch("/api/updateFBMarketUser", {
-                      method: "PUT",
+                    fetch("/api/addFbMarketUser", {
+                      method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        accessToken,
-                      }),
+                      body: JSON.stringify({ accessToken }),
                     })
                       .then((res) => res.json())
                       .then((data) => {
                         if (data.code === "ok") {
-                          console.log("long_lived_token saved");
-                          // LS.set(
-                          //   "facebook_user_accessToken",
-                          //   data.long_lived_token
-                          // );
+                          setUser((prev) => ({
+                            ...prev,
+                            fbMarket: data.fbMarket,
+                          }));
                         }
                       });
-                    FB.api(
-                      "/me",
-                      "GET",
-                      { fields: "name,picture.type(large){url}" },
-                      (res) => {
-                        console.log(res);
-                        if (res.id) {
-                          updateProfileInfo({
-                            "fbMarket.user.name": res.name,
-                            "fbMarket.user.id": res.id,
-                            "fbMarket.user.profileImg": res.picture.data.url,
-                          }).then(({ user: newUser }) => {
-                            setUser((prev) => ({
-                              ...prev,
-                              fbMarket: newUser.fbMarket,
-                            }));
-                          });
-                        }
-                      }
-                    );
                   });
                 }}
               >
@@ -324,7 +297,7 @@ const BusinessManager = ({ setLoading }) => {
         "GET",
         {
           fields: "businesses{picture{url},name,id,created_time}",
-          access_token: LS.get("facebook_user_accessToken"),
+          access_token: user.fbMarket.user.access_token,
         },
         function (res) {
           if (res.businesses) {
@@ -518,7 +491,7 @@ const FbPage = () => {
         "GET",
         {
           fields: "picture{url},access_token,name,category,business",
-          access_token: LS.get("facebook_user_accessToken"),
+          access_token: user.fbMarket.user.access_token,
         },
         function (res) {
           console.log("facebook pages:", res);
@@ -635,7 +608,7 @@ const FbPage = () => {
             "GET",
             {
               fields: "picture{url},access_token,name,category,business",
-              access_token: LS.get("facebook_user_accessToken"),
+              access_token: user.fbMarket.user.access_token,
             },
             function (res) {
               console.log("facebook pages:", res);
@@ -678,16 +651,19 @@ const InstagramAccount = ({ setStep }) => {
   const { FB } = window;
   const { user, setUser } = useContext(SiteContext);
   const [insta, setInsta] = useState(null);
-  const updateInstaAccounts = () => {
+  useEffect(async () => {
     if (!user.fbMarket?.instagramAccount?.id) {
       FB.api(
-        `/${user.fbMarket?.facebookPage?.id}`,
+        "/108729214858102",
         "GET",
-        { fields: "instagram_business_account" },
-        function (res) {
+        {
+          fields: "instagram_business_account",
+          access_token: user.fbMarket.user.access_token,
+        },
+        (res) => {
           if (res.instagram_business_account) {
             FB.api(
-              `/${res.instagram_business_account}`,
+              `/${res.instagram_business_account.id}`,
               "GET",
               { fields: "username,profile_picture_url" },
               function (res) {
@@ -709,9 +685,6 @@ const InstagramAccount = ({ setStep }) => {
         }
       );
     }
-  };
-  useEffect(() => {
-    updateInstaAccounts();
   }, [user]);
   return (
     <>
@@ -1022,7 +995,7 @@ const CommerceAccount = ({ setStep }) => {
                   `/${user.fbMarket.businessManager.id}/owned_product_catalogs`,
                   "GET",
                   {
-                    access_token: LS.get("facebook_user_accessToken"),
+                    access_token: user.fbMarket.user.access_token,
                   },
                   async function ({ data, error }) {
                     console.log(data, error);
@@ -1038,7 +1011,7 @@ const CommerceAccount = ({ setStep }) => {
                         "POST",
                         {
                           name: "Delivery Pay Product Catalog",
-                          access_token: LS.get("facebook_user_accessToken"),
+                          access_token: user.fbMarket.user.access_token,
                         },
                         function (res) {
                           console.log(res.id);

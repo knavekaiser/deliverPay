@@ -231,7 +231,7 @@ const Home = () => {
       <Footer />
       <Route path={"/account/home/createMilestone"}>
         <Modal
-          open={true}
+          open={true && client}
           head={true}
           label="Create Milestone"
           setOpen={() => {
@@ -264,7 +264,7 @@ const Home = () => {
       </Route>
       <Route path={"/account/home/requestMilestone"}>
         <Modal
-          open={true}
+          open={true && client}
           head={true}
           label="Request Milestone"
           setOpen={() => {
