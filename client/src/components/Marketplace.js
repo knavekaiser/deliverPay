@@ -531,6 +531,7 @@ export const SingleProduct = ({ match }) => {
     }
   }, []);
   if (product) {
+    console.log(product);
     return (
       <>
         <Helmet>
@@ -633,18 +634,22 @@ export const SingleProduct = ({ match }) => {
                   <p className="note">Can't buy product from self.</p>
                 )}
               </div>
-              <div className="seller">
-                <label>Being sold by:</label>
-                <Link to={`/marketplace?seller=${product.user?._id}`}>
-                  <div className="profile">
-                    <Img src={product.user.profileImg || "/profile-user.jpg"} />
-                    <p className="name">
-                      {product.user.firstName} {product.user.lastName}{" "}
-                      <span className="contact">{product.user.phone}</span>
-                    </p>
-                  </div>
-                </Link>
-              </div>
+              {product.user && (
+                <div className="seller">
+                  <label>Being sold by:</label>
+                  <Link to={`/marketplace?seller=${product.user._id}`}>
+                    <div className="profile">
+                      <Img
+                        src={product.user.profileImg || "/profile-user.jpg"}
+                      />
+                      <p className="name">
+                        {product.user.firstName} {product.user.lastName}{" "}
+                        <span className="contact">{product.user.phone}</span>
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              )}
             </div>
             <Modal className="msg" open={msg}>
               {msg}
