@@ -522,150 +522,151 @@ app.get("/api/milestone", passport.authenticate("userPrivate"), (req, res) => {
 });
 
 // -------------------------- withdraw money
-// app.post(
-//   "/api/withdrawMoney",
-//   passport.authenticate("userPrivate"),
-//   async (req, res) => {
-//     const { amount, paymentMethod, accountDetail } = req.body;
-//     if (+amount > req.user.balance) {
-//       res.status(403).json({ code: 403, message: "insufficient fund" });
-//       return;
-//     }
-//     let fundAccountDetail;
-//     switch (paymentMethod) {
-//       case "BankAccount":
-//         fundAccountDetail = {
-//           account_type: "bank_account",
-//           bank_account: { ...accountDetail },
-//         };
-//         break;
-//       case "BankCard":
-//         fundAccountDetail = {
-//           account_type: "card",
-//           // "card.name": accountDetail.name,
-//           // "card.number": accountDetail.number,
-//           card: { ...accountDetail },
-//         };
-//         break;
-//       case "VpaAccount":
-//         fundAccountDetail = {
-//           account_type: "vpa",
-//           vpa: { ...accountDetail },
-//         };
-//         break;
-//       default:
-//         res.status(400).json({ message: "bad request" });
-//     }
-//     const razorHeaders = {
-//       "Content-Type": "application/json",
-//       Authorization: `Basic ${base64.encode(
-//         `${process.env.RAZOR_PAY_ID}:${process.env.RAZOR_PAY_SECRET}`
-//       )}`,
-//     };
-//     const razorPayContactId =
-//       req.user.razorPayContactId ||
-//       (await fetch("https://api.razorpay.com/v1/contacts", {
-//         method: "POST",
-//         headers: razorHeaders,
-//         body: JSON.stringify({
-//           name: `${req.user.firstName} ${req.user.lastName}`,
-//           email: req.user.email,
-//           contact: req.user.phone,
-//           type: "user",
-//           reference_id: req.user._id.toString(),
-//         }),
-//       })
-//         .then((res) => res.json())
-//         .then((data) => {
-//           return User.findOneAndUpdate(
-//             { _id: req.user._id },
-//             { razorPayContactId: data.id },
-//             { new: true }
-//           ).then((newUser) => newUser.razorPayContactId);
-//         })
-//         .catch((err) => {
-//           console.log(err);
-//           return null;
-//         }));
-//     const razorBody = {
-//       contact_id: razorPayContactId,
-//       ...fundAccountDetail,
-//     };
-//     console.log(razorBody);
-//     const razorPayFundAccount = await fetch(
-//       "https://api.razorpay.com/v1/fund_accounts",
-//       {
-//         method: "POST",
-//         headers: razorHeaders,
-//         body: JSON.stringify(razorBody),
-//       }
-//     )
-//       .then((res) => res.json())
-//       .then((data) => {
-//         if (data.error) {
-//           console.log(data.error);
-//           return null;
-//         } else {
-//           return data.id;
-//         }
-//       })
-//       .catch((err) => {
-//         console.log(err);
-//         return null;
-//       });
-//     if (razorPayContactId && razorPayFundAccount) {
-//       console.log(razorPayFundAccount);
-//       fetch("https://api.razorpay.com/v1/payouts", {
-//         method: "POST",
-//         headers: razorHeaders,
-//         body: JSON.stringify({
-//           account_number: process.env.RAZOR_PAY_X_ACCOUNT,
-//           fund_account_id: razorPayFundAccount,
-//           amount: amount * 100,
-//           currency: "INR",
-//           mode: "IMPS",
-//           purpose: "withdrawal",
-//           queue_if_low_balance: false,
-//           reference_id: req.user._id,
-//           narration: "fund withdrawal from skropay",
-//         }),
-//       })
-//         .then((res) => res.json())
-//         .then((data) => {
-//           if (data.id) {
-//             new WithdrawMoney({
-//               transactionId: data.id,
-//               user: req.user._id,
-//               amount: amount,
-//               paymentMethod,
-//               note: "Withdraw money from wallet",
-//             })
-//               .save()
-//               .then((transaction) => {
-//                 User.findOneAndUpdate(
-//                   { _id: req.user._id },
-//                   {
-//                     $inc: { balance: -Math.abs(amount) },
-//                     $addToSet: { transactions: transaction._id },
-//                   },
-//                   { new: true }
-//                 ).then((updated) => {
-//                   res.json({ code: "ok", transaction: transaction });
-//                 });
-//               })
-//               .catch((err) => {
-//                 console.log(err);
-//               });
-//           } else {
-//             console.log(data);
-//             res.status(500).json({ message: "someting went wrong" });
-//           }
-//         });
-//     } else {
-//       res.status(400).json({ message: "bad request" });
-//     }
-//   }
-// );
+app.post(
+  "/api/withdrawMoney",
+  passport.authenticate("userPrivate"),
+  async (req, res) => {
+    res.status(403).json({ code: 403 });
+    // const { amount, paymentMethod, accountDetail } = req.body;
+    // if (+amount > req.user.balance) {
+    //   res.status(403).json({ code: 403, message: "insufficient fund" });
+    //   return;
+    // }
+    // let fundAccountDetail;
+    // switch (paymentMethod) {
+    //   case "BankAccount":
+    //     fundAccountDetail = {
+    //       account_type: "bank_account",
+    //       bank_account: { ...accountDetail },
+    //     };
+    //     break;
+    //   case "BankCard":
+    //     fundAccountDetail = {
+    //       account_type: "card",
+    //       // "card.name": accountDetail.name,
+    //       // "card.number": accountDetail.number,
+    //       card: { ...accountDetail },
+    //     };
+    //     break;
+    //   case "VpaAccount":
+    //     fundAccountDetail = {
+    //       account_type: "vpa",
+    //       vpa: { ...accountDetail },
+    //     };
+    //     break;
+    //   default:
+    //     res.status(400).json({ message: "bad request" });
+    // }
+    // const razorHeaders = {
+    //   "Content-Type": "application/json",
+    //   Authorization: `Basic ${base64.encode(
+    //     `${process.env.RAZOR_PAY_ID}:${process.env.RAZOR_PAY_SECRET}`
+    //   )}`,
+    // };
+    // const razorPayContactId =
+    //   req.user.razorPayContactId ||
+    //   (await fetch("https://api.razorpay.com/v1/contacts", {
+    //     method: "POST",
+    //     headers: razorHeaders,
+    //     body: JSON.stringify({
+    //       name: `${req.user.firstName} ${req.user.lastName}`,
+    //       email: req.user.email,
+    //       contact: req.user.phone,
+    //       type: "user",
+    //       reference_id: req.user._id.toString(),
+    //     }),
+    //   })
+    //     .then((res) => res.json())
+    //     .then((data) => {
+    //       return User.findOneAndUpdate(
+    //         { _id: req.user._id },
+    //         { razorPayContactId: data.id },
+    //         { new: true }
+    //       ).then((newUser) => newUser.razorPayContactId);
+    //     })
+    //     .catch((err) => {
+    //       console.log(err);
+    //       return null;
+    //     }));
+    // const razorBody = {
+    //   contact_id: razorPayContactId,
+    //   ...fundAccountDetail,
+    // };
+    // console.log(razorBody);
+    // const razorPayFundAccount = await fetch(
+    //   "https://api.razorpay.com/v1/fund_accounts",
+    //   {
+    //     method: "POST",
+    //     headers: razorHeaders,
+    //     body: JSON.stringify(razorBody),
+    //   }
+    // )
+    //   .then((res) => res.json())
+    //   .then((data) => {
+    //     if (data.error) {
+    //       console.log(data.error);
+    //       return null;
+    //     } else {
+    //       return data.id;
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     console.log(err);
+    //     return null;
+    //   });
+    // if (razorPayContactId && razorPayFundAccount) {
+    //   console.log(razorPayFundAccount);
+    //   fetch("https://api.razorpay.com/v1/payouts", {
+    //     method: "POST",
+    //     headers: razorHeaders,
+    //     body: JSON.stringify({
+    //       account_number: process.env.RAZOR_PAY_X_ACCOUNT,
+    //       fund_account_id: razorPayFundAccount,
+    //       amount: amount * 100,
+    //       currency: "INR",
+    //       mode: "IMPS",
+    //       purpose: "withdrawal",
+    //       queue_if_low_balance: false,
+    //       reference_id: req.user._id,
+    //       narration: "fund withdrawal from skropay",
+    //     }),
+    //   })
+    //     .then((res) => res.json())
+    //     .then((data) => {
+    //       if (data.id) {
+    //         new WithdrawMoney({
+    //           transactionId: data.id,
+    //           user: req.user._id,
+    //           amount: amount,
+    //           paymentMethod,
+    //           note: "Withdraw money from wallet",
+    //         })
+    //           .save()
+    //           .then((transaction) => {
+    //             User.findOneAndUpdate(
+    //               { _id: req.user._id },
+    //               {
+    //                 $inc: { balance: -Math.abs(amount) },
+    //                 $addToSet: { transactions: transaction._id },
+    //               },
+    //               { new: true }
+    //             ).then((updated) => {
+    //               res.json({ code: "ok", transaction: transaction });
+    //             });
+    //           })
+    //           .catch((err) => {
+    //             console.log(err);
+    //           });
+    //       } else {
+    //         console.log(data);
+    //         res.status(500).json({ message: "someting went wrong" });
+    //       }
+    //     });
+    // } else {
+    //   res.status(400).json({ message: "bad request" });
+    // }
+  }
+);
 
 const calculateCouponCode = (coupon, price) => {
   if (!coupon) {
@@ -1267,9 +1268,7 @@ app.post(
             },
           },
         },
-        {
-          $match: { $expr: { $gt: ["$validPerUser", "$usage"] } },
-        },
+        { $match: { $expr: { $gt: ["$validPerUser", "$usage"] } } },
         { $unset: "usage" },
       ]).then(([coupon]) => coupon);
       const couponCodeDiscount =

@@ -144,23 +144,30 @@ const Marketplace = () => {
               <button
                 className="btn"
                 onClick={() => {
-                  FB.login((res) => {
-                    const accessToken = res.authResponse.accessToken;
-                    fetch("/api/addFbMarketUser", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ accessToken }),
-                    })
-                      .then((res) => res.json())
-                      .then((data) => {
-                        if (data.code === "ok") {
-                          setUser((prev) => ({
-                            ...prev,
-                            fbMarket: data.fbMarket,
-                          }));
-                        }
-                      });
-                  });
+                  FB.login(
+                    (res) => {
+                      const accessToken = res.authResponse.accessToken;
+                      fetch("/api/addFbMarketUser", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ accessToken }),
+                      })
+                        .then((res) => res.json())
+                        .then((data) => {
+                          if (data.code === "ok") {
+                            setUser((prev) => ({
+                              ...prev,
+                              fbMarket: data.fbMarket,
+                            }));
+                          }
+                        });
+                    },
+                    {
+                      scope:
+                        "business_management,catalog_management,pages_read_engagement,pages_show_list,instagram_basic,instagram_content_publish",
+                      return_scopes: true,
+                    }
+                  );
                 }}
               >
                 Connect Account
