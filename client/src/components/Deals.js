@@ -19,6 +19,7 @@ import {
   Img,
   Moment,
   moment,
+  LS,
 } from "./Elements";
 import TextareaAutosize from "react-textarea-autosize";
 const MilestoneForm = lazy(() =>
@@ -472,9 +473,11 @@ export const Chat = ({
                 {userType === "seller" ? (
                   <Link
                     className="pay"
-                    to={`/account/deals/${userCard._id}/payment`}
+                    target="_blank"
+                    to={`/marketplace?seller=${user._id}`}
+                    onClick={() => LS.set(userCard._id)}
                   >
-                    Request Milestone
+                    Create an Order
                   </Link>
                 ) : (
                   <>

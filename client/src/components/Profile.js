@@ -10,14 +10,14 @@ import {
   UploadFiles,
   Img,
 } from "./Elements";
-import GoogleLogin from "react-google-login";
+// import GoogleLogin from "react-google-login";
 require("./styles/profile.scss");
 
 export async function updateProfileInfo(newData) {
   return fetch("/api/editUserProfile", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(newData),
+    body: JSON.stringify({ ...newData }),
   }).then((res) => res.json());
 }
 
@@ -27,74 +27,74 @@ const Profile = ({ history, match, location }) => {
   const [msg, setMsg] = useState(null);
   const [kycFiles, setKycFiles] = useState([]);
   const [gstFiles, setGstFiles] = useState([]);
-  const addGoogleId = (e) => {
-    if (e.googleId) {
-      updateProfileInfo({ googleId: e.googleId })
-        .then((data) => {
-          setUser((prev) => ({ ...prev, googleId: e.googleId }));
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Succ_svg />
-                <h4>Google account successfully connected.</h4>
-              </div>
-            </>
-          );
-        })
-        .catch((err) => {
-          console.log(err);
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not connect Google account.</h4>
-              </div>
-            </>
-          );
-        });
-    }
-  };
-  const disconnectFromGoogle = (e) => {
-    updateProfileInfo({ googleId: null })
-      .then((data) => {
-        if (data.user) {
-          setUser((prev) => ({ ...prev, googleId: null }));
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Succ_svg />
-                <h4>Successfully disconnected Google.</h4>
-              </div>
-            </>
-          );
-        } else {
-          setMsg(
-            <>
-              <button onClick={() => setMsg(null)}>Okay</button>
-              <div>
-                <Err_svg />
-                <h4>Could not disconnect Google account. Please try again.</h4>
-              </div>
-            </>
-          );
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        setMsg(
-          <>
-            <button onClick={() => setMsg(null)}>Okay</button>
-            <div>
-              <Err_svg />
-              <h4>Could not disconnect Google account.</h4>
-            </div>
-          </>
-        );
-      });
-  };
+  // const addGoogleId = (e) => {
+  //   if (e.googleId) {
+  //     updateProfileInfo({ googleId: e.googleId })
+  //       .then((data) => {
+  //         setUser((prev) => ({ ...prev, googleId: e.googleId }));
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Succ_svg />
+  //               <h4>Google account successfully connected.</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       })
+  //       .catch((err) => {
+  //         console.log(err);
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Err_svg />
+  //               <h4>Could not connect Google account.</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       });
+  //   }
+  // };
+  // const disconnectFromGoogle = (e) => {
+  //   updateProfileInfo({ googleId: null })
+  //     .then((data) => {
+  //       if (data.user) {
+  //         setUser((prev) => ({ ...prev, googleId: null }));
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Succ_svg />
+  //               <h4>Successfully disconnected Google.</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       } else {
+  //         setMsg(
+  //           <>
+  //             <button onClick={() => setMsg(null)}>Okay</button>
+  //             <div>
+  //               <Err_svg />
+  //               <h4>Could not disconnect Google account. Please try again.</h4>
+  //             </div>
+  //           </>
+  //         );
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //       setMsg(
+  //         <>
+  //           <button onClick={() => setMsg(null)}>Okay</button>
+  //           <div>
+  //             <Err_svg />
+  //             <h4>Could not disconnect Google account.</h4>
+  //           </div>
+  //         </>
+  //       );
+  //     });
+  // };
   return (
     <div className="profileContainer">
       <div className="benner">
@@ -399,30 +399,32 @@ const Profile = ({ history, match, location }) => {
           {user.paymentMethods?.length === 0 && <p>No payment method added.</p>}
         </ul>
       </div>
-      <div className="socials">
-        <div className="head">Connect Social Accounts</div>
-        <ul className="providers">
-          {user.googleId ? (
-            <GoogleLogin
-              className="google"
-              clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
-              buttonText="Disconnect from Google"
-              onSuccess={disconnectFromGoogle}
-              onFailure={disconnectFromGoogle}
-              cookiePolicy={"single_host_origin"}
-            />
-          ) : (
-            <GoogleLogin
-              className="google"
-              clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
-              buttonText="Connect with Google"
-              onSuccess={addGoogleId}
-              onFailure={addGoogleId}
-              cookiePolicy={"single_host_origin"}
-            />
-          )}
-        </ul>
-      </div>
+      {
+        //   <div className="socials">
+        //   <div className="head">Connect Social Accounts</div>
+        //   <ul className="providers">
+        //     {user.googleId ? (
+        //       <GoogleLogin
+        //         className="google"
+        //         clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+        //         buttonText="Disconnect from Google"
+        //         onSuccess={disconnectFromGoogle}
+        //         onFailure={disconnectFromGoogle}
+        //         cookiePolicy={"single_host_origin"}
+        //       />
+        //     ) : (
+        //       <GoogleLogin
+        //         className="google"
+        //         clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+        //         buttonText="Connect with Google"
+        //         onSuccess={addGoogleId}
+        //         onFailure={addGoogleId}
+        //         cookiePolicy={"single_host_origin"}
+        //       />
+        //     )}
+        //   </ul>
+        // </div>
+      }
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>

@@ -50,7 +50,7 @@ export const MilestoneForm = ({
       .then((data) => {
         setLoading(false);
         if (data.code === "ok") {
-          onSuccess?.(data.milestone);
+          onSuccess?.({ ...data });
         } else {
           setMsg(
             <>

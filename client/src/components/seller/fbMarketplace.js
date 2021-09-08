@@ -65,7 +65,7 @@ const Marketplace = () => {
       setStep("businessManager");
     } else if (!user.fbMarket?.facebookPage?.id) {
       setStep("fbPage");
-    } else if (!user.fbMarket?.instagramAccount?.id) {
+    } else if (user.fbMarket?.instagramAccount === undefined) {
       setStep("instagramAccount");
     }
     // else if (!user.fbMarket?.dataSharing) {
@@ -146,21 +146,23 @@ const Marketplace = () => {
                 onClick={() => {
                   FB.login(
                     (res) => {
-                      const accessToken = res.authResponse.accessToken;
-                      fetch("/api/addFbMarketUser", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ accessToken }),
-                      })
-                        .then((res) => res.json())
-                        .then((data) => {
-                          if (data.code === "ok") {
-                            setUser((prev) => ({
-                              ...prev,
-                              fbMarket: data.fbMarket,
-                            }));
-                          }
-                        });
+                      if (res.authResponse?.accessToken) {
+                        const accessToken = res.authResponse.accessToken;
+                        fetch("/api/addFbMarketUser", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ accessToken }),
+                        })
+                          .then((res) => res.json())
+                          .then((data) => {
+                            if (data.code === "ok") {
+                              setUser((prev) => ({
+                                ...prev,
+                                fbMarket: data.fbMarket,
+                              }));
+                            }
+                          });
+                      }
                     },
                     {
                       scope:
@@ -212,17 +214,6 @@ const Marketplace = () => {
         >
           <InstagramAccount setStep={setStep} />
         </Step>
-        {
-          //   <Step
-          //   data={user.fbMarket?.dataSharing}
-          //   disabled={!user.fbMarket?.facebookPage?.id}
-          //   label="Data Sharing"
-          //   defaultStatus={step === "dataSharing"}
-          //   className="dataSharing"
-          // >
-          //   <DataSharing setStep={setStep} />
-          // </Step>
-        }
         <Step
           data={
             user.fbMarket?.commerceAccount?.catalog?.id
@@ -533,11 +524,11 @@ const FbPage = () => {
               <button
                 onClick={() => {
                   updateProfileInfo({
-                    "fbMarket.facebookPage": {},
-                    "fbMarket.commerceAccount": {},
-                    "fbMarket.userAgreement": false,
+                    fbMarket: {
+                      user: user.fbMarket.user,
+                      businessManager: user.fbMarket.businessManager,
+                    },
                   }).then(({ user: newUser }) => {
-                    console.log(newUser.fbMarket);
                     setUser((prev) => ({
                       ...prev,
                       fbMarket: newUser.fbMarket,
@@ -659,40 +650,44 @@ const InstagramAccount = ({ setStep }) => {
   const { user, setUser } = useContext(SiteContext);
   const [insta, setInsta] = useState(null);
   useEffect(async () => {
-    FB.api(
-      `/${user.fbMarket.facebookPage?.id}`,
-      "GET",
-      {
-        fields: "instagram_business_account",
-        access_token: user.fbMarket?.user.access_token,
-      },
-      (res) => {
-        if (res.instagram_business_account) {
-          console.log("insta id", res);
-          FB.api(
-            `/${res.instagram_business_account.id}`,
-            "GET",
-            {
-              fields: "username,profile_picture_url",
-              access_token: user.fbMarket?.user.access_token,
-            },
-            function (res) {
-              if (res.id) {
-                setInsta(res);
-                updateProfileInfo({
-                  "fbMarket.instagramAccount": insta,
-                }).then(({ user: newUser }) => {
-                  setUser((prev) => ({
-                    ...prev,
-                    fbMarket: newUser.fbMarket,
-                  }));
-                });
+    if (!user.fbMarket?.instagramAccount) {
+      FB.api(
+        `/${user.fbMarket.facebookPage?.id}`,
+        "GET",
+        {
+          fields: "instagram_business_account",
+          access_token: user.fbMarket?.user.access_token,
+        },
+        (res) => {
+          if (res.instagram_business_account) {
+            console.log("insta id", res);
+            FB.api(
+              `/${res.instagram_business_account.id}`,
+              "GET",
+              {
+                fields: "username,profile_picture_url",
+                access_token: user.fbMarket?.user.access_token,
+              },
+              function (res) {
+                console.log("ig account", res);
+                if (res.id) {
+                  setInsta(res);
+                  updateProfileInfo({
+                    "fbMarket.instagramAccount": insta,
+                  }).then(({ user: newUser }) => {
+                    console.log("updated");
+                    setUser((prev) => ({
+                      ...prev,
+                      fbMarket: newUser.fbMarket,
+                    }));
+                  });
+                }
               }
-            }
-          );
+            );
+          }
         }
-      }
-    );
+      );
+    }
   }, [user]);
   return (
     <>
@@ -704,7 +699,9 @@ const InstagramAccount = ({ setStep }) => {
           <ul>
             <li>
               <div className="profile">
-                <Img src={user.fbMarket.instagramAccount?.profile_pic_url} />
+                <Img
+                  src={user.fbMarket.instagramAccount?.profile_picture_url}
+                />
                 <div className="detail">
                   {user.fbMarket.instagramAccount.username}
                 </div>
@@ -769,6 +766,14 @@ const InstagramAccount = ({ setStep }) => {
               className="btn_clear"
               onClick={() => {
                 setStep("commerceAccount");
+                updateProfileInfo({
+                  "fbMarket.instagramAccount": null,
+                }).then(({ user: newUser }) => {
+                  setUser((prev) => ({
+                    ...prev,
+                    fbMarket: newUser.fbMarket,
+                  }));
+                });
               }}
             >
               Skip
@@ -776,169 +781,6 @@ const InstagramAccount = ({ setStep }) => {
           </div>
         </>
       )}
-    </>
-  );
-};
-const DataSharing = ({ setStep }) => {
-  const { user, setUser } = useContext(SiteContext);
-  const [msg, setMsg] = useState(null);
-  const [shareData, setShareData] = useState(
-    !!user.fbMarket?.dataSharing || false
-  );
-  const [dataSharingLavel, setDataSharingLavel] = useState(
-    user.fbMarket?.dataSharing || ""
-  );
-  const [pixels, setPixels] = useState([]);
-  return (
-    <>
-      <p className="note">
-        Facebook uses your customer data to target products, page posts, and ads
-        to your customers. To get started, first enable data sharing, and then
-        choose your level.
-      </p>
-      <section className="checkWrapper">
-        <Checkbox
-          value={shareData}
-          onChange={(e) => {
-            setShareData(e);
-          }}
-        />
-        <label>ENABLE CUSTOMER DATA SHARING</label>
-      </section>
-      {shareData && (
-        <>
-          <div className="dataSharingLavel">
-            <p>Choose lavel</p>
-            <Combobox
-              defaultValue={dataSharingLavel}
-              required={true}
-              options={[
-                { label: "Standard", value: "standard" },
-                { label: "Enhanced", value: "enhanced" },
-                { label: "Maximum", value: "maximum" },
-              ]}
-              onChange={(e) => setDataSharingLavel(e.value)}
-            />
-            {dataSharingLavel === "standard" && (
-              <p>
-                Standard uses <strong>Facebook Pixel</strong>, a third-party
-                cookie that collects and shares customers’ browsing behavior on
-                your online store. Browser-based ad blockers can prevent the
-                pixel from collecting data.
-              </p>
-            )}
-            {dataSharingLavel === "enhanced" && (
-              <p>
-                Enhanced uses <strong>Advanced Matching</strong>, which shares
-                personal information about your customers, including name,
-                location, and email. This pixel also shares customer browsing
-                behavior on your online store. Browser-based ad blockers can
-                prevent the pixel from collecting data.
-              </p>
-            )}
-            {dataSharingLavel === "maximum" && (
-              <p>
-                Maximum combines all data-sharing options to reach the highest
-                amount of customers. It uses <strong>Conversions API</strong>,
-                which shares data directly from Delivery Pay’s servers to
-                Facebook. This means the data can’t be blocked by ad blockers.
-              </p>
-            )}
-          </div>
-          <div className="warning">
-            <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
-              <path
-                fillRule="evenodd"
-                d="M10 0C4.486 0 0 4.486 0 10s4.486 10 10 10 10-4.486 10-10S15.514 0 10 0zM9 6a1 1 0 1 1 2 0v4a1 1 0 1 1-2 0V6zm1 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"
-              ></path>
-            </svg>
-            <p className="dscr">
-              This option shares <strong>personal customer details</strong>.
-              Ensure your privacy policy reflects your data-sharing settings.
-            </p>
-          </div>
-          {
-            //   <div>
-            //   <div className="head">
-            //     <Chev_down_svg />
-            //     <p>View Detail</p>
-            //   </div>
-            // </div>
-          }
-          <div className="pixel">
-            <p>BEHAVIOUR WILL BE TRACKED WITH THIS PIXEL</p>
-            <ul>
-              {pixels.map((item, i) => (
-                <li key={i}>
-                  {i}
-                  <div className="facebookPage">
-                    <div className="thumb" />
-                    <p>{item.name}</p>
-                    <span>ID: {item.id}</span>
-                    <span>Created at: {item.createdAt}</span>
-                  </div>
-                  <button>Connect</button>
-                </li>
-              ))}
-              <li>
-                <div className="profile">
-                  <Img src="/profile-user.jpg" />
-                  <p>
-                    Create Facebook Pixel{" "}
-                    <span>
-                      By creating a pixel, you agree to{" "}
-                      <a href="https://www.facebook.com/legal/technology_terms">
-                        Facebook’s Business Tools Terms
-                      </a>
-                    </span>
-                  </p>
-                </div>
-                <button className="btn">Create new</button>
-              </li>
-            </ul>
-          </div>
-        </>
-      )}
-      <div className="btns">
-        <button
-          className="btn_clear"
-          onClick={() => {
-            updateProfileInfo({
-              "fbMarket.dataSharing": "none",
-            });
-          }}
-        >
-          Skip
-        </button>
-        <button
-          className="btn"
-          onClick={() => {
-            if (shareData && !dataSharingLavel) {
-              setMsg(
-                <>
-                  <button onClick={() => setMsg(null)}>Okay</button>
-                  <div>
-                    <h4>Select a data sharing level</h4>
-                  </div>
-                </>
-              );
-              return;
-            }
-            if (user.fbMarket?.dataSharing !== dataSharingLavel) {
-              updateProfileInfo({
-                "fbMarket.dataSharing": dataSharingLavel,
-              }).then(({ user: newUser }) => {
-                setUser((prev) => ({ ...prev, fbMarket: newUser.fbMarket }));
-              });
-            }
-          }}
-        >
-          Confirm
-        </button>
-      </div>
-      <Modal className="msg" open={msg}>
-        {msg}
-      </Modal>
     </>
   );
 };

@@ -16,9 +16,12 @@ import {
   Footer,
   Actions,
   Cart_svg,
+  Seller_cart_svg,
   Img,
   Moment,
   Chev_down_svg,
+  User,
+  LS,
 } from "./Elements";
 import {
   EmailShareButton,
@@ -62,6 +65,8 @@ import {
   WhatsappIcon,
   WorkplaceIcon,
 } from "react-share";
+require("./styles/marketplace.scss");
+require("./styles/account.scss");
 
 // const OrderManagement = lazy(() => import("./OrderManagement"));
 const MilestoneForm = lazy(() =>
@@ -71,6 +76,9 @@ const MilestoneForm = lazy(() =>
 const MyShopping = lazy(() => import("./myShopping"));
 const Cart = lazy(() =>
   import("./Marketplace").then((mod) => ({ default: mod.Cart }))
+);
+const SellerCart = lazy(() =>
+  import("./Marketplace").then((mod) => ({ default: mod.SellerCart }))
 );
 
 const CartItem = lazy(() =>
@@ -94,7 +102,7 @@ require("./styles/account.scss");
 require("./styles/generic.scss");
 
 const Home = () => {
-  const { userType, setUserType } = useContext(SiteContext);
+  const { user, userType, setUserType } = useContext(SiteContext);
   const history = useHistory();
   const [value, setValue] = useState("");
   const [users, setUsers] = useState([]);
@@ -170,22 +178,26 @@ const Home = () => {
           </span>
         </p>
         <ul className="payments">
-          {recentPayments.map((user) => (
-            <li key={user._id}>
+          {recentPayments.map((client) => (
+            <li key={client._id}>
               <Link
-                // target={userType === "buyer" ? "_blank" : ""}
-                // to={`/account/marketplace?seller=${user._id}`}
                 to={
                   userType === "buyer"
-                    ? `/account/deals/${user._id}`
-                    : "/account/home/requestMilestone"
+                    ? `/account/deals/${client._id}`
+                    : `/marketplace?${new URLSearchParams({
+                        seller: user._id,
+                        buyer: client._id,
+                      }).toString()}`
                 }
                 onClick={() => {
-                  setClient(user);
+                  setClient(client);
+                  LS.set("buyer", client._id);
                 }}
               >
-                <Img src={user.profileImg} />
-                <p className="name">{user.firstName + " " + user.lastName}</p>
+                <Img src={client.profileImg} />
+                <p className="name">
+                  {client.firstName + " " + client.lastName}
+                </p>
               </Link>
             </li>
           ))}
@@ -303,7 +315,7 @@ const Home = () => {
 };
 
 export const UserSearch = ({ setClient }) => {
-  const { userType } = useContext(SiteContext);
+  const { userType, user } = useContext(SiteContext);
   const history = useHistory();
   const [msg, setMsg] = useState(null);
   const [users, setUsers] = useState([]);
@@ -321,7 +333,6 @@ export const UserSearch = ({ setClient }) => {
       )
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
           if (data.code === "ok") {
             setMsg(
               <>
@@ -443,26 +454,26 @@ export const UserSearch = ({ setClient }) => {
         </section>
         {showUsers && users.length ? (
           <ul className="searchResult">
-            {users.map((user, i) => (
+            {users.map((client, i) => (
               <Link
                 key={i}
-                target={userType === "buyer" ? "_blank" : ""}
-                onClick={() => setClient(user)}
+                target="_blank"
+                onClick={() => {
+                  setClient(client);
+                  LS.set("buyer", client._id);
+                }}
                 to={{
                   pathname:
                     userType === "seller"
-                      ? "/account/home/createMilestone"
-                      : `/marketplace?seller=${user._id}`,
+                      ? `/marketplace?${new URLSearchParams({
+                          seller: user._id,
+                          buyer: client._id,
+                        }).toString()}`
+                      : `/marketplace?seller=${client._id}`,
                 }}
               >
                 <li key={i}>
-                  <div className="profile">
-                    <Img src={user.profileImg} />
-                    <p className="name">
-                      {user.firstName + " " + user.lastName}
-                      <span className="phone">{user.phone}</span>
-                    </p>
-                  </div>
+                  <User user={client} />
                   <span className="sendReq">
                     {userType === "seller"
                       ? "Request milestone"
@@ -1082,6 +1093,7 @@ function Account() {
               <Route path="/account/transactions" component={Transactions} />
               <Route path="/account/myShop" component={MyShop} />
               <Route path="/account/cart" component={Cart} />
+              <Route path="/account/sellerCart" component={SellerCart} />
               {
                 //   <Route
                 //   path="/account/orderManagement"
@@ -1586,9 +1598,16 @@ function Account() {
   );
 }
 export const ProfileAvatar = () => {
-  const { user, setUser, cart, setCart, userType, setUserType } = useContext(
-    SiteContext
-  );
+  const {
+    user,
+    setUser,
+    cart,
+    setCart,
+    sellerCart,
+    setSellerCart,
+    userType,
+    setUserType,
+  } = useContext(SiteContext);
   const history = useHistory();
   const menuRef = useRef(null);
   const [menu, setMenu] = useState(false);
@@ -1638,7 +1657,7 @@ export const ProfileAvatar = () => {
   return (
     <>
       <div className="profile">
-        {userType === "buyer" && (
+        {userType === "buyer" ? (
           <Actions
             className="cart"
             icon={
@@ -1666,6 +1685,34 @@ export const ProfileAvatar = () => {
               </li>
             )}
             {cart.length === 0 && <p className="placeholder">cart is empty</p>}
+          </Actions>
+        ) : (
+          <Actions
+            className="cart"
+            icon={
+              <>
+                <Seller_cart_svg />
+                {sellerCart.length > 0 && (
+                  <span className="itemCount">
+                    {sellerCart.reduce((a, c) => a + c.qty, 0)}
+                  </span>
+                )}
+              </>
+            }
+            clickable={true}
+            wrapperClassName="popupCart"
+          >
+            {sellerCart.map(({ product, qty }, i) => (
+              <CartItem key={i} product={product} qty={qty} />
+            ))}
+            {sellerCart.length > 0 && (
+              <li className="actions">
+                <Link to="/account/sellerCart">View Order</Link>
+              </li>
+            )}
+            {sellerCart.length === 0 && (
+              <p className="placeholder">cart is empty</p>
+            )}
           </Actions>
         )}
         <Actions

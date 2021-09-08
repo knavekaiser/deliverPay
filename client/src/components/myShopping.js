@@ -693,6 +693,10 @@ export const FullOrder = ({ history, match }) => {
                 <label>Refundable</label>
                 {order.refundable || "N/A"}
               </li>
+              <li>
+                <label>Note</label>
+                {order.note}
+              </li>
               {refundTill && (
                 <li>
                   <label>Refund till</label>

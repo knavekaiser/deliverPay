@@ -32,6 +32,7 @@ import { Modal, Confirm } from "./Modal";
 import { Chat } from "./Deals";
 import queryString from "query-string";
 import { toast } from "react-toastify";
+import TextareaAutosize from "react-textarea-autosize";
 const Helmet = lazy(() => import("react-helmet"));
 const MilestoneForm = lazy(() =>
   import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
@@ -194,7 +195,6 @@ const Marketplace = ({ history, location, match }) => {
   return (
     <div className={`generic marketplace ${chatOpen ? "chatOpen" : ""}`}>
       <Header />
-      {userType === "seller" && <Redirect to="/account/myShop/products" />}
       <div style={{ display: "none" }}>
         <X_svg />
       </div>
@@ -438,7 +438,7 @@ const MiniChat = ({ client, onToggle }) => {
 };
 
 const Product = ({ data }) => {
-  const { user, userType, setCart } = useContext(SiteContext);
+  const { user, userType, setCart, setSellerCart } = useContext(SiteContext);
   let finalPrice = calculatePrice({ product: data, gst: data.user?.gst });
   return (
     <div className="product">
@@ -474,12 +474,17 @@ const Product = ({ data }) => {
           <p className="note">Can't buy product from self.</p>
         )}
         <button
-          disabled={!data.available || data?.user._id === user?._id}
+          disabled={
+            !data.available ||
+            (data?.user._id === user?._id && userType === "buyer")
+          }
           onClick={() => {
-            setCart((prev) => addToCart(prev, data));
+            data?.user._id === user?._id
+              ? setSellerCart((prev) => addToCart(prev, data, "seller"))
+              : setCart((prev) => addToCart(prev, data));
           }}
         >
-          Add to Cart
+          {data?.user._id === user?._id ? "Add to order" : "Add to Cart"}
         </button>
       </div>
     </div>
@@ -487,7 +492,7 @@ const Product = ({ data }) => {
 };
 
 export const SingleProduct = ({ match }) => {
-  const { user, setCart, userType } = useContext(SiteContext);
+  const { user, setCart, setSellerCart, userType } = useContext(SiteContext);
   const [nativeShare, setNativeShare] = useState(false);
   const [product, setProduct] = useState(null);
   const [msg, setMsg] = useState(null);
@@ -597,14 +602,19 @@ export const SingleProduct = ({ match }) => {
                 <button
                   disabled={
                     !product.available ||
-                    userType === "seller" ||
-                    product.user?._id === user?._id
+                    (userType === "buyer" && product.user?._id === user?._id)
                   }
                   onClick={() => {
-                    setCart((prev) => addToCart(prev, product));
+                    product?.user._id === user?._id
+                      ? setSellerCart((prev) =>
+                          addToCart(prev, product, "seller")
+                        )
+                      : setCart((prev) => addToCart(prev, product));
                   }}
                 >
-                  Add to Cart
+                  {product?.user._id === user?._id
+                    ? "Add to order"
+                    : "Add to Cart"}
                 </button>
                 {nativeShare && (
                   <button
@@ -765,7 +775,7 @@ const ImageView = ({ img }) => {
 };
 
 export const Cart = () => {
-  const { setCart, cart } = useContext(SiteContext);
+  const { setCart, cart, userType } = useContext(SiteContext);
   const [loading, setLoading] = useState(true);
   const [carts, setCarts] = useState(null);
   const [msg, setMsg] = useState(null);
@@ -802,12 +812,13 @@ export const Cart = () => {
   if (carts) {
     return (
       <div className="fullCart">
+        {userType === "seller" && <Redirect to="/account/sellerCart" />}
         <div className="head">
           <h1>Cart</h1>
         </div>
         <div className="allCarts">
           {carts.map(({ seller, products }) =>
-            products?.length ? (
+            seller && products?.length ? (
               <Shop
                 key={seller._id}
                 seller={seller}
@@ -826,8 +837,81 @@ export const Cart = () => {
   }
   return (
     <div className="fullCart">
+      {userType === "seller" && <Redirect to="/account/sellerCart" />}
       <div className="head">
         <h1>Cart</h1>
+      </div>
+      <div className="allCarts">Cart is empty.</div>
+      <Modal open={msg} className="msg">
+        {msg}
+      </Modal>
+    </div>
+  );
+};
+export const SellerCart = () => {
+  const { sellerCart, setSellerCart, userType } = useContext(SiteContext);
+  const [loading, setLoading] = useState(true);
+  const [carts, setCarts] = useState(null);
+  const [msg, setMsg] = useState(null);
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/getSellerCartDetail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cart: sellerCart }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          setCarts(data.carts);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not get cart detail. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  }, [sellerCart]);
+  if (carts) {
+    return (
+      <div className="fullCart">
+        {userType === "buyer" && <Redirect to="/account/cart" />}
+        <div className="head">
+          <h1>Create Orders</h1>
+        </div>
+        <div className="allCarts">
+          {carts.map(({ buyer, products }) =>
+            buyer && products?.length ? (
+              <SellerShop
+                key={buyer._id}
+                buyer={buyer}
+                products={products}
+                loading={loading}
+              />
+            ) : null
+          )}
+          {carts?.length === 0 && <p>Cart is empty</p>}
+        </div>
+        <Modal open={msg} className="msg">
+          {msg}
+        </Modal>
+      </div>
+    );
+  }
+  return (
+    <div className="fullCart">
+      {userType === "buyer" && <Redirect to="/account/cart" />}
+      <div className="head">
+        <h1>Create Orders</h1>
       </div>
       <div className="allCarts">Cart is empty.</div>
       <Modal open={msg} className="msg">
@@ -850,6 +934,7 @@ const Shop = ({ seller, products, loading }) => {
   const [couponCode, setCouponCode] = useState("");
   const [validCoupon, setValidCoupon] = useState(false);
   const [couponCodeForm, setCouponCodeForm] = useState(false);
+  const [note, setNote] = useState("");
   const productPrice = products.reduce(
     (a, c) =>
       (
@@ -1048,7 +1133,7 @@ const Shop = ({ seller, products, loading }) => {
               </p>
               <hr />
               <p>
-                <label>Grand total</label>₹{total + fee}
+                <label>Grand total</label>₹{(total + fee).fix()}
               </p>
               {
                 //   <span className="note">
@@ -1087,6 +1172,13 @@ const Shop = ({ seller, products, loading }) => {
                 </li>
               ))}
             </ul>
+            <div className="head">
+              <h3>Note to Seller</h3>
+            </div>
+            <TextareaAutosize
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
           </div>
         </div>
         <div className="actions">
@@ -1129,6 +1221,7 @@ const Shop = ({ seller, products, loading }) => {
                 ...deliveryDetail,
                 deliveryWithin: seller.shopInfo?.deliveryWithin,
               },
+              ...(note && { note }),
               ...(validCoupon && { couponCode: validCoupon?.code }),
             }}
             onSuccess={({ milestone, order }) => {
@@ -1178,9 +1271,346 @@ const Shop = ({ seller, products, loading }) => {
     </>
   );
 };
+const SellerShop = ({ buyer, products, loading }) => {
+  const { user, setSellerCart, config } = useContext(SiteContext);
+  const [msg, setMsg] = useState(null);
+  const [deliveryDetail, setDeliveryDetail] = useState({
+    name: user.firstName + " " + user.lastName,
+    phone: user.phone,
+  });
+  const [addressForm, setAddressForm] = useState(false);
+  const [milestoneForm, setMilestoneForm] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [validCoupon, setValidCoupon] = useState(false);
+  const [couponCodeForm, setCouponCodeForm] = useState(false);
+  const [note, setNote] = useState("");
+  const productPrice = products.reduce(
+    (a, c) =>
+      (a + calculatePrice({ product: c.product, gst: user.gst }) * c.qty).fix(),
+    0
+  );
+  const couponCodeDiscount =
+    (validCoupon?.type === "percent" &&
+      Math.min(
+        (productPrice / 100) * validCoupon.amount,
+        validCoupon.maxDiscount
+      )) ||
+    (validCoupon?.type === "flat" && validCoupon?.amount) ||
+    0;
+  const total =
+    +(productPrice - couponCodeDiscount) +
+    (user.shopInfo?.shippingCost || 0).fix();
+  const fee = (total * ((100 + config.fee) / 100) - total).fix();
+  return (
+    <>
+      <div className="shop">
+        <div className="seller">
+          <div className="profile">
+            <Img src={buyer.profileImg || "/profile-user.jpg"} />
+            <p className="name">
+              {buyer.firstName} {buyer.lastName} •{" "}
+              <span className="role">Buyer</span>
+              <span className="contact">{buyer.phone}</span>
+            </p>
+          </div>
+        </div>
+        <div className="cart">
+          <ul className="items">
+            {products.map(({ product, qty }, i) => (
+              <CartItem key={i} gst={user.gst} product={product} qty={qty} />
+            ))}
+            <div className="total">
+              <p>
+                <label>Total</label>₹{productPrice}
+              </p>
+              <hr />
+              <div className="coupon">
+                {!validCoupon ? (
+                  <label>Coupon</label>
+                ) : (
+                  <label>
+                    Coupon Code {validCoupon.code}
+                    <br />
+                    Discount{" "}
+                    {validCoupon.type === "percent" ? (
+                      <>
+                        {validCoupon.amount}% (Upto ₹{validCoupon.maxDiscount})
+                      </>
+                    ) : (
+                      <>flat</>
+                    )}
+                  </label>
+                )}
+                {!couponCodeForm && !validCoupon && (
+                  <button onClick={() => setCouponCodeForm(true)}>
+                    Add Coupon
+                  </button>
+                )}
+                {validCoupon && <span>₹{couponCodeDiscount}</span>}
+                {couponCodeForm && (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      fetch(`/api/getCoupon/${couponCode}`)
+                        .then((res) => res.json())
+                        .then(({ code, coupon }) => {
+                          if (code === "ok") {
+                            if (
+                              !coupon.sellers ||
+                              coupon.sellers?.filter((_id) => _id === user._id)
+                                .length === 0
+                            ) {
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Err_svg />
+                                    <h4>
+                                      This seller does not accept this coupon
+                                      code.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            } else if (total < coupon.threshold) {
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Err_svg />
+                                    <h4>
+                                      Coupon code {couponCode} can only be
+                                      applied on order more that ₹
+                                      {coupon.threshold}.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            } else if (coupon.usage >= coupon.validPerUser) {
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Err_svg />
+                                    <h4>
+                                      Each user can use this Coupon{" "}
+                                      {coupon.validPerUser} times.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            } else {
+                              setValidCoupon(coupon);
+                              setCouponCodeForm(false);
+                              setMsg(
+                                <>
+                                  <button onClick={() => setMsg(null)}>
+                                    Okay
+                                  </button>
+                                  <div>
+                                    <Succ_svg />
+                                    <h4>
+                                      Coupon code {couponCode} has been applied.
+                                    </h4>
+                                  </div>
+                                </>
+                              );
+                            }
+                          } else {
+                            setMsg(
+                              <>
+                                <button onClick={() => setMsg(null)}>
+                                  Okay
+                                </button>
+                                <div>
+                                  <Err_svg />
+                                  <h4>Invalid Coupon code.</h4>
+                                </div>
+                              </>
+                            );
+                          }
+                        })
+                        .catch((err) => {
+                          console.log(err);
+                          setMsg(
+                            <>
+                              <button onClick={() => setMsg(null)}>Okay</button>
+                              <div>
+                                <Err_svg />
+                                <h4>
+                                  Could not apply Coupon code. Make sure you're
+                                  online.
+                                </h4>
+                              </div>
+                            </>
+                          );
+                        });
+                    }}
+                  >
+                    <input
+                      required={true}
+                      value={couponCode}
+                      onBlur={(e) => {
+                        if (!couponCode) {
+                          setCouponCodeForm(false);
+                        }
+                      }}
+                      onChange={(e) =>
+                        setCouponCode(e.target.value.toUpperCase())
+                      }
+                    />
+                    <button>Apply</button>
+                  </form>
+                )}
+              </div>
+              <hr />
+              <p>
+                <label>Shipping</label>₹{user.shopInfo?.shippingCost}
+              </p>
+              <p>
+                <label>Delivery Pay Fee {config.fee}%</label>₹{fee}
+              </p>
+              <hr />
+              <p>
+                <label>Grand total</label>₹{(total + fee).fix()}
+              </p>
+            </div>
+            <div className="terms">
+              <p>
+                <label>Refundable: </label>
+                {user.shopInfo?.refundable || "N/A"}
+              </p>
+              <p>
+                By proceeding, I agree to seller's all{" "}
+                <span className="btn" onClick={() => setShowTerms(true)}>
+                  Terms
+                </span>
+              </p>
+            </div>
+          </ul>
+          <span className="devider" />
+          <div className="deliveryDetail">
+            <div className="head">
+              <h3>Delivery Information</h3>
+              <button onClick={() => setAddressForm(true)}>Edit</button>
+            </div>
+            <ul>
+              {Object.entries(deliveryDetail).map(([key, value], i) => (
+                <li key={i}>
+                  <label>{key}</label>
+                  {value}
+                </li>
+              ))}
+            </ul>
+            <div className="head">
+              <h3>Note to Buyer</h3>
+            </div>
+            <TextareaAutosize
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="actions">
+          <button onClick={() => setMilestoneForm(true)}>Create order</button>
+        </div>
+        <Modal
+          open={addressForm}
+          head={true}
+          label="Delivery Address"
+          setOpen={setAddressForm}
+          className="addAddress"
+        >
+          <AddressForm
+            client={{
+              name: deliveryDetail.name,
+              phone: deliveryDetail.phone,
+              address: deliveryDetail,
+            }}
+            onSuccess={(data) => {
+              setDeliveryDetail((prev) => ({ ...prev, ...data.address }));
+              setAddressForm(false);
+            }}
+            onCancel={() => setAddressForm(false)}
+          />
+        </Modal>
+        <Modal
+          className="milestoneRequest"
+          head={true}
+          label="Checkout"
+          open={milestoneForm}
+          setOpen={setMilestoneForm}
+        >
+          <MilestoneForm
+            action="request"
+            client={buyer}
+            definedAmount={(total + fee).fix()}
+            order={{
+              products,
+              deliveryDetail: {
+                ...deliveryDetail,
+                deliveryWithin: user.shopInfo?.deliveryWithin,
+              },
+              ...(note && { note }),
+              ...(validCoupon && { couponCode: validCoupon?.code }),
+            }}
+            onSuccess={({ milestone, order }) => {
+              setSellerCart((prev) =>
+                prev.filter(({ product }) => {
+                  return !order.products.some(
+                    (order) => order.product._id === product._id
+                  );
+                })
+              );
+              setMilestoneForm(false);
+              setMsg(
+                <>
+                  <button onClick={() => setMsg(null)}>Okay</button>
+                  <div>
+                    <Succ_svg />
+                    <h4>Order successfully submitted.</h4>
+                    <Link to="/account/myShop/orders">Manage orders</Link>
+                  </div>
+                </>
+              );
+            }}
+          />
+        </Modal>
+        <Modal
+          open={showTerms}
+          setOpen={setShowTerms}
+          head={true}
+          label="Seller's Terms"
+          className="shopTerms"
+        >
+          <ul>
+            {user.shopInfo?.terms?.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </Modal>
+        <Modal className="msg" open={msg}>
+          {msg}
+        </Modal>
+      </div>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
+    </>
+  );
+};
 
 export const CartItem = ({ product, gst, qty }) => {
-  const { setCart } = useContext(SiteContext);
+  const { setCart, setSellerCart, userType } = useContext(SiteContext);
   const price = calculatePrice({ product, gst: gst || product.user?.gst });
   return (
     <li className={`item ${!product.images.length && "noImg"}`}>
@@ -1192,20 +1622,37 @@ export const CartItem = ({ product, gst, qty }) => {
           <div className="addRemove">
             <button
               onClick={() => {
-                setCart((prev) =>
-                  prev
-                    .map((item) => {
-                      if (item.product._id === product._id) {
-                        return {
-                          ...item,
-                          qty: item.qty - 1,
-                        };
-                      } else {
-                        return item;
-                      }
-                    })
-                    .filter((item) => item.qty > 0)
-                );
+                if (userType === "seller") {
+                  setSellerCart((prev) =>
+                    prev
+                      .map((item) => {
+                        if (item.product._id === product._id) {
+                          return {
+                            ...item,
+                            qty: item.qty - 1,
+                          };
+                        } else {
+                          return item;
+                        }
+                      })
+                      .filter((item) => item.qty > 0)
+                  );
+                } else {
+                  setCart((prev) =>
+                    prev
+                      .map((item) => {
+                        if (item.product._id === product._id) {
+                          return {
+                            ...item,
+                            qty: item.qty - 1,
+                          };
+                        } else {
+                          return item;
+                        }
+                      })
+                      .filter((item) => item.qty > 0)
+                  );
+                }
               }}
             >
               <Minus_svg />
@@ -1213,18 +1660,33 @@ export const CartItem = ({ product, gst, qty }) => {
             {qty}
             <button
               onClick={() => {
-                setCart((prev) =>
-                  prev.map((item) => {
-                    if (item.product._id === product._id) {
-                      return {
-                        ...item,
-                        qty: item.qty + 1,
-                      };
-                    } else {
-                      return item;
-                    }
-                  })
-                );
+                if (userType === "seller") {
+                  setSellerCart((prev) =>
+                    prev.map((item) => {
+                      if (item.product._id === product._id) {
+                        return {
+                          ...item,
+                          qty: item.qty + 1,
+                        };
+                      } else {
+                        return item;
+                      }
+                    })
+                  );
+                } else {
+                  setCart((prev) =>
+                    prev.map((item) => {
+                      if (item.product._id === product._id) {
+                        return {
+                          ...item,
+                          qty: item.qty + 1,
+                        };
+                      } else {
+                        return item;
+                      }
+                    })
+                  );
+                }
               }}
             >
               <Plus_svg />

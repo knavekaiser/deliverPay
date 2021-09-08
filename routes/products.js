@@ -100,7 +100,7 @@ app.post(
           res.json({ code: "ok", products: dbRes });
         })
         .catch((err) => {
-          console.log(err, "err");
+          console.log(err);
         });
     } else {
       res.status(400).json({
@@ -358,7 +358,7 @@ app.post(
   passport.authenticate("userPrivate"),
   (req, res) => {
     const { cart } = req.body;
-    if (Array.isArray([cart])) {
+    if (Array.isArray(cart)) {
       if (!cart.length) {
         res.json({
           code: "ok",
@@ -436,6 +436,66 @@ app.post(
         } else {
           res.status(400).json({ code: 400, message: "no product found" });
         }
+      });
+    } else {
+      res.status(400).json({
+        code: 400,
+        message: "Cart with at least one item is required",
+      });
+    }
+  }
+);
+app.post(
+  "/api/getSellerCartDetail",
+  passport.authenticate("userPrivate"),
+  async (req, res) => {
+    const { cart } = req.body;
+    if (Array.isArray(cart)) {
+      if (!cart.length) {
+        res.json({
+          code: "ok",
+          carts: [],
+        });
+        return;
+      }
+      const buyers = {};
+      cart.forEach(({ buyer, product, qty }, i) => {
+        if (buyers[buyer]) {
+          buyers[buyer].push({ product, qty });
+        } else {
+          buyers[buyer] = [{ product, qty }];
+        }
+      });
+      const orders = await Promise.all(
+        Object.entries(buyers).map(async ([buyer_id, products]) => {
+          const buyer = await User.findOne(
+            { _id: buyer_id },
+            "firstName lastName phone email address"
+          );
+          const productDetails = await Product.aggregate([
+            {
+              $match: {
+                $or: products.map((item) => ({
+                  _id: ObjectId(item.product._id),
+                })),
+              },
+            },
+          ]);
+          return {
+            buyer,
+            products: productDetails.map((product) => ({
+              product,
+              qty: products.find(
+                (item) =>
+                  item.product._id.toString() === product._id?.toString()
+              )?.qty,
+            })),
+          };
+        })
+      );
+      res.json({
+        code: "ok",
+        carts: orders,
       });
     } else {
       res.status(400).json({
@@ -524,7 +584,6 @@ app.post(
       const fbUserData = await FB.api("/me", "GET", {
         fields: "name,picture.type(large){url}",
       });
-      console.log(fbUserData);
       FB.api(
         `/oauth/access_token`,
         "GET",
@@ -678,7 +737,6 @@ app.put(
           req.user._id,
           req.user.fbMarket.user.access_token
         );
-        console.log(fb_products);
         res.json({
           code: "ok",
           fb_products,
@@ -696,52 +754,47 @@ app.put(
   "/api/postToInstagram",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    const { pageId, userAccessToken, pageAccessToken, img, caption } = req.body;
-    if (pageId && userAccessToken && pageAccessToken && img && caption) {
-      FB.setAccessToken(pageAccessToken);
-      FB.api(pageId, { fields: ["instagram_business_account"] }, function (
-        result
-      ) {
-        if (!result || result.error) {
-          console.log("get account id", result.error);
-          res.status(424).json({ code: 424, message: result.error.message });
-          return;
-        }
-        FB.setAccessToken(user_access_token);
-        FB.api(
-          `${instagram_id}/media`,
-          "post",
-          { caption: caption, image_url: img },
-          function (result) {
-            if (!result || result.error) {
-              console.log("upload media", result.error);
-              res
-                .status(424)
-                .json({ code: 424, message: result.error.message });
-              return;
-            }
-            FB.api(
-              `${instagram_id}/media_publish`,
-              "post",
-              { creation_id: res.id },
-              function (result) {
-                console.log("final result", result);
-                if (!result || result.error) {
-                  res
-                    .status(424)
-                    .json({ code: 424, message: result.error.message });
-                  return;
-                }
-                res.json({ code: "ok", result });
-              }
-            );
+    const { img, caption } = req.body;
+    if (!user.fbMarket?.instagramAccount) {
+      res
+        .status(400)
+        .json({
+          code: 400,
+          message: "user does not have instagram account connected",
+        });
+      return;
+    }
+    if (img && caption) {
+      FB.setAccessToken(req.user.fbMarket?.user?.access_token);
+      FB.api(
+        `${user.fbMarket?.instagramAccount.id}/media`,
+        "post",
+        { caption: caption, image_url: img },
+        function (result) {
+          if (!result || result.error) {
+            res.status(424).json({ code: 424, message: result.error.message });
+            return;
           }
-        );
-      });
+          FB.api(
+            `${instagram_id}/media_publish`,
+            "post",
+            { creation_id: res.id },
+            function (result) {
+              if (!result || result.error) {
+                res
+                  .status(424)
+                  .json({ code: 424, message: result.error.message });
+                return;
+              }
+              res.json({ code: "ok", result });
+            }
+          );
+        }
+      );
     } else {
       res.status(400).json({
         code: 400,
-        message: "pageId, pageAccessToken, img, caption is required",
+        message: "img, caption is required",
       });
     }
   }

@@ -62,6 +62,7 @@ function LandingPage({ history }) {
               <Link to="/account/home">Dashboard</Link>
             ) : (
               <>
+                <Link to="/u/join">Register</Link>
                 <Link to="/u/login">Login</Link>
               </>
             )}

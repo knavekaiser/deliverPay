@@ -18,10 +18,16 @@ export const Provider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState(LS.get("userType") || "");
   const [cart, setCart] = useState(JSON.parse(LS.get("localCart")) || []);
+  const [sellerCart, setSellerCart] = useState(
+    JSON.parse(LS.get("localSellerCart")) || []
+  );
   const [config, setConfig] = useState({});
   useEffect(() => {
     LS.set("localCart", JSON.stringify(cart));
   }, [cart]);
+  useEffect(() => {
+    LS.set("localSellerCart", JSON.stringify(sellerCart));
+  }, [sellerCart]);
   useEffect(() => {
     if (userType === "seller") {
       document.body.style.setProperty("--blue", `#2598b6`);
@@ -57,6 +63,8 @@ export const Provider = ({ children }) => {
         setIsAuthenticated,
         cart,
         setCart,
+        sellerCart,
+        setSellerCart,
         userType,
         setUserType,
         config,

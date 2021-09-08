@@ -82,6 +82,7 @@ const orderModel = new Schema(
     refundable: { type: String },
     shippingCost: { type: Number },
     deliveredAt: { type: Date },
+    note: { type: String },
   },
   { timestamps: true }
 );

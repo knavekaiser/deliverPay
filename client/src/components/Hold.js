@@ -371,6 +371,55 @@ const SellerMilestone = ({ milestone, setMilestones }) => {
         );
       });
   };
+  const declineMilestone = () => {
+    fetch("/api/declineMilestoneBuyer", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        milestone_id: milestone._id,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setMilestones((prev) =>
+            prev.map((item) => {
+              if (item._id === data.milestone._id) {
+                return {
+                  ...data.milestone,
+                  client: milestone.client,
+                  role: milestone.role,
+                };
+              } else {
+                return item;
+              }
+            })
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not decline milestone. Please try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not decline milestone. Make sure you're online</h4>
+            </div>
+          </>
+        );
+      });
+  };
   return (
     <>
       <li className={`milestone seller`} key={milestone._id}>
@@ -379,17 +428,31 @@ const SellerMilestone = ({ milestone, setMilestones }) => {
           <h4>₹{milestone.amount}</h4>
           <div className="btns">
             {milestone.status === "pending" && (
-              <a
-                onClick={() =>
-                  Confirm({
-                    label: "Milestone Approval",
-                    question: "You sure want to approve this milestone?",
-                    callback: approveMilestone,
-                  })
-                }
-              >
-                Approve
-              </a>
+              <>
+                <a
+                  onClick={() =>
+                    Confirm({
+                      label: "Milestone Approval",
+                      question: "You sure want to approve this milestone?",
+                      callback: approveMilestone,
+                    })
+                  }
+                >
+                  Approve
+                </a>
+                <a
+                  className="disputeRes"
+                  onClick={() =>
+                    Confirm({
+                      label: "Milestone Decline",
+                      question: "You sure want to decline this milestone?",
+                      callback: declineMilestone,
+                    })
+                  }
+                >
+                  Decline
+                </a>
+              </>
             )}
             {milestone.status === "pendingRelease" && (
               <a className="released">Release requested</a>

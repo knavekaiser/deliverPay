@@ -602,6 +602,9 @@
         }
         .deliveryDetail {
           .head {
+            &:not(:first-child) {
+              margin-top: 1.5rem;
+            }
             display: flex;
             justify-content: space-between;
             h3 {
@@ -637,6 +640,15 @@
                 color: rgba(0, 0, 0, 0.7);
               }
             }
+          }
+          textarea {
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            width: 100%;
+            min-height: 5rem;
+            font-size: 1rem;
+            resize: none;
+            padding: 0.5rem;
           }
         }
       }

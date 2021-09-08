@@ -148,7 +148,7 @@ const MyShop = ({ history, location, match }) => {
     // });
     // FB.api(
     //   `/${user.fbMarket?.facebookPage?.id}`,
-    //   "get",
+    //   "GET",
     //   { fields: "access_token" },
     //   (res) => {
     //     if (res.access_token) {
@@ -1245,10 +1245,15 @@ const InstaForm = ({ product, onSuccess }) => {
   const [caption, setCaption] = useState("");
   const submit = (e) => {
     e.preventDefault();
+    setLoading(true);
     FB.api(
-      `${user.fbMarket?.instagramAccount?.id}/media`,
-      "post",
-      { caption, image_url: img },
+      `/${user.fbMarket?.instagramAccount?.id}/media`,
+      "POST",
+      {
+        caption,
+        image_url: img,
+        access_token: user.fbMarket.user.access_token,
+      },
       (res) => {
         if (res.error) {
           console.log(res.error);
@@ -1267,13 +1272,18 @@ const InstaForm = ({ product, onSuccess }) => {
               </div>
             </>
           );
+          setLoading(false);
           return;
         }
         FB.api(
-          `${user.fbMarket?.instagramAccount?.id}/media_publish`,
-          "post",
-          { creation_id: res.id },
+          `/${user.fbMarket?.instagramAccount?.id}/media_publish`,
+          "POST",
+          {
+            creation_id: res.id,
+            access_token: user.fbMarket.user.access_token,
+          },
           (res) => {
+            setLoading(false);
             if (res.error) {
               console.log(res.error);
               setMsg(
@@ -1299,6 +1309,7 @@ const InstaForm = ({ product, onSuccess }) => {
                 <button
                   onClick={() => {
                     setMsg(null);
+                    onSuccess?.();
                   }}
                 >
                   Okay
@@ -1318,7 +1329,7 @@ const InstaForm = ({ product, onSuccess }) => {
     <>
       <form className="content" onSubmit={submit}>
         <div className="profile">
-          <Img src={user.fbMarket?.instagramAccount?.profile_pic} />
+          <Img src={user.fbMarket?.instagramAccount?.profile_picture_url} />
           <p>{user.fbMarket?.instagramAccount?.username}</p>
         </div>
         <Img src={img} className="main" />

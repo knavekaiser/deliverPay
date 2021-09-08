@@ -265,6 +265,7 @@ app.patch(
   "/api/editUserProfile",
   passport.authenticate("userPrivate"),
   async (req, res) => {
+    console.log(req.body);
     User.findOneAndUpdate(
       { _id: req.user._id },
       {

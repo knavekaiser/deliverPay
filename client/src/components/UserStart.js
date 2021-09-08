@@ -3,7 +3,7 @@ import { SiteContext } from "../SiteContext";
 import { Header, Footer } from "./Elements";
 import { Route, Switch, useHistory, useLocation, Link } from "react-router-dom";
 import { Checkbox, Arrow_left_svg, Img } from "./Elements";
-import { GoogleLogin } from "react-google-login";
+// import { GoogleLogin } from "react-google-login";
 require("../components/styles/userStart.scss");
 
 function useQuery() {
@@ -355,7 +355,7 @@ const RegisterFormNew = () => {
 const LoginForm = () => {
   const { user, setUser } = useContext(SiteContext);
   const history = useHistory();
-  const [username, setUsername] = useState("+91");
+  const [username, setUsername] = useState("");
   const [pass, setPass] = useState("");
   const [errMsg, setErrMsg] = useState(false);
   const submit = (e) => {
@@ -397,25 +397,25 @@ const LoginForm = () => {
         }
       });
   };
-  const responseGoogle = (e) => {
-    if (e.tokenId) {
-      fetch("/api/userLoginUsingSocial", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ googleToken: e.tokenId }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.user) {
-            setUser(user);
-            history.replace("/account/home");
-          } else if (data.code === 401) {
-            setErrMsg("No account is associated with this Google account.");
-            setTimeout(() => setErrMsg(null), 2000);
-          }
-        });
-    }
-  };
+  // const responseGoogle = (e) => {
+  //   if (e.tokenId) {
+  //     fetch("/api/userLoginUsingSocial", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ googleToken: e.tokenId }),
+  //     })
+  //       .then((res) => res.json())
+  //       .then((data) => {
+  //         if (data.user) {
+  //           setUser(user);
+  //           history.replace("/account/home");
+  //         } else if (data.code === 401) {
+  //           setErrMsg("No account is associated with this Google account.");
+  //           setTimeout(() => setErrMsg(null), 2000);
+  //         }
+  //       });
+  //   }
+  // };
   return (
     <div className="formWrapper login">
       <Img
@@ -463,16 +463,18 @@ const LoginForm = () => {
           Login
         </button>
       </form>
-      <section className="socials">
-        <GoogleLogin
-          className="google"
-          clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
-          buttonText="Continue with Google"
-          onSuccess={responseGoogle}
-          onFailure={responseGoogle}
-          cookiePolicy={"single_host_origin"}
-        />
-      </section>
+      {
+        //   <section className="socials">
+        //   <GoogleLogin
+        //     className="google"
+        //     clientId="978249749020-kjq65au1n373ur5oap7n4ebo2fq1jdhq.apps.googleusercontent.com"
+        //     buttonText="Continue with Google"
+        //     onSuccess={responseGoogle}
+        //     onFailure={responseGoogle}
+        //     cookiePolicy={"single_host_origin"}
+        //   />
+        // </section>
+      }
       {errMsg && <p className="errMsg">{errMsg}</p>}
     </div>
   );

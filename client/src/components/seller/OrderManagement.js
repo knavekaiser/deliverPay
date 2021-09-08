@@ -838,6 +838,10 @@ export const FullOrder = ({ history, match }) => {
                 <label>Submitted at</label>
                 <Moment format="DD MMM YYYY, hh:mma">{order.createdAt}</Moment>
               </li>
+              <li>
+                <label>Note</label>
+                {order.note}
+              </li>
               <li></li>
               <li className="devide">
                 <label>Delivery Address</label>

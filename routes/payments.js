@@ -592,7 +592,6 @@ app.post(
     //   contact_id: razorPayContactId,
     //   ...fundAccountDetail,
     // };
-    // console.log(razorBody);
     // const razorPayFundAccount = await fetch(
     //   "https://api.razorpay.com/v1/fund_accounts",
     //   {
@@ -615,7 +614,6 @@ app.post(
     //     return null;
     //   });
     // if (razorPayContactId && razorPayFundAccount) {
-    //   console.log(razorPayFundAccount);
     //   fetch("https://api.razorpay.com/v1/payouts", {
     //     method: "POST",
     //     headers: razorHeaders,
@@ -668,6 +666,20 @@ app.post(
   }
 );
 
+const calculateDiscount = (product) => {
+  const { discount, price } = product;
+  if (discount?.amount) {
+    if (discount.type === "flat") {
+      return (+discount.amount).fix();
+    } else if (discount.type === "percent") {
+      return ((+price / 100) * discount.amount).fix();
+    } else {
+      return 0;
+    }
+  } else {
+    return null;
+  }
+};
 const calculateCouponCode = (coupon, price) => {
   if (!coupon) {
     return price;
@@ -750,7 +762,6 @@ app.post(
       }
     } else if (type === "BankAccount") {
       if (name && bank && ifsc && accountNumber && accountType && city) {
-        console.log(accountType);
         new Model({ name, bank, ifsc, accountNumber, city, type: accountType })
           .save()
           .then((method) => {
@@ -855,6 +866,7 @@ app.post(
   passport.authenticate("userPrivate"),
   async (req, res) => {
     const { buyer_id, amount, dscr, order, refund } = req.body;
+    const today = moment({ time: new Date(), format: "YYYY-MM-DD" });
     if (buyer_id?.toString() === req.user._id.toString()) {
       res
         .status(403)
@@ -864,6 +876,111 @@ app.post(
     const { fee, gst } = await Config.findOne().then((config) => config || {});
     const buyer = await User.findOne({ _id: buyer_id });
     if (buyer && amount && dscr) {
+      let newOrder = null;
+      if (order && !ObjectId.isValid(order)) {
+        if (order && (!order?.products?.length || !order?.deliveryDetail)) {
+          res.status(400).json({
+            code: 400,
+            message: "order with products, deliveryDetail required",
+          });
+          return;
+        }
+        const orderSeller = req.user;
+        const products = await Product.find(
+          {
+            $or: order.products.map(({ product, qty }) => ({
+              _id: product._id,
+              user: orderSeller._id,
+            })),
+          },
+          "-available -reviews -createdAt -updatedAt -__v -status"
+        ).then((products) =>
+          products.map((item) => ({
+            product: item,
+            qty:
+              order.products.find(
+                ({ product, qty }) =>
+                  product._id.toString() === item._id.toString()
+              )?.qty || 0,
+          }))
+        );
+        const productPrice = products.reduce(
+          (a, c) =>
+            (
+              a +
+              calculatePrice({ product: c.product, gst: orderSeller.gst }) *
+                c.qty
+            ).fix(),
+          0
+        );
+        const coupon = await Coupon.aggregate([
+          {
+            $match: {
+              code: order.couponCode,
+              "date.from": { $lt: new Date(today) },
+              "date.to": { $gte: new Date(today) },
+              status: "active",
+              threshold: { $lte: productPrice },
+              sellers: { $in: [orderSeller._id] },
+            },
+          },
+          {
+            $set: {
+              usage: {
+                $size: {
+                  $filter: {
+                    input: "$users",
+                    as: "user",
+                    cond: { $eq: ["$$user", req.user._id] },
+                  },
+                },
+              },
+            },
+          },
+          { $match: { $expr: { $gt: ["$validPerUser", "$usage"] } } },
+          { $unset: "usage" },
+        ]).then(([coupon]) => coupon);
+        const couponCodeDiscount =
+          (coupon?.type === "percent" &&
+            Math.min(
+              (productPrice / 100) * coupon.amount,
+              coupon.maxDiscount
+            )) ||
+          productPrice - coupon?.amount ||
+          0;
+        newOrder = await new Order({
+          ...order,
+          buyer,
+          seller: orderSeller,
+          products,
+          total: (
+            productPrice -
+            couponCodeDiscount +
+            (orderSeller.shopInfo?.shippingCost || 0)
+          )
+            .addPercent(fee)
+            .fix(),
+          ...(coupon && { coupon }),
+          fee,
+          ...orderSeller.shopInfo,
+          status: "sellerIssued",
+        })
+          .save()
+          .catch((err) => {
+            console.log(err);
+          });
+        if (newOrder && coupon) {
+          Coupon.findOneAndUpdate(
+            { _id: coupon._id },
+            { $push: { users: buyer._id } },
+            { new: true }
+          ).then((value) => {});
+        }
+      }
+      if (order && !ObjectId.isValid(order) && !newOrder) {
+        res.status(500).json({ code: 500, message: "Could not create order." });
+        return;
+      }
       new Milestone({
         ...req.body,
         status: "pending",
@@ -871,13 +988,18 @@ app.post(
         gst,
         buyer,
         seller: req.user,
+        ...(newOrder && { orderId: newOrder._id }),
+        ...(ObjectId.isValid(order) && { orderId: order }),
       })
         .save()
         .then((milestone) => {
           if (milestone) {
-            if (ObjectId.isValid(order)) {
+            if (newOrder || ObjectId.isValid(order)) {
               Order.findOneAndUpdate(
-                { _id: order, "seller._id": req.user._id },
+                {
+                  _id: newOrder?._id || ObjectId(order),
+                  "seller._id": req.user._id,
+                },
                 { $addToSet: { milestones: milestone._id } },
                 { new: true }
               ).then((value) => {});
@@ -889,6 +1011,12 @@ app.post(
                 { new: true }
               ).then((value) => {});
             }
+            res.json({
+              code: "ok",
+              message: "milestone requested",
+              milestone: milestone,
+              ...(newOrder && { order: newOrder }),
+            });
             InitiateChat({
               user: req.user._id,
               client: buyer._id,
@@ -906,11 +1034,6 @@ app.post(
                 });
               })
               .then((chatRes) => {
-                res.json({
-                  code: "ok",
-                  message: "milestone requested",
-                  milestone: milestone,
-                });
                 notify(
                   buyer._id,
                   JSON.stringify({
@@ -1138,6 +1261,22 @@ app.patch(
                 )
               )
               .then((updated) => {
+                res.json({
+                  code: "ok",
+                  message: "milestone approved",
+                  milestone,
+                });
+                if (milestone.orderId) {
+                  Order.findOneAndUpdate(
+                    {
+                      _id: milestone.orderId,
+                      status: "sellerIssued",
+                      "buyer._id": req.user._id,
+                    },
+                    { status: "approved" },
+                    { new: true }
+                  ).then((value) => {});
+                }
                 InitiateChat({
                   user: req.user._id,
                   client: milestone.seller._id,
@@ -1155,11 +1294,6 @@ app.patch(
                     });
                   })
                   .then((chatRes) => {
-                    res.json({
-                      code: "ok",
-                      message: "milestone approved",
-                      milestone,
-                    });
                     notify(
                       milestone.seller._id,
                       JSON.stringify({
@@ -1191,6 +1325,74 @@ app.patch(
     }
   }
 );
+app.patch(
+  "/api/declineMilestoneBuyer",
+  passport.authenticate("userPrivate"),
+  (req, res) => {
+    const { milestone_id } = req.body;
+    if (milestone_id) {
+      Milestone.findOneAndUpdate(
+        { _id: milestone_id, "buyer._id": req.user._id, status: "pending" },
+        { status: "declined" },
+        { new: true }
+      )
+        .then((milestone) => {
+          if (milestone) {
+            res.json({
+              code: "ok",
+              message: "milestone approved",
+              milestone,
+            });
+            if (milestone.orderId) {
+              Order.findOneAndUpdate(
+                {
+                  _id: milestone.orderId,
+                  status: "sellerIssued",
+                  "buyer._id": req.user._id,
+                },
+                { status: "declined" },
+                { new: true }
+              ).then((value) => {});
+            }
+            InitiateChat({
+              user: req.user._id,
+              client: milestone.seller._id,
+            })
+              .then(([userChat, clientChat]) => {
+                return SendMessage({
+                  rooms: [userChat._id, clientChat._id],
+                  message: {
+                    type: "milestone",
+                    from: req.user._id,
+                    to: milestone.seller._id,
+                    text: `${req.user.firstName} decliend a milestones`,
+                    milestoneId: milestone._id,
+                  },
+                });
+              })
+              .then((chatRes) => {
+                notify(
+                  milestone.seller._id,
+                  JSON.stringify({
+                    title: "Milestone created",
+                    body: `${milestone.buyer.firstName} declined a milestone`,
+                  }),
+                  "User"
+                );
+              });
+          } else {
+            res.status(500).json({ code: 500, message: "bad request" });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ code: 500, message: "something went wrong" });
+        });
+    } else {
+      res.status(400).json({ code: 400, message: "milestone_id is required" });
+    }
+  }
+);
 app.post(
   "/api/createMilestone",
   passport.authenticate("userPrivate"),
@@ -1209,7 +1411,7 @@ app.post(
       return;
     }
     let newOrder = null;
-    if (order) {
+    if (order && !ObjectId.isValid(order)) {
       if (order && (!order?.products?.length || !order?.deliveryDetail)) {
         res.status(400).json({
           code: 400,
@@ -1294,7 +1496,7 @@ app.post(
         .catch((err) => {
           console.log(err);
         });
-      if (newOrder) {
+      if (newOrder && coupon) {
         Coupon.findOneAndUpdate(
           { _id: coupon._id },
           { $push: { users: req.user._id } },
@@ -1302,7 +1504,7 @@ app.post(
         ).then((value) => {});
       }
     }
-    if (order && !newOrder) {
+    if (order && !ObjectId.isValid(order) && !newOrder) {
       res.status(500).json({ code: 500, message: "Could not place order." });
       return;
     }
@@ -1314,14 +1516,18 @@ app.post(
         fee,
         gst,
         seller,
-        ...(newOrder && { order: newOrder._id }),
+        ...(newOrder && { orderId: newOrder._id }),
+        ...(ObjectId.isValid(order) && { orderId: order }),
       })
         .save()
         .then((milestone) => {
           if (milestone) {
-            if (newOrder) {
+            if (newOrder || ObjectId.isValid(order)) {
               Order.findOneAndUpdate(
-                { _id: newOrder._id, "buyer._id": req.user._id },
+                {
+                  _id: newOrder?._id || ObjectId(order),
+                  "buyer._id": req.user._id,
+                },
                 { $addToSet: { milestones: milestone._id } },
                 { new: true }
               ).then((value) => {});
@@ -1512,7 +1718,7 @@ app.patch(
       //           "User"
       //         );
       //         res.json({
-      //           message: "milestonre released",
+      //           message: "milestone released",
       //           milestone: newMilestone,
       //         });
       //       });
@@ -1587,7 +1793,7 @@ app.patch(
       //           "User"
       //         );
       //         res.json({
-      //           message: "milestonre released",
+      //           message: "milestone released",
       //           milestone: newMilestone,
       //         });
       //       });
@@ -1642,7 +1848,7 @@ app.patch(
               "User"
             );
             res.json({
-              message: "milestonre released",
+              message: "milestone released",
               milestone: newMilestone,
             });
           });
