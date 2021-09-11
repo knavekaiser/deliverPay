@@ -71,7 +71,6 @@ function resizeWindow() {
 }
 
 function App() {
-  const { siteLoading, setSiteLoading } = useContext(SiteContext);
   const [mobile, setMobile] = useState(window.innerWidth <= 480);
   useEffect(() => {
     window.addEventListener("resize", () => resizeWindow());

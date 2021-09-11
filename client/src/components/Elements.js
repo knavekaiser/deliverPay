@@ -897,6 +897,7 @@ export const Img = ({ src: defaultSrc, ...rest }) => {
   }, [defaultSrc]);
   return (
     <img
+      alt={rest.alt || ""}
       src={src}
       onError={() => setSrc("/img_err.png")}
       {...rest}

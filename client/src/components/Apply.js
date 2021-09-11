@@ -1,14 +1,10 @@
-import { useState, useEffect, useContext, useRef } from "react";
-import { SiteContext } from "../SiteContext";
-import { Route, Switch, useHistory, Link } from "react-router-dom";
-import { Checkbox, Succ_svg, Err_svg, Header, Footer } from "./Elements";
-import { GoogleLogin } from "react-google-login";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Succ_svg, Err_svg, Header, Footer } from "./Elements";
 import { Modal } from "./Modal";
 require("./styles/apply.scss");
 
 const WorkRequestForm = () => {
-  const { user } = useContext(SiteContext);
-  const history = useHistory();
   const [loading, setLoading] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -163,8 +159,6 @@ const WorkRequestForm = () => {
 };
 
 function Apply() {
-  const { setUser, user } = useContext(SiteContext);
-  const history = useHistory();
   return (
     <div className="generic apply">
       <Header />

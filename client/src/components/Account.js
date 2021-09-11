@@ -45,7 +45,6 @@ import {
   WorkplaceShareButton,
   EmailIcon,
   FacebookIcon,
-  FacebookMessengerIcon,
   HatenaIcon,
   InstapaperIcon,
   LineIcon,
@@ -61,7 +60,6 @@ import {
   TwitterIcon,
   ViberIcon,
   VKIcon,
-  WeiboIcon,
   WhatsappIcon,
   WorkplaceIcon,
 } from "react-share";
@@ -104,13 +102,10 @@ require("./styles/generic.scss");
 const Home = () => {
   const { user, userType, setUserType } = useContext(SiteContext);
   const history = useHistory();
-  const [value, setValue] = useState("");
-  const [users, setUsers] = useState([]);
   const [recentPayments, setRecentPayments] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [client, setClient] = useState(null);
   const [msg, setMsg] = useState(null);
-  const milestoneTimeout = useRef();
   useEffect(() => {
     fetch("/api/recentPayments")
       .then((res) => res.json())
@@ -316,7 +311,6 @@ const Home = () => {
 
 export const UserSearch = ({ setClient }) => {
   const { userType, user } = useContext(SiteContext);
-  const history = useHistory();
   const [msg, setMsg] = useState(null);
   const [users, setUsers] = useState([]);
   const [value, setValue] = useState("");
@@ -495,7 +489,6 @@ export const UserSearch = ({ setClient }) => {
 function Account() {
   const { user, userType } = useContext(SiteContext);
   const { unread } = useContext(ChatContext);
-  const history = useHistory();
   const location = useLocation();
   useEffect(() => {
     if (!socket.connected) {
@@ -1598,22 +1591,13 @@ function Account() {
   );
 }
 export const ProfileAvatar = () => {
-  const {
-    user,
-    setUser,
-    cart,
-    setCart,
-    sellerCart,
-    setSellerCart,
-    userType,
-    setUserType,
-  } = useContext(SiteContext);
+  const { user, setUser, cart, sellerCart, userType, setUserType } = useContext(
+    SiteContext
+  );
   const history = useHistory();
-  const menuRef = useRef(null);
   const [menu, setMenu] = useState(false);
   const [invite, setInvite] = useState(false);
   const [noti, setNoti] = useState(false);
-  const [unread, setUnread] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [msg, setMsg] = useState(null);
   const logout = (e) => {
@@ -1646,12 +1630,6 @@ export const ProfileAvatar = () => {
     const newNoti = user.notifications?.find((item) => {
       return new Date(item.createdAt) > new Date(user.notificationLastRead);
     });
-    if (newNoti) {
-      setUnread(true);
-    }
-    if (noti) {
-      setUnread(false);
-    }
   }, [noti, user]);
   const referLink = `${window.location.origin}/u/join?referer=${user._id}`;
   return (

@@ -70,6 +70,7 @@ const ShopSetup = () => {
           : null,
         shopInfo: {
           name: shopName,
+          offerings,
           ...(logoLink && { logo: logoLink }),
           phone,
           charge,

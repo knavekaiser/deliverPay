@@ -4,7 +4,6 @@ import React, {
   useEffect,
   useContext,
   useRef,
-  useCallback,
 } from "react";
 import { useHistory } from "react-router-dom";
 import { LS } from "./components/Elements";

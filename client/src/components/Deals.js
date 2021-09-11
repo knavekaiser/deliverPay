@@ -4,7 +4,6 @@ import {
   useContext,
   useRef,
   useCallback,
-  useLayoutEffect,
   lazy,
 } from "react";
 import { Link, useHistory, Route } from "react-router-dom";
@@ -37,7 +36,7 @@ const updateChatLastSeen = (rooms) => {
 };
 
 const Deals = ({ history, location, match }) => {
-  const { user, setUser } = useContext(SiteContext);
+  const { user } = useContext(SiteContext);
   const { contacts, setContacts } = useContext(ChatContext);
   const user_id = useRef();
   const [userCard, setUserCard] = useState(null);

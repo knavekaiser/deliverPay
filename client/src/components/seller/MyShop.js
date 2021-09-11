@@ -208,7 +208,11 @@ const MyShop = ({ history, location, match }) => {
 const ProductForm = ({ prefill, onSuccess, categories }) => {
   const { user } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
-  const [type, setType] = useState(prefill?.type || "product");
+  const [type, setType] = useState(
+    prefill?.type ||
+      (user.shopInfo?.offerings === "service" ? "service" : "product") ||
+      "product"
+  );
   const [category, setCategory] = useState(prefill?.category || "");
   const [discount, setDiscount] = useState({
     type: prefill?.discount?.type || null,
@@ -1729,6 +1733,7 @@ const Settings = ({ categories, setCategories }) => {
           <ShopEditForm setOpen={setShopEdit} setMsg={setMsg} />
         ) : (
           <>
+            <p>We sell: {user.shopInfo.offerings}</p>
             <p>Brand/Shop name: {user.shopInfo.name}</p>
             <p>
               Logo: <Img className="logo" src={user.shopInfo.logo} />
@@ -1985,14 +1990,18 @@ const Settings = ({ categories, setCategories }) => {
 const ShopEditForm = ({ setOpen, setMsg }) => {
   const { user, setUser } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
+  const [offerings, setOfferings] = useState(user.shopInfo?.offerings || "");
   const [shopName, setShopName] = useState(user.shopInfo?.name || "");
   const [phone, setPhone] = useState(user.shopInfo?.phone || "");
-  const [logo, setLogo] = useState([]);
+  const [logo, setLogo] = useState(
+    user.shopInfo?.logo ? [user.shopInfo.logo] : []
+  );
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
     const [logoLink] = (await UploadFiles({ files: logo, setMsg })) || [];
     updateProfileInfo({
+      "shopInfo.offerings": offerings,
       "shopInfo.name": shopName,
       "shopInfo.phone": phone,
       "shopInfo.logo": logoLink,
@@ -2020,6 +2029,18 @@ const ShopEditForm = ({ setOpen, setMsg }) => {
   };
   return (
     <form onSubmit={submit}>
+      <section>
+        <label>We sell</label>
+        <Combobox
+          defaultValue={offerings}
+          options={[
+            { label: "Product", value: "product" },
+            { label: "Service", value: "service" },
+            { label: "Both", value: "product,service" },
+          ]}
+          onChange={(option) => setOfferings(option.value)}
+        />
+      </section>
       <section>
         <label>Shop Name</label>
         <input
