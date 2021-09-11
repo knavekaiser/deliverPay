@@ -963,7 +963,7 @@ export const Combobox = ({
     } else if (options.find((item) => item.value === defaultValue)) {
       return options.find((item) => item.value === defaultValue).label;
     } else if (typeof defaultValue === "object") {
-      return defaultValue.label;
+      return defaultValue?.label;
     } else {
       return "";
     }
@@ -975,13 +975,14 @@ export const Combobox = ({
   const section = useRef();
   useLayoutEffect(() => {
     const { width, height, x, y } = section.current.getBoundingClientRect();
+    const top = window.innerHeight - y;
     setOptionsStyle({
       position: "absolute",
       left: x,
-      top: y + height,
+      top: Math.min(y + height, window.innerHeight - (37 * options.length + 8)),
       width: width,
       height: 37 * options.length,
-      maxHeight: window.innerHeight - (y + height) - 16,
+      maxHeight: window.innerHeight - 16,
     });
   }, [open]);
   return (
@@ -995,6 +996,7 @@ export const Combobox = ({
         ref={input}
         required={required}
         value={value}
+        autoComplete="off"
         onFocus={(e) => e.target.blur()}
         onChange={() => {}}
       />
@@ -1201,24 +1203,26 @@ export const FileInput = ({
           </div>
         );
       })}
-      <div className="uploadBtn">
-        <Plus_svg />
-        <input
-          name={name}
-          type="file"
-          multiple={multiple}
-          required={required}
-          accept={accept}
-          onChange={(e) => {
-            setFiles((prev) => [
-              ...prev,
-              ...[...e.target.files].filter(
-                (item) => !files.some((file) => file.name === item.name)
-              ),
-            ]);
-          }}
-        />
-      </div>
+      {(files.length === 0 || multiple) && (
+        <div className="uploadBtn">
+          <Plus_svg />
+          <input
+            name={name}
+            type="file"
+            multiple={multiple}
+            required={required}
+            accept={accept}
+            onChange={(e) => {
+              setFiles((prev) => [
+                ...prev,
+                ...[...e.target.files].filter(
+                  (item) => !files.some((file) => file.name === item.name)
+                ),
+              ]);
+            }}
+          />
+        </div>
+      )}
     </section>
   );
 };

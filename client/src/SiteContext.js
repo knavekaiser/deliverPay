@@ -147,7 +147,6 @@ export const ChatProvider = ({ children }) => {
         "connectedToRoom",
         ({ rooms, newChat, client, clientRoom_id }) => {
           if (newChat) {
-            console.log(newChat, client);
             setContacts((prev) =>
               prev.map((chat) => {
                 if (chat.client._id === client) {

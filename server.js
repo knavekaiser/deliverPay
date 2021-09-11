@@ -266,7 +266,7 @@ io.on("connection", async (socket) => {
       if (decoded) {
         socket.on("joinRooms", async ({ rooms }) => {
           socket.join(decoded.sub.toString());
-          rooms.forEach((room) => {
+          rooms?.forEach((room) => {
             socket.join(room);
           });
         });

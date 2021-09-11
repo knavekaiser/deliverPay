@@ -1228,6 +1228,88 @@
   }
 }
 
+.shopSetup {
+  height: 100%;
+  display: grid;
+  grid-template-rows: min-content 1fr min-content;
+  grid-gap: 2rem;
+  max-width: 40rem;
+  margin: auto;
+  .innerWrapper {
+    display: grid;
+    grid-gap: 2rem;
+    grid-auto-rows: min-content;
+    section {
+      display: grid;
+      align-items: center;
+      grid-gap: 0.5rem;
+      h4 {
+        font-weight: 400;
+      }
+      input {
+        font-size: 1rem;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+      }
+      &.shopName {
+        input {
+          flex: 1;
+        }
+      }
+    }
+    .note {
+      font-size: 0.8rem;
+      color: rgba(0, 0, 0, 0.6);
+    }
+    .bankDetails {
+      display: grid;
+      max-width: 20rem;
+    }
+    .terms {
+      ul {
+        border: 1px solid rgba(0, 0, 0, 0.3);
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        display: grid;
+        grid-gap: 1rem;
+        li {
+          display: flex;
+          grid-gap: 1rem;
+          p {
+            flex: 1;
+          }
+        }
+      }
+      .newTerm {
+        display: flex;
+        grid-gap: 1rem;
+        align-items: center;
+        textarea {
+          flex: 1;
+          min-height: 100%;
+          font-size: 1rem;
+          padding: 0.75rem;
+          border: 1px solid rgba(0, 0, 0, 0.3);
+          resize: none;
+          border-radius: 0.5rem;
+        }
+      }
+    }
+  }
+  .btns {
+    display: flex;
+    .next {
+      margin: auto;
+      margin-right: 0;
+    }
+  }
+  .pad {
+    height: 1px;
+    width: 100%;
+  }
+}
+
 @media only screen and (max-width: 480px) {
   .generic.marketplace {
     .content {

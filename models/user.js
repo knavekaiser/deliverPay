@@ -79,9 +79,15 @@ const userModel = new Schema(
       userAgreement: { type: Boolean, default: false },
     },
     shopInfo: {
+      name: { type: String },
+      logo: { type: String },
+      offerings: { type: String },
+      phone: { type: String },
       shippingCost: { type: Number },
       deliveryWithin: { type: Number },
+      deliveryMethod: { type: String },
       refundable: { type: String },
+      serviceRefund: { type: Boolean },
       terms: [{ type: String }],
       paymentMethod: {
         name: { type: String },

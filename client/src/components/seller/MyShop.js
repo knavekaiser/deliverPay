@@ -43,6 +43,8 @@ import { FacebookShareButton } from "react-share";
 import { Step } from "./fbMarketplace";
 import { CSVLink } from "react-csv";
 
+const ShopSetup = lazy(() => import("./ShopSetup.js"));
+
 require("../styles/products.scss");
 
 const parseXLSXtoJSON = (file, cb) => {
@@ -128,10 +130,9 @@ const MyShop = ({ history, location, match }) => {
       !user.shopInfo?.terms?.length ||
       user.shopInfo?.shippingCost === undefined ||
       user.shopInfo?.shippingCost === null ||
-      user.shopInfo?.deliveryWithin === undefined ||
-      user.shopInfo?.deliveryWithin === null ||
       user.shopInfo?.refundable === undefined ||
-      Object.values(user.shopInfo?.paymentMethod || {}).length < 6
+      user.shopInfo?.paymentMethod === undefined ||
+      user.shopInfo?.paymentMethod === null
     ) {
       setShopSetupComplete(false);
     } else {
@@ -157,6 +158,9 @@ const MyShop = ({ history, location, match }) => {
     //   }
     // );
   }, [user]);
+  if (!user.shopInfo) {
+    return <ShopSetup />;
+  }
   return (
     <>
       {userType === "buyer" && <Redirect to="/account/orders/current" />}
@@ -1684,7 +1688,7 @@ const BatchUpload = ({ onSuccess, categories }) => {
   );
 };
 
-const defaultTerms = [
+export const defaultTerms = [
   "Buyer will be responsible for paying for shipping costs & for returning the item.",
   "Shipping costs are nonrefundable.",
   "Orders must be returned with Original Packaging & Securely.",
@@ -1694,6 +1698,7 @@ const defaultTerms = [
 ];
 const Settings = ({ categories, setCategories }) => {
   const { user, setUser } = useContext(SiteContext);
+  const [shopEdit, setShopEdit] = useState(false);
   const [gstEdit, setGstEdit] = useState(false);
   const [shippingEdit, setShippingEdit] = useState(false);
   const [termsEdit, setTermsEdit] = useState();
@@ -1708,13 +1713,31 @@ const Settings = ({ categories, setCategories }) => {
         )}
         {(user.shopInfo?.shippingCost === undefined ||
           user.shopInfo?.shippingCost === null ||
-          user.shopInfo?.deliveryWithin === undefined ||
-          user.shopInfo?.deliveryWithin === null ||
           user.shopInfo?.refundable === undefined) && (
           <p className="err">Add Shipping & Delivery detail</p>
         )}
-        {Object.values(user.shopInfo?.paymentMethod || {}).length < 6 && (
+        {!user.shopInfo?.paymentMethod && (
           <p className="err">Add valid payment method</p>
+        )}
+      </div>
+      <div className="gst">
+        <h2 className="head">
+          Shop detail{" "}
+          {!shopEdit && <button onClick={() => setShopEdit(true)}>Edit</button>}
+        </h2>
+        {shopEdit ? (
+          <ShopEditForm setOpen={setShopEdit} setMsg={setMsg} />
+        ) : (
+          <>
+            <p>Brand/Shop name: {user.shopInfo.name}</p>
+            <p>
+              Logo: <Img className="logo" src={user.shopInfo.logo} />
+            </p>
+            <p>
+              Phone:
+              {user.shopInfo.phone}
+            </p>
+          </>
         )}
       </div>
       <div className="cat">
@@ -1882,17 +1905,26 @@ const Settings = ({ categories, setCategories }) => {
           />
         ) : (
           <>
-            <p>Name: {user.shopInfo?.paymentMethod?.name || "--"}</p>
-            <p>Bank: {user.shopInfo?.paymentMethod?.bank || "--"}</p>
-            <p>City: {user.shopInfo?.paymentMethod?.city || "--"}</p>
-            <p>
-              Account type: {user.shopInfo?.paymentMethod?.accountType || "--"}
-            </p>
-            <p>
-              Account Number:{" "}
-              {user.shopInfo?.paymentMethod?.accountNumber || "--"}
-            </p>
-            <p>ifsc: {user.shopInfo?.paymentMethod?.ifsc || "--"}</p>
+            {user.shopInfo.paymentMethod?.bank ? (
+              <>
+                <p>Name: {user.shopInfo?.paymentMethod?.name || "--"}</p>
+                <p>Bank: {user.shopInfo?.paymentMethod?.bank || "--"}</p>
+                <p>City: {user.shopInfo?.paymentMethod?.city || "--"}</p>
+                <p>
+                  Account type:{" "}
+                  {user.shopInfo?.paymentMethod?.accountType || "--"}
+                </p>
+                <p>
+                  Account Number:{" "}
+                  {user.shopInfo?.paymentMethod?.accountNumber || "--"}
+                </p>
+                <p>ifsc: {user.shopInfo?.paymentMethod?.ifsc || "--"}</p>
+              </>
+            ) : (
+              <>
+                <p>Payment method: {user.shopInfo.paymentMethod}</p>
+              </>
+            )}
           </>
         )}
       </div>
@@ -1950,6 +1982,75 @@ const Settings = ({ categories, setCategories }) => {
   );
 };
 
+const ShopEditForm = ({ setOpen, setMsg }) => {
+  const { user, setUser } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
+  const [shopName, setShopName] = useState(user.shopInfo?.name || "");
+  const [phone, setPhone] = useState(user.shopInfo?.phone || "");
+  const [logo, setLogo] = useState([]);
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const [logoLink] = (await UploadFiles({ files: logo, setMsg })) || [];
+    updateProfileInfo({
+      "shopInfo.name": shopName,
+      "shopInfo.phone": phone,
+      "shopInfo.logo": logoLink,
+    })
+      .then(({ user: newUser }) => {
+        setLoading(false);
+        if (newUser) {
+          setUser((prev) => ({ ...prev, shopInfo: newUser.shopInfo }));
+          setOpen(false);
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not upadte GST Information. Make sure you're online</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <form onSubmit={submit}>
+      <section>
+        <label>Shop Name</label>
+        <input
+          required={true}
+          type="text"
+          value={shopName}
+          onChange={(e) => setShopName(e.target.value)}
+        />
+      </section>
+      <section>
+        <label>Logo</label>
+        <FileInput prefill={logo} onChange={(files) => setLogo(files)} />
+      </section>
+      <section>
+        <label>Phone</label>
+        <input
+          required={true}
+          type="text"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </section>
+      <section className="btns">
+        <button>Save Changes</button>
+        <button type="button" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </section>
+    </form>
+  );
+};
 const GstEditForm = ({ setOpen, setMsg }) => {
   const { user, setUser } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
@@ -2220,6 +2321,9 @@ const TermsEditForm = ({ setOpen, termsEdit, setMsg }) => {
 };
 const PaymentMethodForm = ({ prefill, onSuccess, setMsg, setOpen }) => {
   const { setUser } = useContext(SiteContext);
+  const [method, setMethod] = useState(
+    prefill?.bank ? "bankAccount" : prefill || ""
+  );
   const [bank, setBank] = useState(prefill?.bank || "");
   const [name, setName] = useState(prefill?.name || "");
   const [ifsc, setIfsc] = useState(prefill?.ifsc || "");
@@ -2231,14 +2335,17 @@ const PaymentMethodForm = ({ prefill, onSuccess, setMsg, setOpen }) => {
   const submit = (e) => {
     e.preventDefault();
     updateProfileInfo({
-      "shopInfo.paymentMethod": {
-        name,
-        bank,
-        city,
-        accountType: type,
-        ifsc,
-        accountNumber,
-      },
+      "shopInfo.paymentMethod":
+        method === "bankAccount"
+          ? {
+              name,
+              bank,
+              city,
+              accountType: type,
+              ifsc,
+              accountNumber,
+            }
+          : method,
     })
       .then(({ user: newUser }) => {
         if (newUser) {
@@ -2276,56 +2383,73 @@ const PaymentMethodForm = ({ prefill, onSuccess, setMsg, setOpen }) => {
   };
   return (
     <form className="paymentMethodForm netBanking" onSubmit={submit}>
-      <section className="inputs">
-        <input
-          type="text"
-          name="name"
-          placeholder="Full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required={true}
-        />
-        <input
-          type="text"
-          name="bank"
-          placeholder="Bank"
-          value={bank}
-          onChange={(e) => setBank(e.target.value)}
-          required={true}
-        />
-        <input
-          type="text"
-          name="city"
-          placeholder="City"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          required={true}
-        />
-        <input
-          type="text"
-          name="type"
-          placeholder="Account type ie. Savings / Current"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          required={true}
-        />
-        <input
-          type="text"
-          name="accountNumber"
-          placeholder="Account Number"
-          value={accountNumber}
-          onChange={(e) => setAccountNumber(e.target.value)}
-          required={true}
-        />
-        <input
-          type="text"
-          name="ifsc"
-          placeholder="IFSC"
-          value={ifsc}
-          onChange={(e) => setIfsc(e.target.value)}
-          required={true}
+      <section>
+        <label></label>
+        <Combobox
+          defaultValue={method}
+          options={[
+            { label: "Check", value: "check" },
+            { label: "Demand Draft", value: "demandDraft" },
+            {
+              label: "Directly in your bank account",
+              value: "bankAccount",
+            },
+          ]}
+          onChange={(op) => setMethod(op.value)}
         />
       </section>
+      {method === "bankAccount" && (
+        <section className="inputs">
+          <input
+            type="text"
+            name="name"
+            placeholder="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required={true}
+          />
+          <input
+            type="text"
+            name="bank"
+            placeholder="Bank"
+            value={bank}
+            onChange={(e) => setBank(e.target.value)}
+            required={true}
+          />
+          <input
+            type="text"
+            name="city"
+            placeholder="City"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            required={true}
+          />
+          <input
+            type="text"
+            name="type"
+            placeholder="Account type ie. Savings / Current"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            required={true}
+          />
+          <input
+            type="text"
+            name="accountNumber"
+            placeholder="Account Number"
+            value={accountNumber}
+            onChange={(e) => setAccountNumber(e.target.value)}
+            required={true}
+          />
+          <input
+            type="text"
+            name="ifsc"
+            placeholder="IFSC"
+            value={ifsc}
+            onChange={(e) => setIfsc(e.target.value)}
+            required={true}
+          />
+        </section>
+      )}
       <section className="btns">
         <button type="submit">Save Changes</button>
         <button type="button" onClick={() => setOpen(false)}>

@@ -316,8 +316,8 @@ global.InitiateChat = async ({ user, client }) => {
 global.SendMessage = async ({ rooms, message }) => {
   const _id = ObjectId();
   const newMessages = io
-    .to(rooms[0].toString())
-    .to(rooms[1].toString())
+    .to(rooms[0]?.toString())
+    .to(rooms[1]?.toString())
     .emit("messageToUser", { ...message, _id });
   return Chat.updateMany(
     { $or: rooms.map((room) => ({ _id: room })) },
