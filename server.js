@@ -22,6 +22,20 @@ const URI = process.env.MONGO_URI;
 const Razorpay = require("razorpay");
 const path = require("path");
 
+const Agenda = require("agenda");
+const agenda = new Agenda({
+  db: { address: process.env.MONGO_URI, collection: "cronjobs" },
+});
+(async function () {
+  await agenda.start();
+  console.log("agenda started");
+})();
+
+agenda.define("notifyUser", async (job) => {
+  const { _id, noti, userType } = job.attrs.data;
+  await notify(_id, noti, userType);
+});
+
 global.razorpay = new Razorpay({
   key_id: process.env.RAZOR_PAY_ID,
   key_secret: process.env.RAZOR_PAY_SECRET,

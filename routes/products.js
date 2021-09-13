@@ -1,4 +1,7 @@
+const fs = require("fs");
 const { FB } = require("fb");
+// const React = require("react");
+// const ReactDOMServer = require("react-dom/server");
 
 app.get("/api/products", passport.authenticate("userPrivate"), (req, res) => {
   const {
@@ -64,10 +67,29 @@ app.post(
         .countDocuments()
         .then((num) => {
           if (num < 100) {
-            new Product({ ...req.body, user: req.user._id })
+            new Product({
+              ...req.body,
+              images: [
+                "https://images.unsplash.com/photo-1628191079535-d1900add3533?ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
+              ],
+              user: req.user._id,
+            })
               .save()
               .then((product) => {
-                res.json({ code: "ok", product });
+                if (
+                  req.user.fbMarket?.user?.access_token &&
+                  req.user.fbMarket?.commerceAccount?.catalog?.id
+                ) {
+                  addToFbMarket(
+                    [product],
+                    req.user.fbMarket.commerceAccount.catalog.id,
+                    req.user._id
+                  ).then((fbRes) => {
+                    res.json({ code: "ok", product, fbMarket: fbRes });
+                  });
+                } else {
+                  res.json({ code: "ok", product });
+                }
               })
               .catch((err) => {
                 console.log(err);
@@ -172,12 +194,12 @@ app.post(
   "/api/uploadProductImg",
   passport.authenticate("userPrivate"),
   (req, res) => {
-    const { category, images } = req.body;
+    const { category, images, type } = req.body;
     if (category && images) {
       const products = images.map(
         (img, i) =>
           new Product({
-            type: "product",
+            type: type || "product",
             user: req.user._id,
             name: "Product draft" + i,
             dscr: "Product draft" + i,
@@ -249,7 +271,7 @@ app.patch(
 );
 
 app.get("/api/getProducts", (req, res) => {
-  const { seller, q, page, perPage, sort, order, category } = req.query;
+  const { seller, buyer, q, page, perPage, sort, order, category } = req.query;
   const sortOrder = {
     [sort || "popularity"]: order === "dsc" ? -1 : 1,
   };
@@ -324,10 +346,16 @@ app.get("/api/getProducts", (req, res) => {
         ...(ObjectId.isValid(seller) && {
           seller: await User.findOne(
             { _id: seller },
-            "firstName lastName phone email profileImg"
+            "firstName lastName phone email profileImg shopInfo"
           ),
           categories: await Category.findOne({ user: seller }).then(
             (dbRes) => dbRes?.categories || null
+          ),
+        }),
+        ...(ObjectId.isValid(buyer) && {
+          buyer: await User.findOne(
+            { _id: buyer },
+            "firstName lastName phone email profileImg"
           ),
         }),
       });
@@ -339,7 +367,10 @@ app.get("/api/getProducts", (req, res) => {
 app.get("/api/singleProduct", (req, res) => {
   if (ObjectId.isValid(req.query._id)) {
     Product.findOne({ _id: req.query._id })
-      .populate("user", "firstName lastName phone email profileImg gst")
+      .populate(
+        "user",
+        "firstName lastName phone email profileImg gst shopInfo"
+      )
       .then((product) => {
         if (product) {
           res.json({ code: "ok", product });
@@ -353,6 +384,22 @@ app.get("/api/singleProduct", (req, res) => {
     res.status(400).json({ code: 400, message: "Valid _id is required." });
   }
 });
+
+// app.get("/marketplace/:_id", (req, res) => {
+//   const { _id } = req.params;
+//   console.log(_id);
+//   const app = ReactDOMServer.renderToString(App);
+//   const indexFile = path.resolve("./client/build/index.html");
+//   fs.readFile(indexFile, "utf8", (err, data) => {
+//     if (err) {
+//       console.error("Something went wrong:", err);
+//       return res.status(500).send("Oops, better luck next time!");
+//     }
+//     return res.send(
+//       data.replace('<div id="root"></div>', `<div id="root">${app}</div>`)
+//     );
+//   });
+// });
 app.post(
   "/api/getCartDetail",
   passport.authenticate("userPrivate"),
@@ -624,42 +671,23 @@ app.post(
   }
 );
 
-const addToFbMarket = async (products, catalogId, user_id, accessToken) => {
+const addToFbMarket = async (products, catalogId) => {
   const fb_products = [];
   for (var i = 0; i < products.length; i++) {
     const item = products[i];
-    await fetch(
-      `https://graph.facebook.com/${catalogId}/products?${new URLSearchParams({
-        access_token: accessToken,
-      }).toString()}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          currency: "INR",
-          name: item.name,
-          price: item.price,
-          price_amount: item.price * 100,
-          image_url: item.images[0],
-          category: item.category,
-          brand: item.brand || "none",
-          retailer_id: item._id,
-          url: `https://deliverypay.in/marketplace/${item._id}`,
-          description: item.dscr,
-        }),
-      }
-    )
-      .then((res) => res.json())
+    await FB.api(`/${catalogId}/products`, "POST", {
+      currency: "INR",
+      name: item.name,
+      price: item.price * 100,
+      price_amount: item.price * 100,
+      image_url: item.images[0],
+      category: item.category,
+      brand: item.brand || "none",
+      retailer_id: item._id,
+      url: `https://deliverypay.in/marketplace/${item._id}`,
+      description: item.dscr,
+    })
       .then(async (data) => {
-        if (data.error) {
-          fb_products.push({
-            _id: item._id,
-            name: item.name,
-            success: false,
-            error: data.error.error_user_msg || data.error.message,
-          });
-          return;
-        }
         await Product.findOneAndUpdate(
           { _id: item._id },
           { fbMarketId: data.id },
@@ -672,39 +700,28 @@ const addToFbMarket = async (products, catalogId, user_id, accessToken) => {
             fbMarketId: dbProduct.fbMarketId,
           });
         });
-      });
-  }
-  return fb_products;
-};
-const removeFromFbMarket = async (
-  products,
-  catalogId,
-  user_id,
-  accessToken
-) => {
-  const fb_products = [];
-  for (var i = 0; i < products.length; i++) {
-    const item = products[i];
-    await fetch(
-      `https://graph.facebook.com/${item.fbMarketId}?${new URLSearchParams({
-        access_token: accessToken,
-      }).toString()}`,
-      {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      }
-    )
-      .then((res) => res.json())
-      .then(async (data) => {
-        if (data.error) {
+      })
+      .catch((error) => {
+        if (error) {
+          console.log(error);
           fb_products.push({
             _id: item._id,
             name: item.name,
             success: false,
-            error: data.error.error_user_msg || data.error.message,
+            error: error.error_user_msg || error.message,
           });
           return;
         }
+      });
+  }
+  return fb_products;
+};
+const removeFromFbMarket = async (products) => {
+  const fb_products = [];
+  for (var i = 0; i < products.length; i++) {
+    const item = products[i];
+    await FB.api(`/${item.fbMarketId}`, "DELETE")
+      .then(async (data) => {
         await Product.findOneAndUpdate(
           { _id: item._id },
           { fbMarketId: null },
@@ -716,6 +733,18 @@ const removeFromFbMarket = async (
             success: true,
           });
         });
+      })
+      .catch((error) => {
+        if (error) {
+          console.log(error);
+          fb_products.push({
+            _id: item._id,
+            name: item.name,
+            success: false,
+            error: error.error_user_msg || error.message,
+          });
+          return;
+        }
       });
   }
   return fb_products;
@@ -731,11 +760,11 @@ app.put(
         $or: _ids.map((_id) => ({ _id })),
         user: req.user._id,
       }).then(async (products) => {
+        FB.setAccessToken(req.user.fbMarket.user.access_token);
         const fb_products = await addToFbMarket(
           products,
           req.user.fbMarket.commerceAccount.catalog.id,
-          req.user._id,
-          req.user.fbMarket.user.access_token
+          req.user._id
         );
         res.json({
           code: "ok",
@@ -756,12 +785,10 @@ app.put(
   (req, res) => {
     const { img, caption } = req.body;
     if (!user.fbMarket?.instagramAccount) {
-      res
-        .status(400)
-        .json({
-          code: 400,
-          message: "user does not have instagram account connected",
-        });
+      res.status(400).json({
+        code: 400,
+        message: "user does not have instagram account connected",
+      });
       return;
     }
     if (img && caption) {
@@ -810,6 +837,7 @@ app.delete(
         $or: _ids.map((_id) => ({ _id })),
         user: req.user._id,
       }).then(async (products) => {
+        FB.setAccessToken(req.user.fbMarket?.user?.access_token);
         const fb_products = await removeFromFbMarket(
           products,
           req.user.fbMarket.commerceAccount.catalog.id,

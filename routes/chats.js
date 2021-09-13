@@ -294,6 +294,9 @@ app.patch(
 );
 
 global.InitiateChat = async ({ user, client }) => {
+  if (user.toString() === client.toString()) {
+    throw 403;
+  }
   return Promise.all([
     new Chat({ user, client }).save().catch((err) => {
       if (err.code === 11000) {

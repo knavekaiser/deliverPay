@@ -649,7 +649,7 @@ const InstagramAccount = ({ setStep }) => {
   const { FB } = window;
   const { user, setUser } = useContext(SiteContext);
   const [insta, setInsta] = useState(null);
-  useEffect(async () => {
+  useEffect(() => {
     if (!user.fbMarket?.instagramAccount) {
       FB.api(
         `/${user.fbMarket.facebookPage?.id}`,
@@ -659,8 +659,8 @@ const InstagramAccount = ({ setStep }) => {
           access_token: user.fbMarket?.user.access_token,
         },
         (res) => {
+          console.log("ig:", res.instagram_business_account);
           if (res.instagram_business_account) {
-            console.log("insta id", res);
             FB.api(
               `/${res.instagram_business_account.id}`,
               "GET",
@@ -669,13 +669,11 @@ const InstagramAccount = ({ setStep }) => {
                 access_token: user.fbMarket?.user.access_token,
               },
               function (res) {
-                console.log("ig account", res);
                 if (res.id) {
                   setInsta(res);
                   updateProfileInfo({
                     "fbMarket.instagramAccount": insta,
                   }).then(({ user: newUser }) => {
-                    console.log("updated");
                     setUser((prev) => ({
                       ...prev,
                       fbMarket: newUser.fbMarket,
@@ -686,6 +684,15 @@ const InstagramAccount = ({ setStep }) => {
             );
           }
         }
+      );
+    } else if (
+      user.fbMarket.instagramAccount &&
+      !user.fbMarket.instagramAccount.id
+    ) {
+      updateProfileInfo({
+        "fbMarket.instagramAccount": null,
+      }).then(({ user: newUser }) =>
+        setUser((prev) => ({ ...prev, fbMarket: newUser.fbMarket }))
       );
     }
   }, [user]);

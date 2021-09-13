@@ -24,6 +24,8 @@ import {
   Moment,
   useOnScreen,
   Arrow_left_svg,
+  LS,
+  ShareButtons,
 } from "./Elements";
 import { AddressForm } from "./Forms";
 import { SiteContext, ChatContext, socket } from "../SiteContext";
@@ -43,6 +45,7 @@ require("./styles/marketplace.scss");
 const Marketplace = ({ history, location, match }) => {
   const { userType } = useContext(SiteContext);
   const [nativeShare, setNativeShare] = useState(false);
+  const [share, setShare] = useState(false);
   const [loadingRef, loadingVisible] = useOnScreen({ rootMargin: "100px" });
   const sortOptions = useRef([
     {
@@ -86,6 +89,7 @@ const Marketplace = ({ history, location, match }) => {
     queryString.parse(location.search).seller
   );
   const [sellerDetail, setSellerDetail] = useState(null);
+  const [buyerDetail, setBuyerDetail] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const loadMore = () => {
@@ -141,6 +145,11 @@ const Marketplace = ({ history, location, match }) => {
           } else {
             setSellerDetail(null);
           }
+          if (data.buyer) {
+            setBuyerDetail(data.buyer);
+          } else {
+            setBuyerDetail(null);
+          }
         } else {
           setMsg(
             <>
@@ -179,6 +188,8 @@ const Marketplace = ({ history, location, match }) => {
           order: sort.order,
           ...(type && { type }),
           ...(category && { category }),
+          ...(userType === "seller" &&
+            LS.get("buyer") && { buyer: LS.get("buyer") }),
         }).toString(),
     });
   }, [page, search, sort, seller, type, category]);
@@ -205,11 +216,11 @@ const Marketplace = ({ history, location, match }) => {
         <div className="mainContent">
           {sellerDetail && (
             <div className="sellerDetail">
-              {sellerDetail?.profileImg && (
-                <Img className="logo" src={"/profile-user.jpg"} />
+              {sellerDetail?.shopInfo?.logo && (
+                <Img className="logo" src={sellerDetail.shopInfo.logo} />
               )}
               <p>
-                {seller.shopInfo?.shopName ||
+                {sellerDetail.shopInfo?.name ||
                   sellerDetail.firstName + " " + sellerDetail.lastName}
               </p>
             </div>
@@ -273,20 +284,21 @@ const Marketplace = ({ history, location, match }) => {
               <section className="share">
                 <button
                   onClick={async () => {
-                    try {
-                      await navigator.share({
-                        title: `Delivery Pay | ${
-                          sellerDetail
-                            ? `${
-                                sellerDetail.firstName +
-                                " " +
-                                sellerDetail.lastName
-                              }`
-                            : "Marketplace"
-                        }`,
-                        url: window.location.href,
-                      });
-                    } catch (err) {}
+                    setShare(true);
+                    // try {
+                    //   await navigator.share({
+                    //     title: `Delivery Pay | ${
+                    //       sellerDetail
+                    //         ? `${
+                    //             sellerDetail.firstName +
+                    //             " " +
+                    //             sellerDetail.lastName
+                    //           }`
+                    //         : "Marketplace"
+                    //     }`,
+                    //     url: window.location.href,
+                    //   });
+                    // } catch (err) {}
                   }}
                 >
                   Share this page
@@ -309,13 +321,25 @@ const Marketplace = ({ history, location, match }) => {
             )}
           </div>
         </div>
+        <Modal
+          open={share}
+          setOpen={setShare}
+          label="Share this page"
+          head={true}
+          className="shareModal"
+        >
+          <ShareButtons url={window.location.href} />
+        </Modal>
         <Modal className="msg" open={msg}>
           {msg}
         </Modal>
       </div>
       <div ref={loadingRef} />
       {sellerDetail && (
-        <MiniChat client={sellerDetail} onToggle={setChatOpen} />
+        <MiniChat
+          client={userType === "seller" ? buyerDetail : sellerDetail}
+          onToggle={setChatOpen}
+        />
       )}
       <Footer />
     </div>
@@ -387,20 +411,22 @@ const MiniChat = ({ client, onToggle }) => {
           setOpen(true);
         }}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="26.55"
-          height="25.219"
-          viewBox="0 0 26.55 25.219"
-        >
-          <path
-            id="Path_1"
-            data-name="Path 1"
-            d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
-            transform="translate(255.198 195.071)"
-            fill="#fff"
-          />
-        </svg>
+        {
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="26.55"
+            height="25.219"
+            viewBox="0 0 26.55 25.219"
+          >
+            <path
+              id="Path_1"
+              data-name="Path 1"
+              d="M-242.2-184.285h-13l26.55-10.786-4.252,25.219-5.531-10.637-2.127,4.68v-6.382l7.659-9.148h2.34"
+              transform="translate(255.198 195.071)"
+              fill="#fff"
+            />
+          </svg>
+        }
       </button>
     );
   }
@@ -494,6 +520,7 @@ const Product = ({ data }) => {
 export const SingleProduct = ({ match }) => {
   const { user, setCart, setSellerCart, userType } = useContext(SiteContext);
   const [nativeShare, setNativeShare] = useState(false);
+  const [share, setShare] = useState(false);
   const [product, setProduct] = useState(null);
   const [msg, setMsg] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -605,31 +632,30 @@ export const SingleProduct = ({ match }) => {
                     (userType === "buyer" && product.user?._id === user?._id)
                   }
                   onClick={() => {
-                    product?.user._id === user?._id
+                    product?.user?._id === user?._id
                       ? setSellerCart((prev) =>
                           addToCart(prev, product, "seller")
                         )
                       : setCart((prev) => addToCart(prev, product));
                   }}
                 >
-                  {product?.user._id === user?._id
+                  {product?.user?._id === user?._id
                     ? "Add to order"
                     : "Add to Cart"}
                 </button>
-                {nativeShare && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        await navigator.share({
-                          title: `${product.name} | Delivery Pay`,
-                          url: window.location.href,
-                        });
-                      } catch (err) {}
-                    }}
-                  >
-                    Share this Product
-                  </button>
-                )}
+                <button
+                  onClick={async () => {
+                    setShare(true);
+                    // try {
+                    //   await navigator.share({
+                    //     title: `${product.name} | Delivery Pay`,
+                    //     url: window.location.href,
+                    //   });
+                    // } catch (err) {}
+                  }}
+                >
+                  Share this Product
+                </button>
                 {userType === "seller" && product?.user?._id !== user?._id && (
                   <p className="note">
                     Switch to buyer profile to buy this product.
@@ -644,23 +670,42 @@ export const SingleProduct = ({ match }) => {
                   <label>Being sold by:</label>
                   <Link to={`/marketplace?seller=${product.user._id}`}>
                     <div className="profile">
-                      <Img
-                        src={product.user.profileImg || "/profile-user.jpg"}
-                      />
-                      <p className="name">
-                        {product.user.firstName} {product.user.lastName}{" "}
-                        <span className="contact">{product.user.phone}</span>
-                      </p>
+                      {product.user.shopInfo?.logo && (
+                        <Img src={product.user.shopInfo?.logo} />
+                      )}
+                      {product.user.shopInfo?.name ? (
+                        <p className="name">{product.user.shopInfo.name}</p>
+                      ) : (
+                        <p className="name">
+                          {product.user.firstName} {product.user.lastName}
+                        </p>
+                      )}
                     </div>
                   </Link>
                 </div>
               )}
             </div>
+            <Modal
+              open={share}
+              setOpen={setShare}
+              label="Share this page"
+              head={true}
+              className="shareModal"
+            >
+              <ShareButtons url={window.location.href} />
+            </Modal>
             <Modal className="msg" open={msg}>
               {msg}
             </Modal>
           </div>
-          {product && <MiniChat client={product.user} onToggle={setChatOpen} />}
+          {product && (
+            <MiniChat
+              client={
+                userType === "seller" ? { _id: LS.get("buyer") } : product.user
+              }
+              onToggle={setChatOpen}
+            />
+          )}
           <Footer />
         </div>
       </>
@@ -960,11 +1005,14 @@ const Shop = ({ seller, products, loading }) => {
       <div className="shop">
         <div className="seller">
           <div className="profile">
-            <Img src={seller.profileImg || "/profile-user.jpg"} />
+            {seller.shopInfo?.logo && <Img src={seller.shopInfo?.logo} />}
             <p className="name">
-              {seller.firstName} {seller.lastName} •{" "}
-              <span className="role">Seller</span>
-              <span className="contact">{seller.phone}</span>
+              {seller.shopInfo?.name ||
+                seller.firstName + " " + seller.lastName}{" "}
+              • <span className="role">Seller</span>
+              <span className="contact">
+                {seller.shopInfo?.phone || seller.phone}
+              </span>
             </p>
           </div>
         </div>
@@ -1275,8 +1323,8 @@ const SellerShop = ({ buyer, products, loading }) => {
   const { user, setSellerCart, config } = useContext(SiteContext);
   const [msg, setMsg] = useState(null);
   const [deliveryDetail, setDeliveryDetail] = useState({
-    name: user.firstName + " " + user.lastName,
-    phone: user.phone,
+    name: buyer.firstName + " " + buyer.lastName,
+    phone: buyer.phone,
   });
   const [addressForm, setAddressForm] = useState(false);
   const [milestoneForm, setMilestoneForm] = useState(false);
@@ -1563,9 +1611,11 @@ const SellerShop = ({ buyer, products, loading }) => {
             }}
             onSuccess={({ milestone, order }) => {
               setSellerCart((prev) =>
-                prev.filter(({ product }) => {
-                  return !order.products.some(
-                    (order) => order.product._id === product._id
+                prev.filter(({ product, buyer }) => {
+                  return !order.products.find(
+                    (order) =>
+                      order.product._id === product._id &&
+                      buyer === milestone.buyer._id
                   );
                 })
               );

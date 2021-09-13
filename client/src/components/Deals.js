@@ -474,7 +474,7 @@ export const Chat = ({
                     className="pay"
                     target="_blank"
                     to={`/marketplace?seller=${user._id}`}
-                    onClick={() => LS.set(userCard._id)}
+                    onClick={() => LS.set("buyer", userCard._id)}
                   >
                     Create an Order
                   </Link>

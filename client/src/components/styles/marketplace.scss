@@ -315,14 +315,18 @@
     background: $blue;
     border: none;
     color: none;
-    padding: 0.6rem;
+    padding: 0.75rem;
     border-radius: 50%;
     box-shadow: 0 0.3rem 0.3rem rgba(0, 0, 0, 0.15);
-    font-size: 3rem;
+    svg {
+      height: 2rem;
+      width: 2rem;
+      transform: translateX(-2px);
+    }
     cursor: pointer;
   }
   &.chatOpen {
-    grid-template-columns: 1fr 20rem;
+    grid-template-columns: 1fr 25rem;
     header {
       grid-column: 1/3;
     }
@@ -1307,6 +1311,19 @@
   .pad {
     height: 1px;
     width: 100%;
+  }
+}
+
+.shareModal {
+  max-width: 40rem;
+  .shareBtns {
+    padding: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    grid-gap: 1rem;
+    button {
+      display: grid;
+    }
   }
 }
 

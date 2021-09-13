@@ -22,51 +22,12 @@ import {
   Chev_down_svg,
   User,
   LS,
+  ShareButtons,
 } from "./Elements";
-import {
-  EmailShareButton,
-  FacebookShareButton,
-  HatenaShareButton,
-  InstapaperShareButton,
-  LineShareButton,
-  LinkedinShareButton,
-  LivejournalShareButton,
-  MailruShareButton,
-  OKShareButton,
-  PinterestShareButton,
-  PocketShareButton,
-  RedditShareButton,
-  TelegramShareButton,
-  TumblrShareButton,
-  TwitterShareButton,
-  ViberShareButton,
-  VKShareButton,
-  WhatsappShareButton,
-  WorkplaceShareButton,
-  EmailIcon,
-  FacebookIcon,
-  HatenaIcon,
-  InstapaperIcon,
-  LineIcon,
-  LinkedinIcon,
-  LivejournalIcon,
-  MailruIcon,
-  OKIcon,
-  PinterestIcon,
-  PocketIcon,
-  RedditIcon,
-  TelegramIcon,
-  TumblrIcon,
-  TwitterIcon,
-  ViberIcon,
-  VKIcon,
-  WhatsappIcon,
-  WorkplaceIcon,
-} from "react-share";
+import { CartItem } from "./Marketplace";
 require("./styles/marketplace.scss");
 require("./styles/account.scss");
 
-// const OrderManagement = lazy(() => import("./OrderManagement"));
 const MilestoneForm = lazy(() =>
   import("./Forms").then((mod) => ({ default: mod.MilestoneForm }))
 );
@@ -77,10 +38,6 @@ const Cart = lazy(() =>
 );
 const SellerCart = lazy(() =>
   import("./Marketplace").then((mod) => ({ default: mod.SellerCart }))
-);
-
-const CartItem = lazy(() =>
-  import("./Marketplace").then((mod) => ({ default: mod.CartItem }))
 );
 
 const StartTransaction = lazy(() =>
@@ -162,79 +119,84 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <UserSearch setClient={setClient} />
-      <div className="recentPayments">
-        <p className="label">
-          Recently Contacted
-          <span className="note">
-            {userType === "buyer"
-              ? "Click to start chatting."
-              : "Click to request a milestone."}
-          </span>
-        </p>
-        <ul className="payments">
-          {recentPayments.map((client) => (
-            <li key={client._id}>
-              <Link
-                to={
-                  userType === "buyer"
-                    ? `/account/deals/${client._id}`
-                    : `/marketplace?${new URLSearchParams({
-                        seller: user._id,
-                        buyer: client._id,
-                      }).toString()}`
-                }
-                onClick={() => {
-                  setClient(client);
-                  LS.set("buyer", client._id);
-                }}
-              >
-                <Img src={client.profileImg} />
-                <p className="name">
-                  {client.firstName + " " + client.lastName}
-                </p>
-              </Link>
-            </li>
-          ))}
-          {recentPayments.length === 0 && <p>Nothing for now.</p>}
-        </ul>
-      </div>
-      <div className="recentOrders">
-        <p className="label">
-          Recent Orders
-          <span className="note">Click to view order details.</span>
-        </p>
-        <ul className="orders">
-          {recentOrders.map((order) => (
-            <Link
-              key={order._id}
-              to={`/account/orders/${
-                order.status === "pending" ? "pending" : "current"
-              }/${order._id}`}
-            >
-              <li>
-                <ul>
-                  <li>
-                    <label>Seller</label>
-                    <p>
-                      {order.seller.firstName + " " + order.seller.lastName}
+      {userType && (
+        <>
+          <UserSearch setClient={setClient} />
+          <div className="recentPayments">
+            <p className="label">
+              Recently Contacted
+              <span className="note">
+                {userType === "buyer"
+                  ? "Click to start chatting."
+                  : "Click to create an order."}
+              </span>
+            </p>
+            <ul className="payments">
+              {recentPayments.map((client) => (
+                <li key={client._id}>
+                  <Link
+                    target={userType === "seller" ? "_blank" : ""}
+                    to={
+                      userType === "buyer"
+                        ? `/account/deals/${client._id}`
+                        : `/marketplace?${new URLSearchParams({
+                            seller: user._id,
+                            buyer: client._id,
+                          }).toString()}`
+                    }
+                    onClick={() => {
+                      setClient(client);
+                      LS.set("buyer", client._id);
+                    }}
+                  >
+                    <Img src={client.profileImg} />
+                    <p className="name">
+                      {client.firstName + " " + client.lastName}
                     </p>
-                  </li>
+                  </Link>
+                </li>
+              ))}
+              {recentPayments.length === 0 && <p>Nothing for now.</p>}
+            </ul>
+          </div>
+          <div className="recentOrders">
+            <p className="label">
+              Recent Orders
+              <span className="note">Click to view order details.</span>
+            </p>
+            <ul className="orders">
+              {recentOrders.map((order) => (
+                <Link
+                  key={order._id}
+                  to={`/account/orders/${
+                    order.status === "pending" ? "pending" : "current"
+                  }/${order._id}`}
+                >
                   <li>
-                    <label>QTY</label>
-                    <p>{order.products.length}</p>
+                    <ul>
+                      <li>
+                        <label>Seller</label>
+                        <p>
+                          {order.seller.firstName + " " + order.seller.lastName}
+                        </p>
+                      </li>
+                      <li>
+                        <label>QTY</label>
+                        <p>{order.products.length}</p>
+                      </li>
+                      <li>
+                        <label>Total</label>
+                        <h3>₹{order.total}</h3>
+                      </li>
+                    </ul>
                   </li>
-                  <li>
-                    <label>Total</label>
-                    <h3>₹{order.total}</h3>
-                  </li>
-                </ul>
-              </li>
-            </Link>
-          ))}
-          {recentOrders.length === 0 && <p>Nothing for now.</p>}
-        </ul>
-      </div>
+                </Link>
+              ))}
+              {recentOrders.length === 0 && <p>Nothing for now.</p>}
+            </ul>
+          </div>
+        </>
+      )}
       <Footer />
       <Route path={"/account/home/createMilestone"}>
         <Modal
@@ -404,7 +366,7 @@ export const UserSearch = ({ setClient }) => {
     };
   }, []);
   useEffect(() => {
-    if (value) {
+    if (value?.length >= 4) {
       fetchUsers();
     } else {
       setUsers([]);
@@ -434,7 +396,10 @@ export const UserSearch = ({ setClient }) => {
             placeholder="Search with Phone Number or Delivery pay ID"
             onFocus={() => setShowUsers(true)}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setShowUsers(true);
+            }}
           />
           <Link
             className={`sendReq ${
@@ -1600,9 +1565,6 @@ export const ProfileAvatar = () => {
   const [noti, setNoti] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [msg, setMsg] = useState(null);
-  const logout = (e) => {
-    console.log(e);
-  };
   useEffect(() => {
     if (noti) {
       fetch("/api/editUserProfile", {
@@ -1793,6 +1755,7 @@ export const ProfileAvatar = () => {
                 .then((data) => {
                   setUser(null);
                   history.push("/");
+                  LS.remove(["userType", "buyer", "localSellerCart"]);
                 })
                 .catch((err) => {
                   console.log(err);
@@ -1834,65 +1797,7 @@ export const ProfileAvatar = () => {
         <div className="imgWrapper" onClick={() => setInvite(false)}>
           <QRCode value={referLink} size={250} renderAs="svg" />
         </div>
-        <div className="shareBtns">
-          <EmailShareButton url={referLink}>
-            <EmailIcon />
-          </EmailShareButton>
-          <FacebookShareButton url={referLink}>
-            <FacebookIcon />
-          </FacebookShareButton>
-          <HatenaShareButton url={referLink}>
-            <HatenaIcon />
-          </HatenaShareButton>
-          <InstapaperShareButton url={referLink}>
-            <InstapaperIcon />
-          </InstapaperShareButton>
-          <LineShareButton url={referLink}>
-            <LineIcon />
-          </LineShareButton>
-          <LinkedinShareButton url={referLink}>
-            <LinkedinIcon />
-          </LinkedinShareButton>
-          <LivejournalShareButton url={referLink}>
-            <LivejournalIcon />
-          </LivejournalShareButton>
-          <MailruShareButton url={referLink}>
-            <MailruIcon />
-          </MailruShareButton>
-          <OKShareButton url={referLink}>
-            <OKIcon />
-          </OKShareButton>
-          <PinterestShareButton url={referLink}>
-            <PinterestIcon />
-          </PinterestShareButton>
-          <PocketShareButton url={referLink}>
-            <PocketIcon />
-          </PocketShareButton>
-          <RedditShareButton url={referLink}>
-            <RedditIcon />
-          </RedditShareButton>
-          <TelegramShareButton url={referLink}>
-            <TelegramIcon />
-          </TelegramShareButton>
-          <TumblrShareButton url={referLink}>
-            <TumblrIcon />
-          </TumblrShareButton>
-          <TwitterShareButton url={referLink}>
-            <TwitterIcon />
-          </TwitterShareButton>
-          <ViberShareButton url={referLink}>
-            <ViberIcon />
-          </ViberShareButton>
-          <VKShareButton url={referLink}>
-            <VKIcon />
-          </VKShareButton>
-          <WhatsappShareButton url={referLink}>
-            <WhatsappIcon />
-          </WhatsappShareButton>
-          <WorkplaceShareButton url={referLink}>
-            <WorkplaceIcon />
-          </WorkplaceShareButton>
-        </div>
+        <ShareButtons url={referLink} />
       </Modal>
     </>
   );

@@ -13,6 +13,7 @@ import { ToastContainer } from "react-toastify";
 
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
+const Helmet = lazy(() => import("react-helmet"));
 const Account = lazy(() => import("./components/Account"));
 
 const Modal = lazy(() =>
@@ -80,6 +81,21 @@ function App() {
   }, []);
   return (
     <div className="App">
+      <Helmet>
+        <title>Delivery Pay</title>
+        <meta
+          name="description"
+          content="Delivery pay is a secure transaction platform that completely protects you from being scammed when you want to buy or sell with someone you don't know."
+        />
+        <meta property="og:url" content={`https://deliverypay.in`} />
+        <meta property="og:type" content="marketplace" />
+        <meta property="og:title" content={`Delivery Pay`} />
+        <meta
+          property="og:description"
+          content="Delivery pay is a secure transaction platform that completely protects you from being scammed when you want to buy or sell with someone you don't know."
+        />
+        <meta property="og:image" content="/logo_sqr.jpg" />
+      </Helmet>
       <BrowserRouter>
         <Suspense fallback={<>Loading</>}>
           <Modal open={mobile} className="mobileApp">

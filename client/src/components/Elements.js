@@ -11,6 +11,46 @@ import { SiteContext } from "../SiteContext";
 import { Modal } from "./Modal";
 import { Link, useHistory } from "react-router-dom";
 import { ProfileAvatar } from "./Account";
+import {
+  EmailShareButton,
+  FacebookShareButton,
+  HatenaShareButton,
+  InstapaperShareButton,
+  LineShareButton,
+  LinkedinShareButton,
+  LivejournalShareButton,
+  MailruShareButton,
+  OKShareButton,
+  PinterestShareButton,
+  PocketShareButton,
+  RedditShareButton,
+  TelegramShareButton,
+  TumblrShareButton,
+  TwitterShareButton,
+  ViberShareButton,
+  VKShareButton,
+  WhatsappShareButton,
+  WorkplaceShareButton,
+  EmailIcon,
+  FacebookIcon,
+  HatenaIcon,
+  InstapaperIcon,
+  LineIcon,
+  LinkedinIcon,
+  LivejournalIcon,
+  MailruIcon,
+  OKIcon,
+  PinterestIcon,
+  PocketIcon,
+  RedditIcon,
+  TelegramIcon,
+  TumblrIcon,
+  TwitterIcon,
+  ViberIcon,
+  VKIcon,
+  WhatsappIcon,
+  WorkplaceIcon,
+} from "react-share";
 const DateRange = lazy(async () => {
   await import("react-date-range/dist/styles.css");
   await import("react-date-range/dist/theme/default.css");
@@ -980,7 +1020,10 @@ export const Combobox = ({
     setOptionsStyle({
       position: "absolute",
       left: x,
-      top: Math.min(y + height, window.innerHeight - (37 * options.length + 8)),
+      top: Math.max(
+        Math.min(y + height, window.innerHeight - (37 * options.length + 8)),
+        8
+      ),
       width: width,
       height: 37 * options.length,
       maxHeight: window.innerHeight - 16,
@@ -1055,7 +1098,7 @@ export const Combobox = ({
                 setOpen(false);
                 input.current.setCustomValidity("");
               }}
-              className={`${"option"} ${
+              className={`option ${option.className || ""} ${
                 value === option.label ? "selected" : ""
               }`}
             >
@@ -1511,12 +1554,10 @@ export const Actions = ({
     setStyle({
       position: "fixed",
       ...(wrapper?.height > bottom
-        ? {
-            bottom: window.innerHeight - y,
-          }
-        : {
-            top: height + y + 4,
-          }),
+        ? height > y
+          ? {}
+          : { bottom: window.innerHeight - y }
+        : { top: height + y + 4 }),
       right: window.innerWidth - x - width,
     });
   }, [open]);
@@ -1592,6 +1633,70 @@ export const User = ({ user }) => {
   );
 };
 
+export const ShareButtons = ({ url }) => {
+  return (
+    <div className="shareBtns">
+      <EmailShareButton url={url}>
+        <EmailIcon />
+      </EmailShareButton>
+      <FacebookShareButton url={url}>
+        <FacebookIcon />
+      </FacebookShareButton>
+      <HatenaShareButton url={url}>
+        <HatenaIcon />
+      </HatenaShareButton>
+      <InstapaperShareButton url={url}>
+        <InstapaperIcon />
+      </InstapaperShareButton>
+      <LineShareButton url={url}>
+        <LineIcon />
+      </LineShareButton>
+      <LinkedinShareButton url={url}>
+        <LinkedinIcon />
+      </LinkedinShareButton>
+      <LivejournalShareButton url={url}>
+        <LivejournalIcon />
+      </LivejournalShareButton>
+      <MailruShareButton url={url}>
+        <MailruIcon />
+      </MailruShareButton>
+      <OKShareButton url={url}>
+        <OKIcon />
+      </OKShareButton>
+      <PinterestShareButton url={url}>
+        <PinterestIcon />
+      </PinterestShareButton>
+      <PocketShareButton url={url}>
+        <PocketIcon />
+      </PocketShareButton>
+      <RedditShareButton url={url}>
+        <RedditIcon />
+      </RedditShareButton>
+      <TelegramShareButton url={url}>
+        <TelegramIcon />
+      </TelegramShareButton>
+      <TumblrShareButton url={url}>
+        <TumblrIcon />
+      </TumblrShareButton>
+      <TwitterShareButton url={url}>
+        <TwitterIcon />
+      </TwitterShareButton>
+      <ViberShareButton url={url}>
+        <ViberIcon />
+      </ViberShareButton>
+      <VKShareButton url={url}>
+        <VKIcon />
+      </VKShareButton>
+      <WhatsappShareButton url={url}>
+        <WhatsappIcon />
+      </WhatsappShareButton>
+      <WorkplaceShareButton url={url}>
+        <WorkplaceIcon />
+      </WorkplaceShareButton>
+    </div>
+  );
+};
+
 export const moment = ({ time, format }) => {
   if (new Date(time).toString() === "Invalid Date") {
     return time;
@@ -1652,8 +1757,7 @@ export const calculatePrice = ({ product, gst, discount }) => {
   }
   return finalPrice.fix();
 };
-export const calculateDiscount = (product) => {
-  const { discount, price } = product;
+export const calculateDiscount = ({ discount, price }) => {
   if (discount?.amount) {
     if (discount.type === "flat") {
       return (+discount.amount).fix();
@@ -1663,7 +1767,7 @@ export const calculateDiscount = (product) => {
       return 0;
     }
   } else {
-    return null;
+    return 0;
   }
 };
 export const SS = {
@@ -1674,15 +1778,26 @@ export const SS = {
 export const LS = {
   set: (key, value) => localStorage.setItem(key, value),
   get: (key) => localStorage.getItem(key),
-  remove: (key) => localStorage.removeItem(key),
+  remove: (key) =>
+    key.push
+      ? key.forEach((item) => localStorage.removeItem(item))
+      : localStorage.removeItem(key),
 };
 export const addToCart = (prev, product, userType) => {
-  if (prev.some((item) => item.product._id === product._id)) {
+  if (
+    prev.find((item) =>
+      userType === "seller"
+        ? item.product._id === product._id && item.buyer === LS.get("buyer")
+        : item.product._id === product._id
+    )
+  ) {
     return prev.map((item) => {
       if (item.product._id === product._id) {
         return {
           ...item,
           qty: item.qty + 1,
+          ...(userType === "seller" &&
+            LS.get("buyer") && { buyer: LS.get("buyer") }),
         };
       } else {
         return item;

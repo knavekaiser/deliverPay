@@ -183,6 +183,7 @@ const MyShop = ({ history, location, match }) => {
           <Route path="/account/myShop/products">
             <Products
               categories={categories}
+              setCategories={setCategories}
               shopSetupComplete={shopSetupComplete}
             />
           </Route>
@@ -205,7 +206,7 @@ const MyShop = ({ history, location, match }) => {
     </>
   );
 };
-const ProductForm = ({ prefill, onSuccess, categories }) => {
+const ProductForm = ({ prefill, onSuccess, categories, setCategories }) => {
   const { user } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState(
@@ -213,6 +214,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
       (user.shopInfo?.offerings === "service" ? "service" : "product") ||
       "product"
   );
+  const [addCat, setAddCat] = useState(false);
   const [category, setCategory] = useState(prefill?.category || "");
   const [discount, setDiscount] = useState({
     type: prefill?.discount?.type || null,
@@ -224,12 +226,24 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
   const [price, setPrice] = useState(prefill?.price || "");
   const [files, setFiles] = useState(prefill?.images || []);
   const [gst, setGst] = useState(
-    prefill?.gst || user.gst?.verified ? user.gst.amount : 0
+    prefill?.gst || user.gst?.verified ? user.gst?.amount : 0
   );
   const [hsn, setHsn] = useState(prefill?.hsn || "");
   const [available, setAvailable] = useState(prefill?.available);
   const [msg, setMsg] = useState(null);
   const [tags, setTags] = useState(prefill?.tags || []);
+  const [priceDetail, setPriceDetail] = useState({});
+  useEffect(() => {
+    const discountAmount = calculateDiscount({ price, discount });
+    const gstAmount =
+      (((+price || 0) - (+discountAmount || 0)) / 100) * (+gst || 0);
+    const final = (price - discountAmount + gstAmount).fix();
+    setPriceDetail({
+      discount: discountAmount.fix(),
+      gst: gstAmount.fix(),
+      final,
+    });
+  }, [price, discount, gst]);
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -261,7 +275,7 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
       .then((data) => {
         setLoading(false);
         if (data.code === "ok") {
-          onSuccess?.(data.product);
+          onSuccess?.(data);
         } else if (data.code === 403) {
           setMsg(
             <>
@@ -337,9 +351,24 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
           <Combobox
             required={true}
             defaultValue={category}
-            options={categories.map((item) => ({ label: item, value: item }))}
-            onChange={(e) => setCategory(e.value)}
+            options={[
+              ...categories.map((item) => ({ label: item, value: item })),
+            ]}
+            onChange={(e) => {
+              if (e.value === "addNew") {
+                setAddCat(true);
+              } else {
+                setCategory(e.value);
+              }
+            }}
           />
+          <button
+            type="button"
+            className="clear"
+            onClick={() => setAddCat(true)}
+          >
+            <Plus_svg />
+          </button>
         </section>
         <section>
           <label>Price ₹</label>
@@ -497,38 +526,23 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
               <label>Input price</label>
               {price}
             </p>
-            {+gst > 0 && (
-              <p className="gst">
-                <label>GST {gst}%</label>+{((+price / 100) * +gst).fix()}
+            {priceDetail.discount > 0 && (
+              <p>
+                <label>
+                  Discount{" "}
+                  {discount.type === "flat" ? "flat" : `${discount.amount}%`}
+                </label>
+                {priceDetail.discount}
               </p>
             )}
-            {
-              //   <p>
-              //   <label>Delivery Pay fee 10%</label>+
-              //   {((+price + (+price / 100) * +gst) * 0.1).fix(2)}
-              // </p>
-            }
-            {discount.amount > 0 && discount.type === "flat" && (
+            {priceDetail.gst > 0 && (
               <p>
-                <label>Discount flat</label>- ₹{(+discount.amount).fix()}
-              </p>
-            )}
-            {discount.amount > 0 && discount.type === "percent" && (
-              <p>
-                <label>Discount {discount.amount}%</label>- ₹
-                {((+price / 100) * discount.amount).fix()}
+                <label>GST {gst}%</label>
+                {priceDetail.gst}
               </p>
             )}
             <p className="final">
-              <label>Listing Price</label>₹
-              {(
-                +price +
-                (+price / 100) * +gst -
-                (discount.type === "percent"
-                  ? (+price / 100) * discount.amount
-                  : 0) -
-                (discount.type === "flat" ? discount.amount : 0)
-              ).fix()}
+              <label>Listing Price</label>₹{priceDetail.final}
             </p>
           </section>
         )}
@@ -547,11 +561,73 @@ const ProductForm = ({ prefill, onSuccess, categories }) => {
       <Modal className="msg" open={msg}>
         {msg}
       </Modal>
+      <Modal
+        head={true}
+        className="categoryForm"
+        label="Add category"
+        open={addCat}
+        setOpen={setAddCat}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const input = e.target.querySelector("input");
+            const value = `${input.value}`;
+            fetch("/api/addCategory", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                category: value,
+              }),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.code === "ok") {
+                  setCategories(data.categories);
+                  setCategory(value);
+                  setAddCat(false);
+                  input.value = "";
+                } else {
+                  setMsg(
+                    <>
+                      <button onClick={() => setMsg(null)}>Okay</button>
+                      <div>
+                        <Err_svg />
+                        <h4>Could not add category. Try again.</h4>
+                      </div>
+                    </>
+                  );
+                }
+              })
+              .catch((err) => {
+                console.log(err);
+                setMsg(
+                  <>
+                    <button onClick={() => setMsg(null)}>Okay</button>
+                    <div>
+                      <Err_svg />
+                      <h4>Could not add category. Make sure you're online.</h4>
+                    </div>
+                  </>
+                );
+              });
+          }}
+        >
+          <section>
+            <label>Category</label>
+            <input required={true} />
+          </section>
+          <section className="btns">
+            <button className="submit">Add</button>
+          </section>
+        </form>
+      </Modal>
     </>
   );
 };
 
-const Products = ({ categories, shopSetupComplete }) => {
+const Products = ({ categories, setCategories, shopSetupComplete }) => {
   const { user } = useContext(SiteContext);
   const { FB } = window;
   const [productForm, setProductForm] = useState(false);
@@ -1046,8 +1122,9 @@ const Products = ({ categories, shopSetupComplete }) => {
       >
         <ProductForm
           categories={categories}
-          onSuccess={(product) => {
-            setProducts((prev) => [...prev, product]);
+          setCategories={setCategories}
+          onSuccess={({ product, fbMarket }) => {
+            setProducts((prev) => [product, ...prev]);
             setProductForm(false);
             setMsg(
               <>
@@ -1202,7 +1279,7 @@ const SingleProduct = ({
       >
         <ProductForm
           categories={categories}
-          onSuccess={(product) => {
+          onSuccess={({ product }) => {
             setProducts((prev) =>
               prev.map((item) => {
                 if (item._id === product._id) {
@@ -1371,12 +1448,14 @@ const InstaForm = ({ product, onSuccess }) => {
 };
 
 const BatchUpload = ({ onSuccess, categories }) => {
+  const { user } = useContext(SiteContext);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [batchItems, setBatchItems] = useState(null);
   const [images, setImages] = useState([]);
   const [msg, setMsg] = useState(null);
   const [category, setCategory] = useState("");
+  const [type, setType] = useState(user.shopInfo.offerings || "");
   const [csvDraft, setCsvDraft] = useState(null);
   const addBatchProducts = () => {
     setLoading(true);
@@ -1453,6 +1532,7 @@ const BatchUpload = ({ onSuccess, categories }) => {
       body: JSON.stringify({
         images: imgLinks,
         category,
+        type,
       }),
     })
       .then((res) => res.json())
@@ -1516,6 +1596,19 @@ const BatchUpload = ({ onSuccess, categories }) => {
       >
         <>
           <form onSubmit={uploadImages}>
+            <section className="type">
+              <label>Type</label>
+              <Combobox
+                defaultValue={type}
+                options={[
+                  { label: "Product", value: "product" },
+                  { label: "Service", value: "service" },
+                  { label: "Other", value: "other" },
+                ]}
+                required={true}
+                onChange={(e) => setType(e.value)}
+              />
+            </section>
             <section className="category">
               <label>Choose category</label>
               <Combobox
