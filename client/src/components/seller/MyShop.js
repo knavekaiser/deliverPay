@@ -1224,7 +1224,7 @@ const Products = ({ categories, setCategories, shopSetupComplete }) => {
                 </button>
                 <div>
                   <Succ_svg />
-                  <h4>Product updated.</h4>
+                  <h4>Product shared.</h4>
                 </div>
               </>
             );
@@ -1418,7 +1418,7 @@ const SingleProduct = ({
                 </button>
                 <div>
                   <Succ_svg />
-                  <h4>Product updated.</h4>
+                  <h4>Product shared.</h4>
                 </div>
               </>
             );
