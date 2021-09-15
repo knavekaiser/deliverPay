@@ -1403,7 +1403,27 @@ const SingleProduct = ({
         label="Share on Social media"
         className="socialShare"
       >
-        <SocialShare products={[product._id]} />
+        <SocialShare
+          products={[product._id]}
+          onSuccess={() => {
+            setSocialShare(false);
+            setMsg(
+              <>
+                <button
+                  onClick={() => {
+                    setMsg(null);
+                  }}
+                >
+                  Okay
+                </button>
+                <div>
+                  <Succ_svg />
+                  <h4>Product updated.</h4>
+                </div>
+              </>
+            );
+          }}
+        />
       </Modal>
       <Modal className="msg" open={msg}>
         {msg}
