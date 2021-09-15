@@ -645,3 +645,47 @@
     }
   }
 }
+
+.socialShare {
+  max-width: 25rem;
+  .content {
+    padding: 1rem;
+    h2 {
+      font-weight: 400;
+      margin: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .note {
+      font-size: 0.8rem;
+      color: rgba(0, 0, 0, 0.6);
+      padding: 0 1rem;
+    }
+    tr {
+      grid-template-columns: min-content 1fr min-content;
+      .name {
+        text-align: left;
+        span {
+          display: block;
+          font-size: 0.8em;
+          color: rgba(0, 0, 0, 0.6);
+        }
+      }
+      &.placeholder {
+        grid-template-columns: 1fr;
+      }
+    }
+    button {
+      svg {
+        height: 2rem;
+        width: 2rem;
+      }
+    }
+  }
+  .publish {
+    margin: 1rem;
+    position: sticky;
+    bottom: 1rem;
+  }
+}

@@ -646,6 +646,7 @@ const Products = ({ categories, setCategories, shopSetupComplete }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [batch, setBatch] = useState([]);
   const [addMany, setAddMany] = useState(false);
+  const [socialShare, setSocialShare] = useState(false);
   const [msg, setMsg] = useState(null);
   const deleteItems = (items) => {
     if (items.length) {
@@ -771,10 +772,7 @@ const Products = ({ categories, setCategories, shopSetupComplete }) => {
     fetch("/api/removeFromFbMarket", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        _ids,
-        access_token: LS.get("facebook_user_accessToken"),
-      }),
+      body: JSON.stringify({ _ids }),
     })
       .then((res) => res.json())
       .then(({ code, fb_products }) => {
@@ -845,6 +843,48 @@ const Products = ({ categories, setCategories, shopSetupComplete }) => {
                 Could not remove products from Facebook Marketplace. Make sure
                 you're online.
               </h4>
+            </div>
+          </>
+        );
+      });
+  };
+  const share = (_ids) => {
+    fetch("/api/shareProducts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: _ids }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "ok") {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Succ_svg />
+                <h4>Product has been shared.</h4>
+              </div>
+            </>
+          );
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not share products. please try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not share products. Make sure you're online.</h4>
             </div>
           </>
         );
@@ -1052,6 +1092,15 @@ const Products = ({ categories, setCategories, shopSetupComplete }) => {
                       Remove from Facebook
                     </button>
                   </th>
+                  <th>
+                    <button
+                      onClick={() => {
+                        setSocialShare(true);
+                      }}
+                    >
+                      Share on Social media
+                    </button>
+                  </th>
                 </>
               )}
             </tr>
@@ -1152,6 +1201,36 @@ const Products = ({ categories, setCategories, shopSetupComplete }) => {
           }}
         />
       </Modal>
+      <Modal
+        open={socialShare}
+        setOpen={setSocialShare}
+        head={true}
+        label="Share on Social media"
+        className="socialShare"
+      >
+        <SocialShare
+          products={batch}
+          onSuccess={() => {
+            setSocialShare(false);
+            setMsg(
+              <>
+                <button
+                  onClick={() => {
+                    setMsg(null);
+                    setBatch([]);
+                  }}
+                >
+                  Okay
+                </button>
+                <div>
+                  <Succ_svg />
+                  <h4>Product updated.</h4>
+                </div>
+              </>
+            );
+          }}
+        />
+      </Modal>
     </>
   );
 };
@@ -1168,6 +1247,7 @@ const SingleProduct = ({
 }) => {
   const { user } = useContext(SiteContext);
   const [selected, setSelected] = useState(selectAll || false);
+  const [socialShare, setSocialShare] = useState(false);
   const [edit, setEdit] = useState(false);
   const [showInstaForm, setShowInstaForm] = useState(false);
   const [msg, setMsg] = useState(false);
@@ -1213,9 +1293,6 @@ const SingleProduct = ({
       </td>
       <td>₹{calculateDiscount(product) || 0}</td>
       <td>₹{calculatePrice({ product, gst: user.gst }) || 0}</td>
-      {
-        // <td>{product.popularity || 0}</td>
-      }
       <td>
         {batch.length === 0 && (
           <Actions icon={<Chev_down_svg />}>
@@ -1223,7 +1300,6 @@ const SingleProduct = ({
               View
             </Link>
             {user.fbMarket?.userAgreement && (
-              // LS.get("facebook_user_accessToken") &&
               <>
                 {product.fbMarketId ? (
                   <button onClick={() => removeFromFbMarket([product._id])}>
@@ -1245,6 +1321,11 @@ const SingleProduct = ({
               <Link to="/account/myShop/fbMarketplace" className="edit">
                 Setup FB Marketplace
               </Link>
+            )}
+            {user.fbMarket?.user?.access_token && (
+              <button onClick={() => setSocialShare(true)}>
+                Share on Social media
+              </button>
             )}
             <FacebookShareButton
               resetButtonStyle={false}
@@ -1314,6 +1395,15 @@ const SingleProduct = ({
           product={product}
           onSuccess={() => setShowInstaForm(false)}
         />
+      </Modal>
+      <Modal
+        open={socialShare}
+        setOpen={setSocialShare}
+        head={true}
+        label="Share on Social media"
+        className="socialShare"
+      >
+        <SocialShare products={[product._id]} />
       </Modal>
       <Modal className="msg" open={msg}>
         {msg}
@@ -1784,6 +1874,289 @@ const BatchUpload = ({ onSuccess, categories }) => {
     </div>
   );
 };
+const SocialShare = ({ products, onSuccess }) => {
+  const { FB } = window;
+  const { user } = useContext(SiteContext);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [igs, setIgs] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [groups, setGroups] = useState([]);
+  useEffect(() => {
+    FB.api(
+      `/me/accounts`,
+      "GET",
+      {
+        fields:
+          "instagram_business_account{profile_picture_url, username},picture{url},access_token,category,name",
+        access_token: user.fbMarket?.user?.access_token,
+      },
+      (resp) => {
+        if (resp.data) {
+          setPages(
+            resp.data.map((item) => {
+              if (item.instagram_business_account) {
+                setIgs((prev) => [
+                  ...prev,
+                  {
+                    ...item.instagram_business_account,
+                    publish: true,
+                  },
+                ]);
+              }
+              return { ...item, publish: true };
+            })
+          );
+        }
+      }
+    );
+    FB.api(
+      `/me/groups`,
+      "GET",
+      {
+        fields: "name,picture{url}",
+        access_token: user.fbMarket?.user?.access_token,
+      },
+      (resp) => {
+        if (resp.data) {
+          setGroups(resp.data.map((item) => ({ ...item, publish: true })));
+        }
+      }
+    );
+  }, []);
+  const allPages = pages.filter((item) => item.publish).length === pages.length;
+  const allIgs = igs.filter((item) => item.publish).length === igs.length;
+  const allGroups =
+    groups.filter((item) => item.publish).length === groups.length;
+  const post = () => {
+    setLoading(true);
+    fetch("/api/shareProducts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        products,
+        pages: pages
+          .filter((item) => item.publish)
+          .map((item) => ({ id: item.id, access_token: item.access_token })),
+        igs: igs
+          .filter((item) => item.publish)
+          .map((item) => ({ id: item.id })),
+        groups: groups.filter((item) => item.publish),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.code === "ok") {
+          onSuccess?.();
+        } else {
+          setMsg(
+            <>
+              <button onClick={() => setMsg(null)}>Okay</button>
+              <div>
+                <Err_svg />
+                <h4>Could not share products. Try again.</h4>
+              </div>
+            </>
+          );
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+        setMsg(
+          <>
+            <button onClick={() => setMsg(null)}>Okay</button>
+            <div>
+              <Err_svg />
+              <h4>Could not share products. Make sure you're online.</h4>
+            </div>
+          </>
+        );
+      });
+  };
+  return (
+    <>
+      <div className="content">
+        <h2>
+          Pages{" "}
+          <button
+            className="clear"
+            onClick={() =>
+              setPages((prev) =>
+                prev.map((item) => ({ ...item, publish: !allPages }))
+              )
+            }
+          >
+            {allPages ? <Succ_svg /> : <Err_svg />}
+          </button>
+        </h2>
+        <table className="table pages">
+          <tbody>
+            {pages.map((page) => (
+              <tr key={page.id}>
+                <td>
+                  <Img src={page.picture?.data?.url} />
+                </td>
+                <td className="name">
+                  {page.name}
+                  <span className="category">{page.category}</span>
+                </td>
+                <td>
+                  <button
+                    className="clear"
+                    onClick={() => {
+                      setPages((prev) =>
+                        prev.map((item) => {
+                          if (item.id === page.id) {
+                            return {
+                              ...item,
+                              publish: !item.publish,
+                            };
+                          } else {
+                            return item;
+                          }
+                        })
+                      );
+                    }}
+                  >
+                    {page.publish ? <Succ_svg /> : <Err_svg />}
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {pages.length === 0 && (
+              <tr className="placeholder">
+                <td>No page found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <h2>
+          Instagram{" "}
+          <button
+            className="clear"
+            onClick={() =>
+              setIgs((prev) =>
+                prev.map((item) => ({ ...item, publish: !allIgs }))
+              )
+            }
+          >
+            {allIgs ? <Succ_svg /> : <Err_svg />}
+          </button>
+        </h2>
+        <p className="note">
+          *Make sure image aspect ratio is correct. otherwise product may not be
+          posted on instagram.
+        </p>
+        <table className="table ig">
+          <tbody>
+            {igs.map((ig) => (
+              <tr key={ig.id}>
+                <td>
+                  <Img src={ig.profile_picture_url} />
+                </td>
+                <td className="name">{ig.username}</td>
+                <td>
+                  <button
+                    className="clear"
+                    onClick={() => {
+                      setIgs((prev) =>
+                        prev.map((item) => {
+                          if (item.id === ig.id) {
+                            return {
+                              ...item,
+                              publish: !item.publish,
+                            };
+                          } else {
+                            return item;
+                          }
+                        })
+                      );
+                    }}
+                  >
+                    {ig.publish ? <Succ_svg /> : <Err_svg />}
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {igs.length === 0 && (
+              <tr className="placeholder">
+                <td>No Instagram busines account found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <h2>
+          Groups{" "}
+          <button
+            className="clear"
+            onClick={() =>
+              setGroups((prev) =>
+                prev.map((item) => ({ ...item, publish: !allGroups }))
+              )
+            }
+          >
+            {allGroups ? <Succ_svg /> : <Err_svg />}
+          </button>
+        </h2>
+        <p className="note">
+          *Make sure you are an admin of the group or at least have permission
+          to post on the group.
+        </p>
+        <table className="table groups">
+          <tbody>
+            {groups.map((group) => (
+              <tr key={group.id}>
+                <td>
+                  <Img src={group.picture?.data?.url} />
+                </td>
+                <td className="name">{group.name}</td>
+                <td>
+                  <button
+                    className="clear"
+                    onClick={() => {
+                      setGroups((prev) =>
+                        prev.map((item) => {
+                          if (item.id === group.id) {
+                            return {
+                              ...item,
+                              publish: !item.publish,
+                            };
+                          } else {
+                            return item;
+                          }
+                        })
+                      );
+                    }}
+                  >
+                    {group.publish ? <Succ_svg /> : <Err_svg />}
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {groups.length === 0 && (
+              <tr className="placeholder">
+                <td>No group found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <button className="publish fill" onClick={post}>
+        Post
+      </button>
+      {loading && (
+        <div className="spinnerContainer">
+          <div className="spinner" />
+        </div>
+      )}
+      <Modal className="msg" open={msg}>
+        {msg}
+      </Modal>
+    </>
+  );
+};
 
 export const defaultTerms = [
   "Buyer will be responsible for paying for shipping costs & for returning the item.",
@@ -2204,7 +2577,7 @@ const GstEditForm = ({ setOpen, setMsg }) => {
   return (
     <form onSubmit={submit}>
       <section>
-        <label>GST Registration Nubmer</label>
+        <label>GST Registration Number</label>
         <input
           required={true}
           type="text"

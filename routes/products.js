@@ -385,21 +385,70 @@ app.get("/api/singleProduct", (req, res) => {
   }
 });
 
-// app.get("/marketplace/:_id", (req, res) => {
-//   const { _id } = req.params;
-//   console.log(_id);
-//   const app = ReactDOMServer.renderToString(App);
-//   const indexFile = path.resolve("./client/build/index.html");
-//   fs.readFile(indexFile, "utf8", (err, data) => {
-//     if (err) {
-//       console.error("Something went wrong:", err);
-//       return res.status(500).send("Oops, better luck next time!");
-//     }
-//     return res.send(
-//       data.replace('<div id="root"></div>', `<div id="root">${app}</div>`)
-//     );
-//   });
-// });
+app.post(
+  "/api/shareProducts",
+  passport.authenticate("userPrivate"),
+  async (req, res) => {
+    const { products, pages, igs, groups } = req.body;
+    if (products?.forEach) {
+      FB.setAccessToken(req.user.fbMarket?.user?.access_token);
+      res.json({ code: "ok", message: "Product is being shared" });
+      for (var i = 0; i < pages.length; i++) {
+        const { id, access_token } = pages[i];
+        FB.setAccessToken(access_token);
+        for (var j = 0; j < products.length; j++) {
+          FB.api(`/${id}/feed`, "POST", {
+            link: `https://deliverypay.in/marketplace/${products[j]}`,
+          }).then((resp) => {
+            console.log(resp);
+          });
+        }
+      }
+      for (var i = 0; i < igs.length; i++) {
+        const { id } = igs[i];
+        FB.setAccessToken(req.user.fbMarket?.user?.access_token);
+        for (var j = 0; j < products.length; j++) {
+          const _id = products[j];
+          FB.api(`/${id}/media`, "POST", {
+            image_url: await Product.findOne({ _id }, "images").then(
+              (pro) => pro?.images[0] || ""
+            ),
+          })
+            .then((res) => {
+              FB.api(`/${id}/media_publish`, "POST", { creation_id: res.id })
+                .then((res) => {
+                  console.log(res);
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }
+      }
+      for (var i = 0; i < groups.length; i++) {
+        const { id } = groups[i];
+        FB.setAccessToken(req.user.fbMarket?.user?.access_token);
+        for (var j = 0; j < products.length; j++) {
+          FB.api(`${id}/feed`, "post", {
+            link: `https://deliverypay.in/marketplace/${products[j]}`,
+          })
+            .then((resp) => {
+              console.log(resp);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }
+      }
+    } else {
+      res.status(400).json({ code: 400, message: "products is required." });
+    }
+  }
+);
+
 app.post(
   "/api/getCartDetail",
   passport.authenticate("userPrivate"),
