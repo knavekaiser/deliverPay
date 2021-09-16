@@ -137,13 +137,31 @@ const ShopSetup = () => {
                 />
               </section>
             )}
-            {(offerings === "service" || offerings === "product,service") && (
+            {offerings === "service" && (
               <section className="charge">
                 <h4>Charge</h4>
                 <Combobox
                   required={true}
                   defaultValue={charge}
                   options={[
+                    { label: "Charge per hour", value: "Charge per hour" },
+                    {
+                      label: "I charge flat rates for my Services",
+                      value: "I charge flat rates for my Services",
+                    },
+                  ]}
+                  onChange={(option) => setCharge(option.value)}
+                />
+              </section>
+            )}
+            {offerings === "product,service" && (
+              <section className="charge">
+                <h4>Charge</h4>
+                <Combobox
+                  required={true}
+                  defaultValue={charge}
+                  options={[
+                    { label: "Charge per unit", value: "Charge per unit" },
                     { label: "Charge per hour", value: "Charge per hour" },
                     {
                       label: "I charge flat rates for my Services",

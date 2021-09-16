@@ -80,6 +80,7 @@ app.post(
                   req.user.fbMarket?.user?.access_token &&
                   req.user.fbMarket?.commerceAccount?.catalog?.id
                 ) {
+                  FB.setAccessToken(req.user.fbMarket.user.access_token);
                   addToFbMarket(
                     [product],
                     req.user.fbMarket.commerceAccount.catalog.id,

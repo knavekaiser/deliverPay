@@ -150,6 +150,16 @@
       }
     }
   }
+  &.loading {
+    .setup {
+      .body {
+        .btn {
+          pointer-events: none;
+          filter: grayscale(1);
+        }
+      }
+    }
+  }
 }
 .step {
   background: rgba(0, 0, 0, 0.01);

@@ -78,7 +78,7 @@ const Marketplace = () => {
     }
   }, [user]);
   return (
-    <div className="fbMarket">
+    <div className={`fbMarket ${loading ? "loading" : ""}`}>
       <h1>Facebook marketplace</h1>
       <div className="setup">
         <Step
@@ -117,6 +117,7 @@ const Marketplace = () => {
               <button
                 className="btn"
                 onClick={() => {
+                  setLoading(true);
                   FB.logout((res) => {
                     console.log(res);
                   });
@@ -131,11 +132,14 @@ const Marketplace = () => {
                     "fbMarket.commerceAccount": {},
                     "fbMarket.userAgreement": false,
                   }).then(({ user: newUser }) => {
-                    setUser((prev) => ({
-                      ...prev,
-                      fbMarket: newUser.fbMarket,
-                    }));
+                    if (newUser) {
+                      setUser((prev) => ({
+                        ...prev,
+                        fbMarket: newUser.fbMarket,
+                      }));
+                    }
                   });
+                  setLoading(false);
                 }}
               >
                 Disconnect
@@ -144,6 +148,7 @@ const Marketplace = () => {
               <button
                 className="btn"
                 onClick={() => {
+                  setLoading(true);
                   FB.login(
                     (res) => {
                       if (res.authResponse?.accessToken) {
@@ -155,6 +160,7 @@ const Marketplace = () => {
                         })
                           .then((res) => res.json())
                           .then((data) => {
+                            setLoading(false);
                             if (data.code === "ok") {
                               setUser((prev) => ({
                                 ...prev,
@@ -166,7 +172,7 @@ const Marketplace = () => {
                     },
                     {
                       scope:
-                        "business_management,catalog_management,pages_read_engagement,pages_show_list,instagram_basic,instagram_content_publish",
+                        "business_management,catalog_management,pages_read_engagement,pages_show_list,instagram_basic,instagram_content_publish,publish_to_groups",
                       return_scopes: true,
                     }
                   );
@@ -199,7 +205,7 @@ const Marketplace = () => {
           className="page"
           disabled={!user.fbMarket?.businessManager?.id}
         >
-          <FbPage />
+          <FbPage setLoading={setLoading} />
         </Step>
         <Step
           data={
@@ -212,7 +218,7 @@ const Marketplace = () => {
           defaultStatus={step === "instagramAccount"}
           className="instagramAccount"
         >
-          <InstagramAccount setStep={setStep} />
+          <InstagramAccount setStep={setStep} setLoading={setLoading} />
         </Step>
         <Step
           data={
@@ -225,7 +231,7 @@ const Marketplace = () => {
           defaultStatus={step === "commerceAccount"}
           className="commerceAccount"
         >
-          <CommerceAccount setStep={setStep} />
+          <CommerceAccount setStep={setStep} setLoading={setLoading} />
         </Step>
         <Step
           disabled={!user.fbMarket?.commerceAccount?.catalog?.id}
@@ -333,16 +339,20 @@ const BusinessManager = ({ setLoading }) => {
               </div>
               <button
                 onClick={() => {
+                  setLoading(true);
                   updateProfileInfo({
                     "fbMarket.businessManager": {},
                     "fbMarket.facebookPage": {},
                     "fbMarket.commerceAccount": {},
                     "fbMarket.userAgreement": false,
                   }).then(({ user: newUser }) => {
-                    setUser((prev) => ({
-                      ...prev,
-                      fbMarket: newUser.fbMarket,
-                    }));
+                    setLoading(false);
+                    if (newUser) {
+                      setUser((prev) => ({
+                        ...prev,
+                        fbMarket: newUser.fbMarket,
+                      }));
+                    }
                   });
                 }}
                 className="btn"
@@ -388,6 +398,7 @@ const BusinessManager = ({ setLoading }) => {
                 <button
                   className="btn"
                   onClick={() => {
+                    setLoading(true);
                     updateProfileInfo({
                       "fbMarket.businessManager.id": item.id,
                       "fbMarket.businessManager.name": item.name,
@@ -395,6 +406,7 @@ const BusinessManager = ({ setLoading }) => {
                       "fbMarket.businessManager.profileImg":
                         item.picture.data.url,
                     }).then(({ user: newUser }) => {
+                      setLoading(false);
                       setUser((prev) => ({
                         ...prev,
                         fbMarket: newUser.fbMarket,
@@ -415,7 +427,6 @@ const BusinessManager = ({ setLoading }) => {
                 className="btn"
                 onClick={() => {
                   setLoading(true);
-                  console.log(`/${user.fbMarket?.user?.id}/businesses`);
                   FB.api(
                     `/${user.fbMarket?.user?.id}/businesses`,
                     "POST",
@@ -477,7 +488,7 @@ const BusinessManager = ({ setLoading }) => {
     </>
   );
 };
-const FbPage = () => {
+const FbPage = ({ setLoading }) => {
   const { FB } = window;
   const { user, setUser } = useContext(SiteContext);
   const [fbPages, setFbPages] = useState([]);
@@ -523,16 +534,20 @@ const FbPage = () => {
               </div>
               <button
                 onClick={() => {
+                  setLoading(true);
                   updateProfileInfo({
                     fbMarket: {
                       user: user.fbMarket.user,
                       businessManager: user.fbMarket.businessManager,
                     },
                   }).then(({ user: newUser }) => {
-                    setUser((prev) => ({
-                      ...prev,
-                      fbMarket: newUser.fbMarket,
-                    }));
+                    setLoading(false);
+                    if (newUser) {
+                      setUser((prev) => ({
+                        ...prev,
+                        fbMarket: newUser.fbMarket,
+                      }));
+                    }
                   });
                 }}
                 className="btn"
@@ -565,6 +580,7 @@ const FbPage = () => {
                 <button
                   className="btn"
                   onClick={() => {
+                    setLoading(true);
                     updateProfileInfo({
                       "fbMarket.facebookPage.id": item.id,
                       "fbMarket.facebookPage.name": item.name,
@@ -572,10 +588,13 @@ const FbPage = () => {
                       "fbMarket.facebookPage.profileImg": item.picture.data.url,
                       "fbMarket.facebookPage.category": item.category,
                     }).then(({ user: newUser }) => {
-                      setUser((prev) => ({
-                        ...prev,
-                        fbMarket: newUser.fbMarket,
-                      }));
+                      setLoading(false);
+                      if (newUser) {
+                        setUser((prev) => ({
+                          ...prev,
+                          fbMarket: newUser.fbMarket,
+                        }));
+                      }
                     });
                   }}
                 >
@@ -645,7 +664,7 @@ const FbPage = () => {
     </>
   );
 };
-const InstagramAccount = ({ setStep }) => {
+const InstagramAccount = ({ setStep, setLoading }) => {
   const { FB } = window;
   const { user, setUser } = useContext(SiteContext);
   const [insta, setInsta] = useState(null);
@@ -791,16 +810,32 @@ const InstagramAccount = ({ setStep }) => {
     </>
   );
 };
-const CommerceAccount = ({ setStep }) => {
+const CommerceAccount = ({ setStep, setLoading }) => {
   const { FB } = window;
   const { user, setUser } = useContext(SiteContext);
   const [commerceAccounts, setCommerceAccounts] = useState([]);
+  const [catalogs, setCatalogs] = useState([]);
   const [catalog, setCatalog] = useState(
     user.fbMarket?.commerceAccount?.catalog
   );
   const [err, setErr] = useState(null);
   useEffect(() => {
     setCatalog(user.fbMarket?.commerceAccount?.catalog);
+    if (!user.fbMarket?.commerceAccount?.catalog?.id) {
+      FB.api(
+        `/${user.fbMarket?.businessManager?.id}/owned_product_catalogs`,
+        "GET",
+        { fields: "name", access_token: user.fbMarket?.user?.access_token },
+        function (res) {
+          if (res.error) {
+            console.log(res.error);
+            setErr(res.error.message);
+            return;
+          }
+          setCatalogs(res.data);
+        }
+      );
+    }
   }, [user]);
   return (
     <>
@@ -818,25 +853,60 @@ const CommerceAccount = ({ setStep }) => {
       </p>
       {err && <div className="err">{err}</div>}
       <ul>
-        {
-          //   commerceAccounts.map((item, i) => (
-          //   <li key={i}>
-          //     {i}
-          //     <div className="facebookPage">
-          //       <div className="thumb" />
-          //       <p>{item.name}</p>
-          //       <span>ID: {item.id}</span>
-          //       <span>Created at: {item.createdAt}</span>
-          //     </div>
-          //     <button>Connect</button>
-          //   </li>
-          // ))
-        }
+        {!user.fbMarket?.commerceAccount?.catalog?.id &&
+          catalogs.map((item, i) => (
+            <li key={i}>
+              <div className="profile">
+                <div className="detail">
+                  <p>{item.name}</p>
+                  <span>ID: {item.id}</span>
+                </div>
+              </div>
+              <button
+                className="btn"
+                onClick={() => {
+                  setLoading(true);
+                  updateProfileInfo({
+                    "fbMarket.commerceAccount.catalog": item,
+                  }).then(({ user: newUser }) => {
+                    setLoading(false);
+                    if (newUser) {
+                      setUser((prev) => ({
+                        ...prev,
+                        fbMarket: newUser.fbMarket,
+                      }));
+                    }
+                  });
+                }}
+              >
+                Connect
+              </button>
+            </li>
+          ))}
         {catalog && (
           <li className="catalog">
             <p>PRODUCTS WILL BE SYNCED TO THIS CATALOG</p>
             <p>{catalog.name}</p>
             <span>ID: {catalog.id}</span>
+            <button
+              className="btn"
+              onClick={() => {
+                setLoading(true);
+                updateProfileInfo({
+                  "fbMarket.commerceAccount.catalog": null,
+                }).then(({ user: newUser }) => {
+                  setLoading(false);
+                  if (newUser) {
+                    setUser((prev) => ({
+                      ...prev,
+                      fbMarket: newUser.fbMarket,
+                    }));
+                  }
+                });
+              }}
+            >
+              Disconnect
+            </button>
           </li>
         )}
         {!catalog && (
@@ -848,6 +918,7 @@ const CommerceAccount = ({ setStep }) => {
             <button
               className="btn"
               onClick={() => {
+                setLoading(true);
                 FB.api(
                   `/${user.fbMarket.businessManager.id}/owned_product_catalogs`,
                   "GET",
@@ -857,6 +928,7 @@ const CommerceAccount = ({ setStep }) => {
                   async function ({ data, error }) {
                     console.log(data, error);
                     if (error) {
+                      setLoading(false);
                       setErr(error.message);
                     }
                     const delCatalog =
@@ -871,6 +943,7 @@ const CommerceAccount = ({ setStep }) => {
                           access_token: user.fbMarket.user.access_token,
                         },
                         function (res) {
+                          setLoading(false);
                           console.log(res.id);
                           if (res.id) {
                             return {
@@ -887,9 +960,11 @@ const CommerceAccount = ({ setStep }) => {
                       ));
                     if (delCatalog) {
                       setCatalog(delCatalog);
+                      setLoading(true);
                       updateProfileInfo({
                         "fbMarket.commerceAccount.catalog": delCatalog,
                       }).then(({ user: newUser }) => {
+                        setLoading(false);
                         setUser((prev) => ({
                           ...prev,
                           fbMarket: newUser.fbMarket,
