@@ -172,7 +172,7 @@ const Marketplace = () => {
                     },
                     {
                       scope:
-                        "business_management,catalog_management,pages_read_engagement,pages_show_list,instagram_basic,instagram_content_publish,publish_to_groups",
+                        "business_management,catalog_management,pages_read_engagement,pages_manage_posts,pages_show_list,instagram_basic,instagram_content_publish,publish_to_groups",
                       return_scopes: true,
                     }
                   );

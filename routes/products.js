@@ -400,9 +400,13 @@ app.post(
         for (var j = 0; j < products.length; j++) {
           FB.api(`/${id}/feed`, "POST", {
             link: `https://deliverypay.in/marketplace/${products[j]}`,
-          }).then((resp) => {
-            console.log(resp);
-          });
+          })
+            .then((resp) => {
+              console.log(resp);
+            })
+            .catch((err) => {
+              console.log("page error: ", err?.response);
+            });
         }
       }
       for (var i = 0; i < igs.length; i++) {
@@ -440,7 +444,7 @@ app.post(
               console.log(resp);
             })
             .catch((err) => {
-              console.log(err);
+              console.log(err?.response);
             });
         }
       }
