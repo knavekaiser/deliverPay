@@ -394,60 +394,53 @@ app.post(
     if (products?.forEach) {
       FB.setAccessToken(req.user.fbMarket?.user?.access_token);
       res.json({ code: "ok", message: "Product is being shared" });
-      for (var i = 0; i < pages.length; i++) {
-        const { id, access_token } = pages[i];
-        FB.setAccessToken(access_token);
-        for (var j = 0; j < products.length; j++) {
-          FB.api(`/${id}/feed`, "POST", {
-            link: `https://deliverypay.in/marketplace/${products[j]}`,
+      products.forEach(async (product_id, i) => {
+        const product = await Product.findOne(
+          { _id: product_id },
+          "images _id fbMarketId"
+        );
+        pages.forEach(async ({ id, access_token }, j) => {
+          FB.setAccessToken(access_token);
+          await FB.api(`/${id}/feed`, "POST", {
+            link: product.fbMarketId
+              ? `https://www.facebook.com/marketplace/item/${product_id}`
+              : `https://deliverypay.in/marketplace/${product_id}`,
           })
-            .then((resp) => {
-              console.log(resp);
+            .then((value) => {})
+            .catch((err) => {
+              console.log("page err:", err?.response);
+            });
+        });
+        igs.forEach(async ({ id }, i) => {
+          FB.setAccessToken(req.user.fbMarket?.user?.access_token);
+          await FB.api(`/${id}/media`, "POST", {
+            image_url: product.images[0],
+          })
+            .then(async (result) => {
+              if (!result || result.error) {
+                return;
+              }
+              await FB.api(`${id}/media_publish`, "POST", {
+                creation_id: result.id,
+              });
             })
             .catch((err) => {
-              console.log("page error: ", err?.response);
+              console.log("ig err:", err?.response);
             });
-        }
-      }
-      for (var i = 0; i < igs.length; i++) {
-        const { id } = igs[i];
-        FB.setAccessToken(req.user.fbMarket?.user?.access_token);
-        for (var j = 0; j < products.length; j++) {
-          const _id = products[j];
-          FB.api(`/${id}/media`, "POST", {
-            image_url: await Product.findOne({ _id }, "images").then(
-              (pro) => pro?.images[0] || ""
-            ),
+        });
+        groups.forEach(async ({ id }, i) => {
+          FB.setAccessToken(req.user.fbMarket?.user?.access_token);
+          await FB.api(`${id}/feed`, "post", {
+            link: ObjectId.isValid(product_id)
+              ? `https://deliverypay.in/marketplace/${product_id}`
+              : `https://www.facebook.com/marketplace/item/${product_id}`,
           })
-            .then((res) => {
-              FB.api(`/${id}/media_publish`, "POST", { creation_id: res.id })
-                .then((res) => {
-                  console.log(res);
-                })
-                .catch((err) => {
-                  console.log(err);
-                });
-            })
+            .then((resp) => {})
             .catch((err) => {
-              console.log(err);
+              console.log("group err:", err?.response);
             });
-        }
-      }
-      for (var i = 0; i < groups.length; i++) {
-        const { id } = groups[i];
-        FB.setAccessToken(req.user.fbMarket?.user?.access_token);
-        for (var j = 0; j < products.length; j++) {
-          FB.api(`${id}/feed`, "post", {
-            link: `https://deliverypay.in/marketplace/${products[j]}`,
-          })
-            .then((resp) => {
-              console.log(resp);
-            })
-            .catch((err) => {
-              console.log(err?.response);
-            });
-        }
-      }
+        });
+      });
     } else {
       res.status(400).json({ code: 400, message: "products is required." });
     }
